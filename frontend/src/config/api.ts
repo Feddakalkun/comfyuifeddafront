@@ -1,0 +1,39 @@
+// ComfyUI API Configuration
+
+export const COMFY_API = {
+    BASE_URL: 'http://127.0.0.1:8188',
+
+    ENDPOINTS: {
+        PROMPT: '/prompt',
+        QUEUE: '/queue',
+        HISTORY: '/history',
+        VIEW: '/view',
+        UPLOAD_IMAGE: '/upload/image',
+        SYSTEM_STATS: '/system_stats',
+        OBJECT_INFO: '/object_info',
+    },
+
+    WS_URL: 'ws://127.0.0.1:8188/ws',
+};
+
+export const APP_CONFIG = {
+    NAME: 'ComfyFront',
+    VERSION: '0.1.0',
+    DESCRIPTION: 'Premium ComfyUI Frontend',
+};
+
+export const MODELS = {
+    IMAGE: [
+        { id: 'z-image', label: 'Z-Image', icon: 'Sparkles' },
+        { id: 'flux', label: 'Flux', icon: 'Zap' },
+        { id: 'qwen', label: 'Qwen', icon: 'Aperture' },
+    ],
+    VIDEO: [
+        { id: 'wan2.1', label: 'Wan 2.1', icon: 'Video' },
+        { id: 'wan2.2', label: 'Wan 2.2', icon: 'Video' },
+        { id: 'ltx-2', label: 'LTX-2', icon: 'Video' },
+    ],
+    AUDIO: [
+        { id: 'generic', label: 'Coming Soon', icon: 'Music' },
+    ],
+};
