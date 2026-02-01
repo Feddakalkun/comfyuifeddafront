@@ -150,7 +150,7 @@ $NodeExe = Join-Path $NodeDir "node.exe"
 if (-not (Test-Path $NodeExe)) {
     Write-Log "[ComfyUI 3/9] Setting up Portable Node.js..."
     $NodeZip = Join-Path $RootPath "node.zip"
-    Download-File "https://nodejs.org/dist/v20.11.0/node-v20.11.0-win-x64.zip" $NodeZip
+    Download-File "https://nodejs.org/dist/v22.14.0/node-v22.14.0-win-x64.zip" $NodeZip
     
     Extract-Zip $NodeZip $RootPath
     $ExtractedNode = Get-ChildItem -Path $RootPath -Directory -Filter "node-v*-win-x64" | Select-Object -First 1
