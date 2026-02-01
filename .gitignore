@@ -75,3 +75,7 @@ download_loras.bat
 scripts/download_loras.py
 config/loras.json
 loras.json
+
+# Design assets (local only)
+assets/design/
+assets/landingpage/
