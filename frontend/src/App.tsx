@@ -3,6 +3,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { ImagePage } from './pages/ImagePage';
 import { VideoPage } from './pages/VideoPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ChatPage } from './pages/ChatPage';
 import { MODELS } from './config/api';
 
 
@@ -64,6 +65,10 @@ function App() {
               modelId={currentModel.id}
               modelLabel={currentModel.label}
             />
+          )}
+
+          {activeTab === 'chat' && (
+            <ChatPage />
           )}
 
           {activeTab === 'audio' && (

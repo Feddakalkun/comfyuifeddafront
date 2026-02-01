@@ -78,5 +78,27 @@ export const ollamaService = {
             console.error('Ollama delete error:', error);
             throw error;
         }
+    },
+
+    // Unload model from VRAM (free memory for ComfyUI)
+    unloadModel: async (modelName: string) => {
+        try {
+            console.log(`🧹 Unloading ${modelName} from VRAM...`);
+            const response = await fetch('/ollama/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: modelName,
+                    keep_alive: 0  // Immediately unload
+                }),
+            });
+            if (!response.ok) {
+                console.warn('Failed to unload model (non-critical)');
+            } else {
+                console.log('✅ Model unloaded from VRAM');
+            }
+        } catch (error) {
+            console.warn('Ollama unload error (non-critical):', error);
+        }
     }
 };

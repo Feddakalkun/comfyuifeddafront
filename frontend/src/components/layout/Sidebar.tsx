@@ -1,5 +1,4 @@
 // Sidebar Navigation Component
-import { useState } from 'react';
 import {
     Image as ImageIcon,
     Video,
@@ -7,6 +6,7 @@ import {
     Settings,
     Terminal,
     ChevronRight,
+    MessageSquare,
 } from 'lucide-react';
 import { StatusIndicator } from '../ui/StatusIndicator';
 import { APP_CONFIG, MODELS } from '../../config/api';
@@ -19,6 +19,11 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeTab, activeSubTab, onTabChange }: SidebarProps) => {
     const navigation = [
+        {
+            id: 'chat',
+            label: 'Agent Chat',
+            icon: MessageSquare,
+        },
         {
             id: 'image',
             label: 'Image Generation',

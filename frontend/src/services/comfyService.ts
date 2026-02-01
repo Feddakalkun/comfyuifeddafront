@@ -157,6 +157,19 @@ class ComfyUIService {
             return ['No Style', 'Photographic', 'Cinematic', 'Anime', 'Digital Art'];
         }
     }
+    async getCheckpoints(): Promise<string[]> {
+        try {
+            const response = await fetch(`${COMFY_API.BASE_URL}/object_info/CheckpointLoaderSimple`);
+            if (!response.ok) throw new Error('Failed to fetch checkpoints');
+
+            const data = await response.json();
+            return data.CheckpointLoaderSimple?.input?.required?.ckpt_name?.[0] || [];
+        } catch (error) {
+            console.error('Failed to load checkpoints:', error);
+            return [];
+        }
+    }
+
     /**
      * Connect to WebSocket for real-time updates and return a listener cleanup function
      */

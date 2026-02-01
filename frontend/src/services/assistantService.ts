@@ -57,7 +57,6 @@ export const assistantService = {
         }
     },
 
-    // Describe Image (I2T)
     describeImage: async (modelName: string, base64Image: string): Promise<string> => {
         try {
             // Remove header if present (data:image/png;base64,)
@@ -80,6 +79,27 @@ export const assistantService = {
             return data.response;
         } catch (error) {
             console.error('Vision Assist Error:', error);
+            throw error;
+        }
+    },
+
+    // General Chat
+    chat: async (modelName: string, messages: { role: string; content: string }[]): Promise<string> => {
+        try {
+            const response = await fetch('/ollama/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: modelName,
+                    messages: messages,
+                    stream: false,
+                }),
+            });
+            if (!response.ok) throw new Error('Failed to chat');
+            const data = await response.json();
+            return data.message.content;
+        } catch (error) {
+            console.error('Chat Error:', error);
             throw error;
         }
     }
