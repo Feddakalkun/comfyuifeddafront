@@ -1,16 +1,16 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-title Fanvue Hub - Universal Installer
+title ComfyFront - Universal Installer
 cd /d "%~dp0"
 
 echo ============================================================================
-echo   FANVUE HUB ^& VOXCPM ^& COMFYUI - UNIVERSAL INSTALLER
+echo   			   FEDDAKALKUN COMFYUI FRONTEND
 echo ============================================================================
 echo.
 echo This script will set up the entire ecosystem:
-echo 1. ComfyUI (Generation Engine) + Custom Nodes + LoRAs
-echo 2. Fanvue Hub (Dashboard) + Dependencies
+echo 1. ComfyUI (Generation Engine) + Custom Nodes
+echo 2. Dashboard + Dependencies
 echo 3. Ollama (AI Chat Engine)
 echo 4. VoxCPM (Voice Engine)
 echo.

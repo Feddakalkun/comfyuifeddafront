@@ -183,25 +183,21 @@ function Run-Git {
 # 3. COMPONENT INSTALLERS
 # ============================================================================ 
 
-function Install-FanvueHub {
-    Write-Log "`n[Fanvue Hub] Installing dependencies..."
-    $HubDir = Join-Path $RootPath "fanvue-hub"
+function Install-Frontend {
+    Write-Log "`n[Frontend] Installing frontend dependencies..."
+    $FrontendDir = Join-Path $RootPath "frontend"
     
-    if (-not (Test-Path $HubDir)) {
-        Write-Log "ERROR: fanvue-hub directory missing!"
+    if (-not (Test-Path $FrontendDir)) {
+        Write-Log "ERROR: frontend directory missing!"
         return
     }
 
-    Set-Location $HubDir
+    Set-Location $FrontendDir
     # Use portable node
-    & "$NodeExe" "npm" "install" "--legacy-peer-deps"
-    
-    Write-Log "[Fanvue Hub] Initializing Database..."
-    & "$NodeExe" "npx" "prisma" "generate"
-    & "$NodeExe" "npx" "prisma" "db" "push"
+    & "$NodeExe" "npm" "install"
     
     Set-Location $RootPath
-    Write-Log "[Fanvue Hub] Setup complete."
+    Write-Log "[Frontend] Setup complete."
     Pause-Step
 }
 
@@ -584,7 +580,7 @@ if (Test-Path $LegacyBackup) {
 
 # 10. Shortcut
 # 10. Install Other Components
-Install-FanvueHub
+Install-Frontend
 Install-Ollama
 Install-VoxCPM
 
