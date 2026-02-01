@@ -12,7 +12,6 @@ echo This script will set up the entire ecosystem:
 echo 1. ComfyUI (Generation Engine) + Custom Nodes
 echo 2. Dashboard + Dependencies
 echo 3. Ollama (AI Chat Engine)
-echo 4. VoxCPM (Voice Engine)
 echo.
 
 :: Admin Check

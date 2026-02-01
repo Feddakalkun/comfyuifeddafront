@@ -231,27 +231,6 @@ function Install-Ollama {
     Pause-Step
 }
 
-function Install-VoxCPM {
-    Write-Log "`n[VoxCPM] Setting up VoxCPM..."
-    $VoxDir = Join-Path $RootPath "VoxCPM"
-    
-    if (-not (Test-Path $VoxDir)) {
-        Write-Log "Cloning VoxCPM..."
-        Run-Git "clone https://github.com/OpenBMB/VoxCPM.git `"$VoxDir`""
-    }
-    
-    if (Test-Path $VoxDir) {
-        Write-Log "Installing VoxCPM dependencies (via portable pip)..."
-        Set-Location $VoxDir
-        Run-Pip "install ."
-        Set-Location $RootPath
-        Write-Log "[VoxCPM] Installed successfully."
-    }
-    else {
-        Write-Log "ERROR: VoxCPM directory missing."
-    }
-    Pause-Step
-}
 
 # ============================================================================ 
 # 2. INSTALLATION LOGIC
@@ -586,7 +565,6 @@ if (Test-Path $LegacyBackup) {
 # 10. Install Other Components
 Install-Frontend
 Install-Ollama
-Install-VoxCPM
 
 # 11. Final Cleanup
 Write-Log "Skipping desktop shortcut creation (use run.bat)."
