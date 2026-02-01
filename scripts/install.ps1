@@ -49,7 +49,11 @@ function Download-File {
     if (-not (Test-Path $Dest)) {
         Write-Log "Downloading $(Split-Path $Dest -Leaf)..."
         try {
-            Invoke-WebRequest -Uri $Url -OutFile $Dest -UseBasicParsing
+            # Use curl instead of Invoke-WebRequest (10x faster!)
+            & curl.exe -L -o "$Dest" "$Url" --progress-bar --retry 3 --retry-delay 2
+            if ($LASTEXITCODE -ne 0) {
+                throw "curl failed with exit code $LASTEXITCODE"
+            }
         }
         catch {
             Write-Log "ERROR: Failed to download $Url"
