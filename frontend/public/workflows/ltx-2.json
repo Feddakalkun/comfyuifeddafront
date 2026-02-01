@@ -40,7 +40,7 @@
   },
   "22": {
     "inputs": {
-      "gemma_path": "gemma3/model-00001-of-00005.safetensors",
+      "gemma_path": "gemma3\\model-00001-of-00005.safetensors",
       "ltxv_path": "ltx-2-19b-distilled.safetensors",
       "max_length": 1024
     },
