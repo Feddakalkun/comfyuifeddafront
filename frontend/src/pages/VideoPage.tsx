@@ -129,7 +129,7 @@ export const VideoPage = ({ }: VideoPageProps) => {
                 workflow["30"].inputs.length = frameCount;
             }
 
-            setExecutionStatus('Queuing in ComfyUI... (First run may download 15GB+ models)');
+            setExecutionStatus('Queuing in ComfyUI... (First run may download 15GB+ models). Watch your terminal for download progress.');
             const result = await comfyService.queuePrompt(workflow);
             console.log('✅ LTX-2 Queued:', result);
 
@@ -151,15 +151,21 @@ export const VideoPage = ({ }: VideoPageProps) => {
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        className="w-full h-40 bg-[#0a0a0f] border border-white/10 rounded-xl p-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none transition-all"
-                        placeholder="Describe the action, movement, and scene..."
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                e.preventDefault();
+                                handleGenerate();
+                            }
+                        }}
+                        className="w-full h-40 bg-[#0a0a0f] border border-white/10 rounded-xl p-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none transition-all"
+                        placeholder="Describe the action, movement, and scene... (Ctrl + Enter to generate)"
                     />
 
                     <div className="mt-6">
                         <Button
                             variant="primary"
                             size="lg"
-                            className="w-full bg-pink-600 hover:bg-pink-500 text-white border-none shadow-[0_0_20px_rgba(216,27,96,0.3)] transition-all duration-300 rounded-xl font-semibold flex items-center justify-center gap-2"
+                            className="w-full bg-white hover:bg-slate-200 text-black border-none shadow-lg transition-all duration-300 rounded-xl font-bold flex items-center justify-center gap-2"
                             isLoading={isGenerating}
                             onClick={handleGenerate}
                             disabled={!prompt.trim()}
@@ -191,7 +197,7 @@ export const VideoPage = ({ }: VideoPageProps) => {
                                 <textarea
                                     value={negativePrompt}
                                     onChange={(e) => setNegativePrompt(e.target.value)}
-                                    className="w-full h-20 bg-[#0a0a0f] border border-white/10 rounded-xl p-3 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none transition-all"
+                                    className="w-full h-20 bg-[#0a0a0f] border border-white/10 rounded-xl p-3 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none transition-all"
                                     placeholder="Avoid..."
                                 />
                             </div>
@@ -227,7 +233,7 @@ export const VideoPage = ({ }: VideoPageProps) => {
                                     step="8"
                                     value={frameCount}
                                     onChange={(e) => setFrameCount(parseInt(e.target.value))}
-                                    className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                                    className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white"
                                 />
                             </div>
 
@@ -238,7 +244,7 @@ export const VideoPage = ({ }: VideoPageProps) => {
                                 type="number"
                                 value={seed}
                                 onChange={(e) => setSeed(parseInt(e.target.value))}
-                                className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                                className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-white/20"
                             />
                         </div>
                     )}
@@ -252,20 +258,20 @@ export const VideoPage = ({ }: VideoPageProps) => {
                 {isGenerating || executionStatus ? (
                     <div className="z-10 w-full max-w-md p-8 text-center space-y-6">
                         <div className="relative w-24 h-24 mx-auto">
-                            <div className="absolute inset-0 border-4 border-pink-500/20 rounded-full animate-pulse"></div>
-                            <div className="absolute inset-0 border-t-4 border-pink-500 rounded-full animate-spin"></div>
-                            <Film className="absolute inset-0 m-auto w-8 h-8 text-pink-400 animate-pulse" />
+                            <div className="absolute inset-0 border-4 border-white/20 rounded-full animate-pulse"></div>
+                            <div className="absolute inset-0 border-t-4 border-white rounded-full animate-spin"></div>
+                            <Film className="absolute inset-0 m-auto w-8 h-8 text-white animate-pulse" />
                         </div>
 
                         <div className="space-y-2">
                             <p className="text-white font-medium text-lg tracking-tight">{executionStatus || 'Preparing Engine...'}</p>
-                            {progress > 0 && <p className="text-pink-400 font-bold text-2xl">{progress}%</p>}
+                            {progress > 0 && <p className="text-white font-bold text-2xl">{progress}%</p>}
                         </div>
 
                         {progress > 0 && (
                             <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-gradient-to-r from-pink-600 to-pink-400 transition-all duration-300"
+                                    className="h-full bg-white transition-all duration-300"
                                     style={{ width: `${progress}%` }}
                                 ></div>
                             </div>
@@ -287,7 +293,7 @@ export const VideoPage = ({ }: VideoPageProps) => {
                             controls
                             autoPlay
                             loop
-                            className="max-w-full max-h-full rounded-xl border border-white/10 shadow-[0_0_50px_rgba(216,27,96,0.2)] animate-in zoom-in-95 duration-700"
+                            className="max-w-full max-h-full rounded-xl border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.1)] animate-in zoom-in-95 duration-700"
                         />
                     </div>
                 )}

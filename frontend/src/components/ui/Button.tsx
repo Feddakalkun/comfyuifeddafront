@@ -23,7 +23,7 @@ export const Button = ({
     const baseStyles = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
-        primary: 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]',
+        primary: 'bg-white hover:bg-slate-200 text-black shadow-lg hover:shadow-xl hover:scale-[1.02]',
         secondary: 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600',
         ghost: 'bg-transparent hover:bg-white/5 text-slate-300 hover:text-white',
     };
