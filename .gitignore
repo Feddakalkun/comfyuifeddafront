@@ -34,6 +34,10 @@ node_embeded/
 ollama_embeded/
 VoxCPM/
 fanvue-hub/
+git_embeded/
+node_embeded/
+node-v22.14.0-win-x64/
+node.zip
 
 # Generated files
 *.pyc

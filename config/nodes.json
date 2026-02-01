@@ -259,5 +259,25 @@
     "name": "ComfyUI-AnimateDiff-Evolved",
     "url": "https://github.com/Kosinkadink/ComfyUI-AnimateDiff-Evolved.git",
     "folder": "ComfyUI-AnimateDiff-Evolved"
+  },
+  {
+    "name": "ComfyUI-MelBandRoFormer",
+    "url": "https://github.com/kijai/ComfyUI-MelBandRoFormer",
+    "folder": "ComfyUI-MelBandRoFormer"
+  },
+  {
+    "name": "ComfyUI-LTXVideo",
+    "url": "https://github.com/Lightricks/ComfyUI-LTXVideo",
+    "folder": "ComfyUI-LTXVideo"
+  },
+  {
+    "name": "ComfyUI-Timer-Nodes",
+    "url": "https://github.com/Shannooty/ComfyUI-Timer-Nodes",
+    "folder": "ComfyUI-Timer-Nodes"
+  },
+  {
+    "name": "comfyui-various",
+    "url": "https://github.com/jamesWalker55/comfyui-various",
+    "folder": "comfyui-various"
   }
 ]

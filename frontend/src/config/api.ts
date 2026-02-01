@@ -17,9 +17,9 @@ export const COMFY_API = {
 };
 
 export const APP_CONFIG = {
-    NAME: 'ComfyFront',
+    NAME: 'FEDDA',
     VERSION: '0.1.0',
-    DESCRIPTION: 'Premium ComfyUI Frontend',
+    DESCRIPTION: 'PREMIUM COMFYUI FRONTEND',
 };
 
 export const MODELS = {
