@@ -45,6 +45,8 @@ export const ChatPage = () => {
     const [generatingMsgId, setGeneratingMsgId] = useState<string | null>(null);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [selectedModel, setSelectedModel] = useState<string>('');
+    const [availableLoras, setAvailableLoras] = useState<string[]>([]);
+    const [selectedLora, setSelectedLora] = useState<string>('');
     const [executionStatus, setExecutionStatus] = useState('');
     const [progress, setProgress] = useState(0);
     const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
@@ -75,41 +77,27 @@ export const ChatPage = () => {
         large: 'text-lg'
     };
 
-    // Fetch Models on Mount
+    // Fetch Models & LoRAs on Mount
     useEffect(() => {
-        const fetchModels = async () => {
+        const fetchData = async () => {
             try {
+                // Models
                 const models = await ollamaService.getModels();
                 if (models.length > 0) {
                     setAvailableModels(models.map(m => m.name));
-
-                    // Heuristic to pick a good chat model: prefer 'qwen' or 'llama'
                     const preferred = models.find(m => m.name.toLowerCase().includes('qwen') || m.name.toLowerCase().includes('llama'));
-                    const chosen = preferred ? preferred.name : models[0].name;
-                    console.log('Chat Agent using model:', chosen);
-                    setSelectedModel(chosen);
-                } else {
-                    console.warn('No Ollama models found.');
-                    setMessages(prev => [...prev, {
-                        id: 'no-model',
-                        role: 'assistant',
-                        content: "⚠️ I couldn't find any AI models installed in Ollama. Please install one (like llama3 or qwen) first!",
-                        timestamp: Date.now(),
-                        type: 'text'
-                    }]);
+                    setSelectedModel(preferred ? preferred.name : models[0].name);
                 }
+
+                // LoRAs
+                const loras = await comfyService.getLoras();
+                setAvailableLoras(loras);
+
             } catch (error) {
-                console.error('Failed to load models:', error);
-                setMessages(prev => [...prev, {
-                    id: 'model-error',
-                    role: 'assistant',
-                    content: "⚠️ I couldn't connect to Ollama. Make sure it's running!",
-                    timestamp: Date.now(),
-                    type: 'text'
-                }]);
+                console.error('Failed to load data:', error);
             }
         };
-        fetchModels();
+        fetchData();
     }, []);
 
     const scrollToBottom = () => {
@@ -263,6 +251,23 @@ export const ChatPage = () => {
             if (workflow["30"]) {
                 workflow["30"].inputs.width = 1024;
                 workflow["30"].inputs.height = 1024;
+            }
+
+            // Node 126: LoRA Injection
+            if (workflow["126"]) {
+                if (selectedLora) {
+                    workflow["126"].inputs.lora_1 = {
+                        "on": true,
+                        "lora": selectedLora,
+                        "strength": 1.0
+                    };
+                    console.log('🎨 Applying LoRA:', selectedLora);
+                } else {
+                    // Disable LoRA if none selected
+                    if (workflow["126"].inputs.lora_1) {
+                        workflow["126"].inputs.lora_1.on = false;
+                    }
+                }
             }
 
             // 2. Queue the workflow and get prompt_id
@@ -636,6 +641,24 @@ export const ChatPage = () => {
 
                     {/* Font Size Control */}
                     <div className="flex items-center gap-2 pointer-events-auto">
+
+                        {/* LoRA Selector */}
+                        {availableLoras.length > 0 && (
+                            <div className="flex items-center gap-2 bg-[#121218] border border-white/10 rounded-lg px-2 py-1 mr-2">
+                                <span className="text-xs text-slate-500">Style:</span>
+                                <select
+                                    value={selectedLora}
+                                    onChange={(e) => setSelectedLora(e.target.value)}
+                                    className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none max-w-[120px]"
+                                >
+                                    <option value="">None</option>
+                                    {availableLoras.map(l => (
+                                        <option key={l} value={l} className="bg-[#121218]">{l.replace('.safetensors', '').replace('.pt', '')}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
                         <Type className="w-4 h-4 text-slate-500" />
                         <div className="flex gap-1 bg-[#121218] border border-white/10 rounded-lg p-1">
                             {(['small', 'medium', 'large'] as const).map((size) => (
