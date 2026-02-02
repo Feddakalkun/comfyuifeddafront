@@ -483,6 +483,28 @@ Pause-Step
 # 8.5 INSTALL CHARACTER WORKFLOW NODES (Optional but Recommended)
 # ============================================================================ 
 
+
+# 7.6 Install WanVideo Wrapper (Required for LipSync)
+function Install-WanVideo {
+    Write-Log "`n[WanVideo] Setting up WanVideo Wrapper..."
+    $WanDir = Join-Path $CustomNodesDir "ComfyUI-WanVideo-Wrapper"
+    
+    if (-not (Test-Path $WanDir)) {
+        Write-Log "Cloning WanVideo Wrapper..."
+        Run-Git "clone https://github.com/Kijai/ComfyUI-WanVideo-Wrapper.git `"$WanDir`""
+        
+        if (Test-Path "$WanDir\requirements.txt") {
+            Write-Log "Installing WanVideo requirements..."
+            Run-Pip "install -r `"$WanDir\requirements.txt`""
+        }
+    }
+    else {
+        Write-Log "WanVideo Wrapper already installed."
+    }
+}
+
+Install-WanVideo
+
 Write-Log "`n[ComfyUI 8.5/9] Installing Character Workflow Nodes..."
 Write-Log "  - ComfyUI-Impact-Pack (SAM, FaceDetailer)"
 Write-Log "  - ComfyUI InstantID (facial identity)"

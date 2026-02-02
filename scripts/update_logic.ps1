@@ -40,6 +40,25 @@ foreach ($dep in $StableDeps) {
     & $PyExe -m pip install "$dep" --index-url https://download.pytorch.org/whl/cu124 --extra-index-url https://pypi.org/simple
 }
 
+# Check and Install WanVideo Wrapper
+$WanVideoDir = Join-Path $CustomNodesDir "ComfyUI-WanVideo-Wrapper"
+if (-not (Test-Path $WanVideoDir)) {
+    Write-Host "`n[WanVideo] Installing missing WanVideo nodes..." -ForegroundColor Yellow
+    try {
+        Set-Location $CustomNodesDir
+        & git clone https://github.com/Kijai/ComfyUI-WanVideo-Wrapper.git
+        
+        if (Test-Path "$WanVideoDir\requirements.txt") {
+            Write-Host "Installing requirements..."
+            & $PyExe -m pip install -r "$WanVideoDir\requirements.txt"
+        }
+    }
+    catch {
+        Write-Host "Failed to install WanVideo Wrapper: $_" -ForegroundColor Red
+    }
+    Set-Location $RootPath
+}
+
 # 2. Install VoxCPM (The new TTS engine)
 Write-Host "`n[2/4] Installing VoxCPM TTS Node..." -ForegroundColor Yellow
 if (-not (Test-Path $VoxDir)) {
