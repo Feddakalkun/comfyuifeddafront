@@ -424,10 +424,41 @@ Write-Log "Installing llama-cpp-python..."
 # Try installing with --prefer-binary to avoid building from source if possible
 Run-Pip "install llama-cpp-python --prefer-binary --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu118"
 
-# 7.4 Install VibeVoice compatibility versions
-Write-Log "Installing requirements for VibeVoice..."
-# Pin transformers to 4.x series to prevent v5.0 breaking changes
-Run-Pip "install 'transformers>=4.51.3,<5.0.0' 'accelerate>=1.6.0' 'bitsandbytes>=0.48.1'"
+# 7.4 Install VoxCPM (TTS Engine)
+function Install-VoxCPM {
+    Write-Log "`n[VoxCPM] Setting up VoxCPM TTS..."
+    $VoxDir = Join-Path $ComfyDir "custom_nodes\ComfyUI-VoxCPM"
+    
+    if (-not (Test-Path $VoxDir)) {
+        Write-Log "Cloning VoxCPM..."
+        Run-Git "clone https://github.com/wildminder/ComfyUI-VoxCPM `"$VoxDir`""
+    }
+    else {
+        Write-Log "VoxCPM already present, ensuring dependencies..."
+    }
+    
+    if (Test-Path $VoxDir) {
+        Write-Log "Installing VoxCPM dependencies..."
+        if (Test-Path "$VoxDir\requirements.txt") {
+            Run-Pip "install -r `"$VoxDir\requirements.txt`""
+        }
+        Write-Log "[VoxCPM] Requirement check complete."
+    }
+}
+
+# Run the installation
+Install-VoxCPM
+
+# 7.5 Setup Audio Assets
+Write-Log "`n[Audio Setup] Configuring TTS assets..."
+$AudioScript = Join-Path $ScriptPath "setup_tts_audio.py"
+if (Test-Path $AudioScript) {
+    Start-Process -FilePath $PyExe -ArgumentList "$AudioScript" -NoNewWindow -Wait
+    Write-Log "Audio assets configured."
+}
+else {
+    Write-Log "WARNING: Audio setup script not found at $AudioScript"
+}
 
 Pause-Step
 

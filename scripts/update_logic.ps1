@@ -52,7 +52,7 @@ if (Test-Path "$VoxDir\requirements.txt") {
 
 # 4. Setup Audio Assets
 Write-Host "`n[4/4] Setting up audio assets..." -ForegroundColor Yellow
-$SetupAudioScript = Join-Path $RootPath "setup_tts_audio.py"
+$SetupAudioScript = Join-Path $ScriptPath "setup_tts_audio.py"
 if (Test-Path $SetupAudioScript) {
     & $PyExe $SetupAudioScript
 }
