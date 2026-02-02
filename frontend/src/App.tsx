@@ -52,7 +52,7 @@ function App() {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto p-8 relative z-0">
+        <div className="flex-1 overflow-auto relative z-0">
           {activeTab === 'image' && (
             <ImagePage
               modelId={currentModel.id}

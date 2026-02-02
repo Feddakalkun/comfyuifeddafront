@@ -97,7 +97,7 @@ export const SettingsPage = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="p-8 max-w-6xl mx-auto space-y-8">
             <div className="flex items-center gap-3 mb-8">
                 <BrainCircuit className="w-8 h-8 text-white" />
                 <div>

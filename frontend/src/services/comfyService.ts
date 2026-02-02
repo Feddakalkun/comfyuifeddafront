@@ -117,26 +117,36 @@ class ComfyUIService {
 
     /**
      * Get available LoRAs from ComfyUI
+     * Checks multiple common node types to ensure we find the file list
      */
     async getLoras(): Promise<string[]> {
-        try {
-            // Fetch object info for LoraLoader to get the list of files
-            const response = await fetch(`${COMFY_API.BASE_URL}/object_info/LoraLoader`);
-            if (!response.ok) throw new Error('Failed to fetch LoRAs');
+        const nodeTypes = ['LoraLoader', 'LoraLoaderModelOnly', 'Power Lora Loader (rgthree)', 'CR Load LoRA'];
 
-            const data = await response.json();
-            // LoraLoader.input.required.lora_name returns [list_of_loras]
-            // The structure is { "LoraLoader": { "input": { "required": { "lora_name": [ ["lora1.safetensors", "lora2.safetensors"] ] } } } }
-            // Actually it's simpler, usually inputs -> required -> lora_name -> [0] is the list
+        for (const type of nodeTypes) {
+            try {
+                const response = await fetch(`${COMFY_API.BASE_URL}/object_info/${type}`);
+                if (!response.ok) continue;
 
-            // Let's safe guard access
-            const loraList = data.LoraLoader?.input?.required?.lora_name?.[0] || [];
-            return loraList;
-        } catch (error) {
-            console.error('Failed to load LoRAs:', error);
-            // Fallback: Return empty list
-            return [];
+                const data = await response.json();
+                const nodeData = data[type];
+
+                // Common paths for the lora list in ComfyUI object info
+                const loraList =
+                    nodeData?.input?.required?.lora_name?.[0] ||
+                    nodeData?.input?.required?.lora?.[0] ||
+                    [];
+
+                if (loraList.length > 0) {
+                    console.log(`✅ Loaded ${loraList.length} LoRAs from ${type}`);
+                    return loraList;
+                }
+            } catch (err) {
+                // Silently try next one
+            }
         }
+
+        console.warn('⚠️ Could not find LoRA list from common nodes.');
+        return [];
     }
 
     /**

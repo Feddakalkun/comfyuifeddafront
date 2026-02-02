@@ -1,6 +1,6 @@
 // Image Generation Page
 import { useState, useEffect } from 'react';
-import { Sparkles, ChevronRight, Search, Maximize2, X, Loader2, Eye, Upload } from 'lucide-react';
+import { Sparkles, ChevronRight, Maximize2, X, Loader2, Eye, Upload } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { comfyService } from '../services/comfyService';
 import { assistantService } from '../services/assistantService';
@@ -313,7 +313,7 @@ export const ImagePage = ({ modelId }: ImagePageProps) => {
     };
 
     return (
-        <div className={`grid grid-cols-1 ${showGallery ? 'lg:grid-cols-3' : 'lg:grid-cols-1 w-full'} gap-8 h-full transition-all duration-500`}>
+        <div className={`p-8 grid grid-cols-1 ${showGallery ? 'lg:grid-cols-3' : 'lg:grid-cols-1 w-full'} gap-8 h-full transition-all duration-500`}>
             {/* Left: Controls */}
             <div className={`space-y-6 ${showGallery ? 'lg:col-span-1' : 'w-full max-w-full'}`}>
 

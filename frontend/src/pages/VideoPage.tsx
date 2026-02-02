@@ -171,7 +171,7 @@ export const VideoPage = ({ }: VideoPageProps) => {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+        <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
             {/* Left: Controls */}
             <div className="lg:col-span-1 space-y-6">
 

@@ -16,18 +16,29 @@ interface Message {
 }
 
 // System prompt to guide the Agent
-const AGENT_SYSTEM_PROMPT = `You are a friendly conversation partner AND an expert image prompt engineer.
-Your primary goal is to chat with the user via text.
-If the user uploads an image, analyze it.
+// System prompt to guide the Agent
+const AGENT_SYSTEM_PROMPT = `You are FEDDA AGENT, an Elite Creative Director and Expert Stable Diffusion Prompt Engineer.
+Your goal is to help the user create AWARD-WINNING visuals via ComfyUI.
 
-IMPORTANT:
-1. Generally reply with TEXT.
-2. Only generate images if EXPLICITLY requested.
-3. If generating, use "Z-Image" aesthetics: Photorealistic, 8k, Cinematic, Detailed.
+### 🧠 CORE DIRECTIVES:
+1.  **Visual Excellence:** Never settle for boring. Always aim for "Z-Image" quality: Photorealistic, Cinematic, High Detail, 8k.
+2.  **Context Mastery & Logic:** ALWAYS CHECK CHAT HISTORY. If the user says "change hair to blue", REMEMBER the previous image details (pose, setting) and ONLY change the hair. If the user requests a LOCATION change (e.g. "move her to a bus"), REMOVE old locations (e.g. "mountains") and replace them. Do not include conflicting settings in one prompt.
+3.  **Vision Analysis:** If an image is uploaded, analyze its composition, lighting, and style. Use it as inspiration.
 
-Image Generation Format:
+### 🎨 PROMPT INGREDIENTS (Use freely to enhance prompts):
+-   **Lighting:** Volumetric, Cinematic, Rembrandt, Bioluminescent, God Rays, Studio Softbox, Hard Rim Lighting.
+-   **Camera:** 85mm Portrait, Macro, Wide Angle, Drone View, GoPro, Bokeh/Depth of Field, F/1.8.
+-   **Details:** Skin pores, fabric texture, water droplets, dust particles, film grain, imperfect skin.
+-   **Styles:** Cyberpunk, Fantasy, Noir, Vaporwave, Cinematic, Corporate, 1990s VHS, Analog Photography.
+
+### 🚀 BEHAVIOR:
+-   **Simple Request:** If user says "a cat", EXPAND it: "A majestic Maine Coon in a neon alley, rain, volumetric fog, cybernetic details."
+-   **Specific Request:** If user is specific, FOLLOW EXACTLY.
+-   **Conversation:** If user says "Hi" or chats, just reply nicely. DO NOT GENERATE.
+
+### 📢 FORMAT (Only when generating):
 <<GENERATE>>
-[Detailed Prompt]
+[Subject & Pose], [Clothing], [Environment/Background], [Lighting & Mood], [Camera & Angle], [Style Tags], [Tech Specs: best quality, 8k, masterpiece]
 <</GENERATE>>`;
 
 export const ChatPage = () => {
@@ -129,10 +140,10 @@ export const ChatPage = () => {
 
         try {
             // Prepare history for Ollama
-            // We filter out image-result types to keep context clean, or just map them to text
+            // We keep the prompt content in history so the model knows what it generated previously
             const history = messages.map(m => ({
                 role: m.role,
-                content: m.content.replace(/<<GENERATE>>[\s\S]*?<<\/GENERATE>>/g, '[Image Prompt Generated]'), // Simple cleanup if needed
+                content: m.content.replace(/<<GENERATE>>([\s\S]*?)(?:<<\/GENERATE>>|<<\/GENERATOR>>|$)/i, ' [Previous Prompt: $1] '),
                 images: m.images ? m.images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, "")) : undefined
             }));
             history.push({
@@ -148,12 +159,21 @@ export const ChatPage = () => {
             // Use Ollama to chat with selected model
             const responseText = await assistantService.chat(selectedModel, fullHistory);
 
-            // Parse response for <<GENERATE>>
-            const genMatch = responseText.match(/<<GENERATE>>([\s\S]*?)<<\/GENERATE>>/);
+            // Determine if the user actually intended to generate something
+            // (Prevents model from hallucinating cards on "Hi" or small talk)
+            const generationKeywords = ['generate', 'create', 'make', 'draw', 'picture', 'image', 'photo', 'portrait', 'show', 'change', 'add', 'remove', 'variant', 'version', 'look like', 'lag', 'bilde', 'vis'];
+            const userHasIntent = generationKeywords.some(kw => input.toLowerCase().includes(kw)) || input.length > 30;
 
-            if (genMatch) {
-                const textPart = responseText.replace(/<<GENERATE>>[\s\S]*?<<\/GENERATE>>/, '').trim();
-                const promptPart = genMatch[1].trim();
+            // Parse response for <<GENERATE>> (Robust)
+            const genMatch = responseText.match(/<<GENERATE>>([\s\S]*?)(?:<<\/GENERATE>>|<<\/GENERATOR>>|$)/i);
+
+            if (genMatch && userHasIntent) {
+                const textPart = responseText.replace(/<<GENERATE>>[\s\S]*?(?:<<\/GENERATE>>|<<\/GENERATOR>>|$)/i, '').trim();
+                let promptPart = genMatch[1].trim();
+
+                // Cleanup: Remove leading "[Detailed Prompt]", strip quotes, and trim
+                promptPart = promptPart.replace(/^\[Detailed Prompt\][\s:-]*/i, '');
+                promptPart = promptPart.replace(/^["'“”]|["'“”]$/g, '').trim();
 
                 // Add the generation request card ONLY if prompt is valid
                 if (promptPart && promptPart.length > 5 && !['hi', 'hello', 'hey'].includes(promptPart.toLowerCase())) {
@@ -180,18 +200,20 @@ export const ChatPage = () => {
                     setMessages(prev => [...prev, {
                         id: Date.now().toString(),
                         role: 'assistant',
-                        content: responseText.replace(/<<GENERATE>>[\s\S]*?<<\/GENERATE>>/, '').trim() || responseText,
+                        content: responseText.replace(/<<GENERATE>>[\s\S]*?(?:<<\/GENERATE>>|<<\/GENERATOR>>|$)/i, '').trim() || responseText,
                         timestamp: Date.now(),
                         type: 'text'
                     }]);
                 }
 
             } else {
-                // Normal text response
+                // Normal text response (strip hallucinated tags if they shouldn't be there)
+                const cleanText = responseText.replace(/<<GENERATE>>[\s\S]*?(?:<<\/GENERATE>>|<<\/GENERATOR>>|$)/i, '').trim();
+
                 setMessages(prev => [...prev, {
                     id: Date.now().toString(),
                     role: 'assistant',
-                    content: responseText,
+                    content: cleanText || responseText, // Fallback to raw if cleaning emptied it entirely
                     timestamp: Date.now(),
                     type: 'text'
                 }]);
@@ -270,6 +292,13 @@ export const ChatPage = () => {
                 }
             }
 
+            // Node 3: Randomize Seed (Critical for variations)
+            if (workflow["3"]) {
+                const randomSeed = Math.floor(Math.random() * 1000000000000000); // 15 digits
+                workflow["3"].inputs.seed = randomSeed;
+                console.log('🎲 New Seed generated:', randomSeed);
+            }
+
             // 2. Queue the workflow and get prompt_id
             console.log('📤 Queueing workflow...');
             const { prompt_id } = await comfyService.queuePrompt(workflow);
@@ -313,8 +342,9 @@ export const ChatPage = () => {
 
                         if (outputs && outputs.images && outputs.images.length > 0) {
                             const img = outputs.images[0];
-                            imageUrl = comfyService.getImageUrl(img.filename, img.subfolder, img.type);
-                            console.log('✅ Image found!', imageUrl);
+                            // Add a cache-buster timestamp to ensure fresh image is displayed
+                            imageUrl = `${comfyService.getImageUrl(img.filename, img.subfolder, img.type)}&t=${Date.now()}`;
+                            console.log('✅ Fresh Image found!', imageUrl);
                         }
                     }
                 } catch (err) {
@@ -598,7 +628,7 @@ export const ChatPage = () => {
 
     return (
         <div
-            className="flex flex-col h-full max-w-7xl mx-auto w-full relative"
+            className="flex flex-col h-full w-full relative"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -643,21 +673,20 @@ export const ChatPage = () => {
                     <div className="flex items-center gap-2 pointer-events-auto">
 
                         {/* LoRA Selector */}
-                        {availableLoras.length > 0 && (
-                            <div className="flex items-center gap-2 bg-[#121218] border border-white/10 rounded-lg px-2 py-1 mr-2">
-                                <span className="text-xs text-slate-500">Style:</span>
-                                <select
-                                    value={selectedLora}
-                                    onChange={(e) => setSelectedLora(e.target.value)}
-                                    className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none max-w-[120px]"
-                                >
-                                    <option value="">None</option>
-                                    {availableLoras.map(l => (
-                                        <option key={l} value={l} className="bg-[#121218]">{l.replace('.safetensors', '').replace('.pt', '')}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-2 bg-[#121218] border border-white/10 rounded-lg px-2 py-1 mr-2">
+                            <span className="text-xs text-slate-500">Style:</span>
+                            <select
+                                value={selectedLora}
+                                onChange={(e) => setSelectedLora(e.target.value)}
+                                className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none max-w-[120px]"
+                                disabled={availableLoras.length === 0}
+                            >
+                                <option value="">{availableLoras.length === 0 ? 'None (No LoRAs found)' : 'None'}</option>
+                                {availableLoras.map(l => (
+                                    <option key={l} value={l} className="bg-[#121218]">{l.replace('.safetensors', '').replace('.pt', '')}</option>
+                                ))}
+                            </select>
+                        </div>
 
                         <Type className="w-4 h-4 text-slate-500" />
                         <div className="flex gap-1 bg-[#121218] border border-white/10 rounded-lg p-1">
@@ -708,7 +737,7 @@ export const ChatPage = () => {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto px-6 py-20 space-y-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-12 py-20 space-y-8 custom-scrollbar">
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
@@ -720,7 +749,7 @@ export const ChatPage = () => {
                             </div>
                         )}
 
-                        <div className={`max-w-[80%] flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div className={`max-w-[95%] flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
 
                             {/* User Images */}
                             {msg.images && msg.images.length > 0 && (
@@ -780,7 +809,7 @@ export const ChatPage = () => {
 
                             {/* Generation Request Card */}
                             {msg.type === 'image-generation-request' && (
-                                <div className="bg-[#121218] border border-white/10 rounded-2xl p-5 shadow-2xl w-[400px] max-w-full animate-in zoom-in-95 duration-300">
+                                <div className="bg-[#121218] border border-white/10 rounded-2xl p-5 shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-300">
                                     <div className="flex items-center gap-2 mb-3 text-white/50 text-xs font-bold tracking-wider uppercase">
                                         <Sparkles className="w-3 h-3" />
                                         <span>Ready to Generate</span>
@@ -831,7 +860,7 @@ export const ChatPage = () => {
                                     <img
                                         src={msg.metadata?.imageUrl}
                                         alt="Generated"
-                                        className="rounded-xl w-full h-auto object-cover max-h-[500px]"
+                                        className="rounded-xl w-full h-auto object-cover max-h-[800px]"
                                     />
                                     <div className="p-3 flex items-center justify-between">
                                         <span className="text-xs text-slate-500 font-mono">Z-Image v1</span>
@@ -869,7 +898,7 @@ export const ChatPage = () => {
 
             {/* Input Area */}
             <div className="p-6 mb-4 relative z-20">
-                <div className="relative max-w-4xl mx-auto">
+                <div className="relative w-full">
 
                     {/* Pending Image Preview */}
                     {pendingImages.length > 0 && (
