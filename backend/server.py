@@ -8,11 +8,12 @@ from pathlib import Path
 # Add backend directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import uvicorn
 from audio_service import transcribe_audio, save_temp_audio, cleanup_temp_audio, text_to_speech
+from lipsync_service import generate_lipsync
 from pathlib import Path
 from pydantic import BaseModel
 
@@ -90,6 +91,54 @@ async def generate_speech(request: TTSRequest):
         
     except Exception as e:
         print(f"❌ TTS error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.post("/api/video/lipsync")
+async def generate_lipsync_video(
+    image: UploadFile = File(...),
+    audio: UploadFile = File(...),
+    resolution: int = Form(512),
+    seed: int = Form(-1),
+    prompt: str = Form("woman talking"),
+    steps: int = Form(15)
+):
+    """
+    Generate LipSync video from Image + Audio
+    """
+    image_path = None
+    audio_path = None
+    try:
+        # Save temp files
+        image_data = await image.read()
+        audio_data = await audio.read()
+        
+        # Allow png/jpg extensions
+        img_ext = Path(image.filename).suffix if image.filename else ".png"
+        aud_ext = Path(audio.filename).suffix if audio.filename else ".wav"
+        
+        image_path = save_temp_audio(image_data, f"temp_face{img_ext}")
+        audio_path = save_temp_audio(audio_data, f"temp_voice{aud_ext}")
+        
+        # Generate
+        video_path = generate_lipsync(
+            image_path=image_path,
+            audio_path=audio_path,
+            resolution=resolution,
+            seed=seed,
+            steps=steps,
+            prompt=prompt
+        )
+        
+        return FileResponse(
+            path=str(video_path),
+            media_type="video/mp4",
+            filename=video_path.name
+        )
+        
+    except Exception as e:
+        print(f"❌ LipSync error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
