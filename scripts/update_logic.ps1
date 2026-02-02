@@ -9,6 +9,17 @@ Write-Host "===================================================" -ForegroundColo
 
 # Define Paths
 $PyExe = Join-Path $RootPath "python_embeded\python.exe"
+
+# Pre-flight Check: Ensure Python Exists
+if (-not (Test-Path $PyExe)) {
+    Write-Host "`n[ERROR] Embedded Python not found!" -ForegroundColor Red
+    Write-Host "File missing: $PyExe" -ForegroundColor Grid
+    Write-Host "It looks like this is a fresh folder or broken install."
+    Write-Host "Please run 'install.bat' strictly BEFORE running update/repair." -ForegroundColor Yellow
+    Write-Host "Updates require an existing python environment."
+    exit 1
+}
+
 $ComfyDir = Join-Path $RootPath "ComfyUI"
 $CustomNodesDir = Join-Path $ComfyDir "custom_nodes"
 $VoxDir = Join-Path $CustomNodesDir "ComfyUI-VoxCPM"
