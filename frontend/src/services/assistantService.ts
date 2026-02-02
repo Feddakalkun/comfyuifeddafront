@@ -84,7 +84,7 @@ export const assistantService = {
     },
 
     // General Chat
-    chat: async (modelName: string, messages: { role: string; content: string }[]): Promise<string> => {
+    chat: async (modelName: string, messages: { role: string; content: string; images?: string[] }[]): Promise<string> => {
         try {
             const response = await fetch('/ollama/chat', {
                 method: 'POST',

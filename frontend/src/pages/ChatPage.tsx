@@ -12,30 +12,23 @@ interface Message {
     type?: 'text' | 'image-generation-request' | 'image-result';
     timestamp: number;
     metadata?: any;
+    images?: string[]; // Base64 images for vision models
 }
 
 // System prompt to guide the Agent
-const AGENT_SYSTEM_PROMPT = `You are "Fedda Agent", a helpful creative AI assistant for a ComfyUI platform.
-Your goal is to help the user with conversation and image generation when requested.
+const AGENT_SYSTEM_PROMPT = `You are a friendly conversation partner AND an expert image prompt engineer.
+Your primary goal is to chat with the user via text.
+If the user uploads an image, analyze it.
 
-BEHAVIOR:
-1. You are a conversational partner FIRST. Answer questions, discuss topics, and be helpful.
-2. ONLY trigger image generation if the user EXPLICITLY uses phrases like:
-   - "generate an image of..."
-   - "create a picture of..."
-   - "make an image showing..."
-   - "show me a picture of..."
-3. If the user just says "hello", "hi", or has casual conversation, respond normally WITHOUT generating images.
-4. If the user describes a scene but doesn't ask for an image, just discuss it with them.
-5. When you DO generate, use this format:
+IMPORTANT:
+1. Generally reply with TEXT.
+2. Only generate images if EXPLICITLY requested.
+3. If generating, use "Z-Image" aesthetics: Photorealistic, 8k, Cinematic, Detailed.
 
-   <<GENERATE>>
-   [Standard Stable Diffusion Prompt: Subject, Action, Context, Style, Lighting, Artist, Tech Specs]
-   <</GENERATE>>
-
-   (You can add conversational text before or after the block).
-
-IMPORTANT: DO NOT trigger generation on greeting messages or casual conversation!`;
+Image Generation Format:
+<<GENERATE>>
+[Detailed Prompt]
+<</GENERATE>>`;
 
 export const ChatPage = () => {
     const [messages, setMessages] = useState<Message[]>([
@@ -50,6 +43,7 @@ export const ChatPage = () => {
     const [input, setInput] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const [generatingMsgId, setGeneratingMsgId] = useState<string | null>(null);
+    const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [selectedModel, setSelectedModel] = useState<string>('');
     const [executionStatus, setExecutionStatus] = useState('');
     const [progress, setProgress] = useState(0);
@@ -57,6 +51,11 @@ export const ChatPage = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [recordingMode, setRecordingMode] = useState<'hold' | 'toggle'>('hold');
+
+    // Drag & Drop / Vision State
+    const [isDragging, setIsDragging] = useState(false);
+    const [pendingImages, setPendingImages] = useState<string[]>([]); // Base64 strings
+
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const recordingTimeoutRef = useRef<number | null>(null);
@@ -82,6 +81,8 @@ export const ChatPage = () => {
             try {
                 const models = await ollamaService.getModels();
                 if (models.length > 0) {
+                    setAvailableModels(models.map(m => m.name));
+
                     // Heuristic to pick a good chat model: prefer 'qwen' or 'llama'
                     const preferred = models.find(m => m.name.toLowerCase().includes('qwen') || m.name.toLowerCase().includes('llama'));
                     const chosen = preferred ? preferred.name : models[0].name;
@@ -122,16 +123,20 @@ export const ChatPage = () => {
     const handleSend = async () => {
         if (!input.trim()) return;
 
+        const inputImages = [...pendingImages];
+
         const userMsg: Message = {
             id: Date.now().toString(),
             role: 'user',
             content: input,
             timestamp: Date.now(),
-            type: 'text'
+            type: 'text',
+            images: inputImages.length > 0 ? inputImages : undefined
         };
 
         setMessages(prev => [...prev, userMsg]);
         setInput('');
+        setPendingImages([]);
         setIsThinking(true);
 
         try {
@@ -139,9 +144,14 @@ export const ChatPage = () => {
             // We filter out image-result types to keep context clean, or just map them to text
             const history = messages.map(m => ({
                 role: m.role,
-                content: m.content.replace(/<<GENERATE>>[\s\S]*?<<\/GENERATE>>/g, '[Image Prompt Generated]') // Simple cleanup if needed
+                content: m.content.replace(/<<GENERATE>>[\s\S]*?<<\/GENERATE>>/g, '[Image Prompt Generated]'), // Simple cleanup if needed
+                images: m.images ? m.images.map(img => img.replace(/^data:image\/[a-z]+;base64,/, "")) : undefined
             }));
-            history.push({ role: 'user', content: userMsg.content });
+            history.push({
+                role: 'user',
+                content: userMsg.content,
+                images: inputImages.map(img => img.replace(/^data:image\/[a-z]+;base64,/, ""))
+            });
 
             // Add system prompt at the start
             const fullHistory = [{ role: 'system', content: AGENT_SYSTEM_PROMPT }, ...history];
@@ -157,25 +167,36 @@ export const ChatPage = () => {
                 const textPart = responseText.replace(/<<GENERATE>>[\s\S]*?<<\/GENERATE>>/, '').trim();
                 const promptPart = genMatch[1].trim();
 
-                // Add the text part if it exists
-                if (textPart) {
+                // Add the generation request card ONLY if prompt is valid
+                if (promptPart && promptPart.length > 5 && !['hi', 'hello', 'hey'].includes(promptPart.toLowerCase())) {
+                    // Add text
+                    if (textPart) {
+                        setMessages(prev => [...prev, {
+                            id: Date.now().toString(),
+                            role: 'assistant',
+                            content: textPart,
+                            timestamp: Date.now(),
+                            type: 'text'
+                        }]);
+                    }
+                    // Add Card
+                    setMessages(prev => [...prev, {
+                        id: (Date.now() + 1).toString(),
+                        role: 'assistant',
+                        content: promptPart,
+                        timestamp: Date.now(),
+                        type: 'image-generation-request'
+                    }]);
+                } else {
+                    // Malformed or empty prompt -> Treat as text
                     setMessages(prev => [...prev, {
                         id: Date.now().toString(),
                         role: 'assistant',
-                        content: textPart,
+                        content: responseText.replace(/<<GENERATE>>[\s\S]*?<<\/GENERATE>>/, '').trim() || responseText,
                         timestamp: Date.now(),
                         type: 'text'
                     }]);
                 }
-
-                // Add the generation request card
-                setMessages(prev => [...prev, {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant',
-                    content: promptPart,
-                    timestamp: Date.now(),
-                    type: 'image-generation-request'
-                }]);
 
             } else {
                 // Normal text response
@@ -325,6 +346,45 @@ export const ChatPage = () => {
             setGeneratingMsgId(null);
             setExecutionStatus('');
             setProgress(0);
+        }
+    };
+
+    // Drag & Drop Handlers
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
+        if (imageFiles.length === 0) return;
+
+        const base64Promises = imageFiles.map(file => {
+            return new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    resolve(reader.result as string);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        });
+
+        try {
+            const base64Images = await Promise.all(base64Promises);
+            setPendingImages(prev => [...prev, ...base64Images]);
+        } catch (error) {
+            console.error('Failed to process dropped images:', error);
         }
     };
 
@@ -532,13 +592,46 @@ export const ChatPage = () => {
     }, [messages, ttsEnabled]);
 
     return (
-        <div className="flex flex-col h-full max-w-7xl mx-auto w-full relative">
+        <div
+            className="flex flex-col h-full max-w-7xl mx-auto w-full relative"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+        >
+            {/* Drag Overlay */}
+            {isDragging && (
+                <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center border-4 border-dashed border-white/30 rounded-xl backdrop-blur-sm pointer-events-none animate-in fade-in duration-200">
+                    <div className="flex flex-col items-center gap-4 animate-bounce">
+                        <ImageIcon className="w-16 h-16 text-white" />
+                        <span className="text-2xl font-bold text-white tracking-widest uppercase">Drop Idea Here</span>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 p-6 z-10 bg-gradient-to-b from-[#050508] to-transparent">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 opacity-50 pointer-events-none">
-                        <Bot className="w-5 h-5" />
-                        <span className="text-sm font-medium tracking-wider uppercase">Fedda Agent</span>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 opacity-50 pointer-events-none">
+                            <Bot className="w-5 h-5" />
+                            <span className="text-sm font-medium tracking-wider uppercase">Fedda Agent</span>
+                        </div>
+
+                        {/* Brain Selector */}
+                        {availableModels.length > 0 && (
+                            <div className="flex items-center gap-2 bg-[#121218] border border-white/10 rounded-lg px-2 py-1 z-20 pointer-events-auto shadow-lg">
+                                <span className="text-xs text-slate-500">Brain:</span>
+                                <select
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none"
+                                >
+                                    {availableModels.map(m => (
+                                        <option key={m} value={m} className="bg-[#121218] text-white py-1">{m}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
                     {/* Font Size Control */}
@@ -605,6 +698,15 @@ export const ChatPage = () => {
                         )}
 
                         <div className={`max-w-[80%] flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+
+                            {/* User Images */}
+                            {msg.images && msg.images.length > 0 && (
+                                <div className={`flex flex-wrap gap-2 mb-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    {msg.images.map((img, idx) => (
+                                        <img key={idx} src={img} alt="Context" className="w-32 h-32 object-cover rounded-xl border border-white/20 shadow-lg" />
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Text Bubble */}
                             {msg.type === 'text' && (
@@ -743,8 +845,26 @@ export const ChatPage = () => {
             </div>
 
             {/* Input Area */}
-            <div className="p-6 mb-4">
+            <div className="p-6 mb-4 relative z-20">
                 <div className="relative max-w-4xl mx-auto">
+
+                    {/* Pending Image Preview */}
+                    {pendingImages.length > 0 && (
+                        <div className="absolute -top-24 left-0 flex gap-4 p-4 z-10">
+                            {pendingImages.map((img, idx) => (
+                                <div key={idx} className="relative group animate-in zoom-in-50 duration-200">
+                                    <img src={img} className="w-20 h-20 object-cover rounded-lg border-2 border-white/30 shadow-2xl" />
+                                    <button
+                                        onClick={() => setPendingImages(prev => prev.filter((_, i) => i !== idx))}
+                                        className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-white text-xs font-bold shadow-md hover:bg-red-600 transition-colors"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     {/* Mode Toggle Tooltip */}
                     {isRecording && (
                         <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-medium animate-pulse">
