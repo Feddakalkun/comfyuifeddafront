@@ -491,7 +491,7 @@ function Install-WanVideo {
     
     if (-not (Test-Path $WanDir)) {
         Write-Log "Cloning WanVideo Wrapper..."
-        Run-Git "clone https://github.com/Kijai/ComfyUI-WanVideo-Wrapper.git `"$WanDir`""
+        Run-Git "clone https://github.com/Kijai/ComfyUI-WanVideoWrapper.git `"$WanDir`""
         
         if (Test-Path "$WanDir\requirements.txt") {
             Write-Log "Installing WanVideo requirements..."

@@ -46,7 +46,7 @@ if (-not (Test-Path $WanVideoDir)) {
     Write-Host "`n[WanVideo] Installing missing WanVideo nodes..." -ForegroundColor Yellow
     try {
         Set-Location $CustomNodesDir
-        & git clone https://github.com/Kijai/ComfyUI-WanVideo-Wrapper.git
+        & git clone https://github.com/Kijai/ComfyUI-WanVideoWrapper.git $WanVideoDir
         
         if (Test-Path "$WanVideoDir\requirements.txt") {
             Write-Host "Installing requirements..."
