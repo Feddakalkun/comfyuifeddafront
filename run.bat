@@ -99,7 +99,7 @@ for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr ":8188"') do taskkill 
 timeout /t 1 >nul
 
 cd /d "%COMFYUI_DIR%"
-"%PYTHON%" -u main.py --windows-standalone-build --port 8188 --listen 127.0.0.1 --reserve-vram 4 --enable-cors-header * --preview-method none --auto-launch-mode none
+"%PYTHON%" -u main.py --windows-standalone-build --port 8188 --listen 127.0.0.1 --reserve-vram 4 --enable-cors-header * --preview-method none
 
 if %errorlevel% neq 0 (
     echo.
