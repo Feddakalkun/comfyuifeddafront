@@ -279,5 +279,20 @@
     "name": "comfyui-various",
     "url": "https://github.com/jamesWalker55/comfyui-various",
     "folder": "comfyui-various"
+  },
+  {
+    "name": "audio-separation-nodes-comfyui",
+    "url": "https://github.com/christian-byrne/audio-separation-nodes-comfyui.git",
+    "folder": "audio-separation-nodes-comfyui"
+  },
+  {
+    "name": "ComfyUI-Whisper",
+    "url": "https://github.com/yuvraj108c/ComfyUI-Whisper.git",
+    "folder": "ComfyUI-Whisper"
+  },
+  {
+    "name": "VibeVoice-ComfyUI",
+    "url": "https://github.com/Enemyx-net/VibeVoice-ComfyUI.git",
+    "folder": "VibeVoice-ComfyUI"
   }
 ]

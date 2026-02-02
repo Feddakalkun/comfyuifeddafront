@@ -79,3 +79,6 @@ loras.json
 # Design assets (local only)
 assets/design/
 assets/landingpage/
+
+# Audio workflows (local only)
+backend/workflows/audio/

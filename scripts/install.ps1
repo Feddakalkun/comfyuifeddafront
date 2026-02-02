@@ -414,7 +414,8 @@ $Deps = @(
     "librosa", "soundfile",
     "webdriver-manager", "beautifulsoup4", "lxml", "shapely",
     "deepdiff", "fal_client", "matplotlib", "scipy", "scikit-image", "scikit-learn",
-    "timm", "colour-science", "blend-modes", "loguru"
+    "timm", "colour-science", "blend-modes", "loguru",
+    "fastapi", "uvicorn[standard]", "python-multipart"
 )
 Run-Pip "install $($Deps -join ' ')"
 
@@ -422,6 +423,11 @@ Run-Pip "install $($Deps -join ' ')"
 Write-Log "Installing llama-cpp-python..."
 # Try installing with --prefer-binary to avoid building from source if possible
 Run-Pip "install llama-cpp-python --prefer-binary --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu118"
+
+# 7.4 Install VibeVoice compatibility versions
+Write-Log "Installing requirements for VibeVoice..."
+# Pin transformers to 4.x series to prevent v5.0 breaking changes
+Run-Pip "install 'transformers>=4.51.3,<5.0.0' 'accelerate>=1.6.0' 'bitsandbytes>=0.48.1'"
 
 Pause-Step
 
@@ -509,20 +515,21 @@ Pause-Step
 
 # 9. Configure ComfyUI-Manager Security (Weak Mode)
 Write-Log "`n[ComfyUI 9/9] Configuring ComfyUI-Manager Security..."
-$ManagerConfigDir = Join-Path $ComfyDir "user\default\ComfyUI-Manager"
+# FIXED: Correct path is user/__manager not user/default/ComfyUI-Manager
+$ManagerConfigDir = Join-Path $ComfyDir "user\__manager"
 $ManagerConfigFile = Join-Path $ManagerConfigDir "config.ini"
 
 if (-not (Test-Path $ManagerConfigDir)) {
     New-Item -ItemType Directory -Path $ManagerConfigDir -Force | Out-Null
 }
 
-if (-not (Test-Path $ManagerConfigFile)) {
-    $ConfigContent = @"
+# Always overwrite to ensure security_level is set to weak
+$ConfigContent = @"
 [default]
-preview_method = latent2rgb
-git_exe =
+preview_method = none
+git_exe = 
 use_uv = False
-channel_url = https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/node_db/dev
+channel_url = https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main
 share_option = all
 bypass_ssl = False
 file_logging = True
@@ -530,38 +537,33 @@ component_policy = mine
 update_policy = stable-comfyui
 windows_selector_event_loop_policy = False
 model_download_by_agent = False
-downgrade_blacklist =
+downgrade_blacklist = 
 security_level = weak
 always_lazy_install = False
 network_mode = public
-db_mode = cache
-host = 0.0.0.0
-port = 8188
-allow_remote = true
-auto_update = false
-auto_start = false
-username =
-password =
-token =
+db_mode = remote
 "@
-    Set-Content -Path $ManagerConfigFile -Value $ConfigContent
-    Write-Log "Security level set to 'weak' (Developer Mode)."
-}
-else {
-    Write-Log "ComfyUI-Manager config already exists. Skipping."
-}
+Set-Content -Path $ManagerConfigFile -Value $ConfigContent
+Write-Log "Security level set to 'weak' - all custom nodes can auto-install."
 
 Pause-Step
 
 # 9.5 Cleanup legacy ComfyUI-Manager backup (if exists)
+Write-Log "`nCleaning up legacy ComfyUI-Manager data..."
 $LegacyBackup = Join-Path $ComfyDir "user\__manager\.legacy-manager-backup"
 if (Test-Path $LegacyBackup) {
-    Write-Log "Cleaning up legacy ComfyUI-Manager backup..."
-    Remove-Item -Path $LegacyBackup -Recurse -Force
-    Write-Log "Legacy backup removed."
+    try {
+        Remove-Item -Path $LegacyBackup -Recurse -Force -ErrorAction Stop
+        Write-Log "Legacy backup removed successfully."
+    }
+    catch {
+        Write-Log "WARNING: Could not remove legacy backup (non-fatal): $_"
+    }
+}
+else {
+    Write-Log "No legacy backup found - clean install."
 }
 
-# 10. Shortcut
 # 10. Install Other Components
 Install-Frontend
 Install-Ollama

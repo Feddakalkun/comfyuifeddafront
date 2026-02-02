@@ -8,6 +8,7 @@ title ComfyFront Launcher
 if "%1"==":launch_ollama" goto :launch_ollama
 if "%1"==":launch_comfy" goto :launch_comfy
 if "%1"==":launch_vox" goto :launch_vox
+if "%1"==":launch_backend" goto :launch_backend
 if "%1"==":launch_frontend" goto :launch_frontend
 
 :: ============================================================================
@@ -37,12 +38,17 @@ if exist "%OLLAMA%" (
 )
 
 :: 3. Start ComfyUI
-echo [2/3] Starting ComfyUI Backend (Port 8188)...
+echo [2/4] Starting ComfyUI Backend (Port 8188)...
 start "ComfyUI Backend" /MIN cmd /k "call "%~f0" :launch_comfy"
 timeout /t 3 /nobreak >nul
 
-:: 4. Start Frontend
-echo [3/3] Starting ComfyFront UI (Port 5173)...
+:: 4. Start Backend Audio Server
+echo [3/4] Starting Audio Transcription Server (Port 8000)...
+start "Audio Backend" /MIN cmd /k "call "%~f0" :launch_backend"
+timeout /t 2 /nobreak >nul
+
+:: 5. Start Frontend
+echo [4/4] Starting ComfyFront UI (Port 5173)...
 cd frontend
 call npm run dev
 
@@ -126,6 +132,37 @@ set CUDA_VISIBLE_DEVICES=-1
 if %errorlevel% neq 0 (
     echo.
     echo [ERROR] VoxCPM crashed with error code %errorlevel%
+    pause
+)
+exit /b
+
+:: ============================================================================
+:: SUBROUTINE: BACKEND AUDIO SERVER
+:: ============================================================================
+:launch_backend
+set "BASE_DIR=%~dp0"
+if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
+set "BACKEND_DIR=%BASE_DIR%\backend"
+set "PYTHON=%BASE_DIR%\python_embeded\python.exe"
+set "PATH=%BASE_DIR%\python_embeded;%BASE_DIR%\python_embeded\Scripts;%PATH%"
+set "PYTHONPATH=%BACKEND_DIR%;%PYTHONPATH%"
+
+if not exist "%BACKEND_DIR%" (
+    echo [ERROR] Backend directory missing: %BACKEND_DIR%
+    pause
+    exit /b
+)
+
+echo Clearing port 8000...
+for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr ":8000"') do taskkill /F /PID %%a 2>nul
+timeout /t 1 >nul
+
+cd /d "%BACKEND_DIR%"
+"%PYTHON%" -u server.py
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERROR] Backend server crashed with error code %errorlevel%
     pause
 )
 exit /b

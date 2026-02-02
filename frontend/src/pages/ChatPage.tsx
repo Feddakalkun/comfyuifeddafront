@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Image as ImageIcon, Loader2, Type } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Image as ImageIcon, Loader2, Type, Mic, Square, Volume2, VolumeX } from 'lucide-react';
 import { assistantService } from '../services/assistantService';
 import { comfyService } from '../services/comfyService';
 import { ollamaService } from '../services/ollamaService';
@@ -16,27 +16,33 @@ interface Message {
 
 // System prompt to guide the Agent
 const AGENT_SYSTEM_PROMPT = `You are "Fedda Agent", a helpful creative AI assistant for a ComfyUI platform.
-Your goal is to help the user brainstorm ideas and generate images.
+Your goal is to help the user with conversation and image generation when requested.
 
 BEHAVIOR:
-1. You are a conversational partner first. Discuss ideas, answering questions, and be helpful.
-2. ONLY if the user EXPLICITLY asks to "generate", "make", "create" an image, or says "show me", should you trigger generation.
-3. If the user just describes a scene but doesn't ask for an image, just discuss the scene with them.
-4. When you DO generate, use this format:
+1. You are a conversational partner FIRST. Answer questions, discuss topics, and be helpful.
+2. ONLY trigger image generation if the user EXPLICITLY uses phrases like:
+   - "generate an image of..."
+   - "create a picture of..."
+   - "make an image showing..."
+   - "show me a picture of..."
+3. If the user just says "hello", "hi", or has casual conversation, respond normally WITHOUT generating images.
+4. If the user describes a scene but doesn't ask for an image, just discuss it with them.
+5. When you DO generate, use this format:
 
    <<GENERATE>>
    [Standard Stable Diffusion Prompt: Subject, Action, Context, Style, Lighting, Artist, Tech Specs]
    <</GENERATE>>
 
    (You can add conversational text before or after the block).
-`;
+
+IMPORTANT: DO NOT trigger generation on greeting messages or casual conversation!`;
 
 export const ChatPage = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: 'welcome',
             role: 'assistant',
-            content: "Hey! I'm your creative AI assistant. I can help you brainstorm and generate images directly here. What are we making today?",
+            content: "Hey! I'm your creative AI assistant. I can help you brainstorm ideas, answer questions, and generate images when you need them. How can I help you?",
             timestamp: Date.now(),
             type: 'text'
         }
@@ -48,6 +54,20 @@ export const ChatPage = () => {
     const [executionStatus, setExecutionStatus] = useState('');
     const [progress, setProgress] = useState(0);
     const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
+    const [isRecording, setIsRecording] = useState(false);
+    const [isTranscribing, setIsTranscribing] = useState(false);
+    const [recordingMode, setRecordingMode] = useState<'hold' | 'toggle'>('hold');
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const recordingTimeoutRef = useRef<number | null>(null);
+
+    // TTS State
+    const [ttsEnabled, setTtsEnabled] = useState(false);
+    const [playingMsgId, setPlayingMsgId] = useState<string | null>(null);
+    const [generatingTtsId, setGeneratingTtsId] = useState<string | null>(null);
+    const [voiceStyle, setVoiceStyle] = useState('female, clear voice');
+    const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const fontSizeClasses = {
@@ -315,6 +335,202 @@ export const ChatPage = () => {
         }
     };
 
+    // Voice Recording Functions
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // Use webm/opus for best compatibility and smallest size
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : 'audio/webm';
+
+            const mediaRecorder = new MediaRecorder(stream, { mimeType });
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+                stream.getTracks().forEach(track => track.stop());
+                await transcribeAudio(audioBlob);
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+
+            // Auto-stop after 30 seconds
+            recordingTimeoutRef.current = setTimeout(() => {
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                    stopRecording();
+                }
+            }, 30000);
+
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: '⚠️ Could not access microphone. Please check permissions.',
+                timestamp: Date.now(),
+                type: 'text'
+            }]);
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+
+            if (recordingTimeoutRef.current) {
+                clearTimeout(recordingTimeoutRef.current);
+                recordingTimeoutRef.current = null;
+            }
+        }
+    };
+
+    const transcribeAudio = async (audioBlob: Blob) => {
+        setIsTranscribing(true);
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            const response = await fetch('/api/audio/transcribe', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Transcription failed');
+            }
+
+            const data = await response.json();
+            const transcribedText = data.text || '';
+
+            if (transcribedText.trim()) {
+                // Option C from questions: both flows available
+                // For now, set in input field so user can edit before sending
+                setInput(prev => prev + (prev ? ' ' : '') + transcribedText);
+            } else {
+                throw new Error('No speech detected');
+            }
+
+        } catch (error) {
+            console.error('Transcription error:', error);
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: '⚠️ Could not transcribe audio. Please try again.',
+                timestamp: Date.now(),
+                type: 'text'
+            }]);
+        } finally {
+            setIsTranscribing(false);
+        }
+    };
+
+    const handleMicMouseDown = () => {
+        if (recordingMode === 'hold') {
+            startRecording();
+        }
+    };
+
+    const handleMicMouseUp = () => {
+        if (recordingMode === 'hold' && isRecording) {
+            stopRecording();
+        }
+    };
+
+    const handleMicClick = () => {
+        if (recordingMode === 'toggle') {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+    };
+
+    // TTS Functions
+    const playTTS = async (messageId: string, text: string) => {
+        try {
+            setGeneratingTtsId(messageId);
+
+            // Generate TTS
+            const response = await fetch('/api/audio/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text,
+                    voice_style: voiceStyle
+                })
+            });
+
+            if (!response.ok) throw new Error('TTS generation failed');
+
+            // Get audio blob
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+
+            // Stop any currently playing audio
+            if (audioPlayerRef.current) {
+                audioPlayerRef.current.pause();
+                audioPlayerRef.current = null;
+            }
+
+            // Create and play audio
+            const audio = new Audio(audioUrl);
+            audioPlayerRef.current = audio;
+            setPlayingMsgId(messageId);
+            setGeneratingTtsId(null);
+
+            audio.onended = () => {
+                setPlayingMsgId(null);
+                URL.revokeObjectURL(audioUrl);
+            };
+
+            audio.onerror = () => {
+                setPlayingMsgId(null);
+                setGeneratingTtsId(null);
+                URL.revokeObjectURL(audioUrl);
+            };
+
+            await audio.play();
+
+        } catch (error) {
+            console.error('TTS error:', error);
+            setPlayingMsgId(null);
+            setGeneratingTtsId(null);
+        }
+    };
+
+    const stopTTS = () => {
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.pause();
+            audioPlayerRef.current = null;
+        }
+        setPlayingMsgId(null);
+    };
+
+    // Auto-play TTS for new assistant messages when enabled
+    useEffect(() => {
+        if (!ttsEnabled || messages.length === 0) return;
+
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage.role === 'assistant' && lastMessage.type === 'text' && !playingMsgId && !generatingTtsId) {
+            // Auto-play with a slight delay to feel natural
+            setTimeout(() => {
+                playTTS(lastMessage.id, lastMessage.content);
+            }, 300);
+        }
+    }, [messages, ttsEnabled]);
+
     return (
         <div className="flex flex-col h-full max-w-7xl mx-auto w-full relative">
             {/* Header */}
@@ -341,6 +557,35 @@ export const ChatPage = () => {
                                     {size === 'small' ? 'S' : size === 'medium' ? 'M' : 'L'}
                                 </button>
                             ))}
+                        </div>
+
+                        {/* TTS Controls */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setTtsEnabled(!ttsEnabled)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${ttsEnabled
+                                    ? 'bg-white/10 text-white'
+                                    : 'bg-white/5 text-slate-400 hover:text-white'
+                                    }`}
+                                title="Toggle AI voice responses"
+                            >
+                                {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                                <span className="text-xs font-medium">Voice</span>
+                            </button>
+
+                            {/* Voice Style Selector */}
+                            {ttsEnabled && (
+                                <select
+                                    value={voiceStyle}
+                                    onChange={(e) => setVoiceStyle(e.target.value)}
+                                    className="px-2 py-1 rounded-lg bg-[#121218] border border-white/10 text-xs text-white"
+                                >
+                                    <option value="female, clear voice">Female</option>
+                                    <option value="man with low pitch tembre">Male Deep</option>
+                                    <option value="cheerful woman">Cheerful</option>
+                                    <option value="professional male narrator">Professional</option>
+                                </select>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -373,6 +618,39 @@ export const ChatPage = () => {
                                         </ReactMarkdown>
                                     </div>
                                 </div>
+                            )}
+
+                            {/* TTS Button for Assistant Messages */}
+                            {msg.role === 'assistant' && msg.type === 'text' && (
+                                <button
+                                    onClick={() => {
+                                        if (playingMsgId === msg.id) {
+                                            stopTTS();
+                                        } else {
+                                            playTTS(msg.id, msg.content);
+                                        }
+                                    }}
+                                    disabled={generatingTtsId === msg.id}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs text-white/50 hover:text-white/70 disabled:opacity-50"
+                                    title={playingMsgId === msg.id ? "Stop" : "Play voice"}
+                                >
+                                    {generatingTtsId === msg.id ? (
+                                        <>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            <span>Generating...</span>
+                                        </>
+                                    ) : playingMsgId === msg.id ? (
+                                        <>
+                                            <VolumeX className="w-3 h-3" />
+                                            <span>Stop</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Volume2 className="w-3 h-3" />
+                                            <span>Play</span>
+                                        </>
+                                    )}
+                                </button>
                             )}
 
                             {/* Generation Request Card */}
@@ -467,17 +745,59 @@ export const ChatPage = () => {
             {/* Input Area */}
             <div className="p-6 mb-4">
                 <div className="relative max-w-4xl mx-auto">
+                    {/* Mode Toggle Tooltip */}
+                    {isRecording && (
+                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-medium animate-pulse">
+                            Recording... ({recordingMode === 'hold' ? 'Release to stop' : 'Click to stop'})
+                        </div>
+                    )}
+
                     <textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Message Fedda Agent..."
-                        className="w-full bg-[#121218] border border-white/10 rounded-2xl pl-6 pr-14 py-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none shadow-2xl custom-scrollbar"
+                        disabled={isRecording || isTranscribing}
+                        className="w-full bg-[#121218] border border-white/10 rounded-2xl pl-6 pr-28 py-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none shadow-2xl custom-scrollbar disabled:opacity-50"
                         style={{ minHeight: '60px', maxHeight: '200px' }}
                     />
+
+                    {/* Microphone Button */}
+                    <button
+                        onMouseDown={handleMicMouseDown}
+                        onMouseUp={handleMicMouseUp}
+                        onMouseLeave={handleMicMouseUp}
+                        onClick={handleMicClick}
+                        disabled={isTranscribing}
+                        className={`absolute right-16 bottom-3 p-2 rounded-xl transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${isRecording
+                            ? 'bg-red-500 text-white animate-pulse'
+                            : 'bg-slate-700 text-white hover:bg-slate-600'
+                            }`}
+                        title={recordingMode === 'hold' ? 'Hold to record' : 'Click to start/stop'}
+                    >
+                        {isTranscribing ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : isRecording ? (
+                            <Square className="w-4 h-4" />
+                        ) : (
+                            <Mic className="w-4 h-4" />
+                        )}
+                    </button>
+
+                    {/* Mode Toggle (small button) */}
+                    <button
+                        onClick={() => setRecordingMode(mode => mode === 'hold' ? 'toggle' : 'hold')}
+                        disabled={isRecording || isTranscribing}
+                        className="absolute right-16 bottom-[-20px] text-[10px] text-slate-500 hover:text-white transition-all disabled:opacity-50"
+                        title="Toggle recording mode"
+                    >
+                        {recordingMode === 'hold' ? '📌 Hold' : '🔘 Click'}
+                    </button>
+
+                    {/* Send Button */}
                     <button
                         onClick={handleSend}
-                        disabled={!input.trim() || isThinking}
+                        disabled={!input.trim() || isThinking || isRecording || isTranscribing}
                         className="absolute right-3 bottom-3 p-2 bg-white text-black rounded-xl hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                     >
                         <Send className="w-4 h-4" />
