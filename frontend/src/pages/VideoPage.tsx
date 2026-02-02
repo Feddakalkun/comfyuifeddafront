@@ -156,6 +156,12 @@ export const VideoPage = ({ }: VideoPageProps) => {
             setExecutionStatus('Completed!');
             setProgress(100);
 
+            // Clear status after delay so video view takes over
+            setTimeout(() => {
+                setExecutionStatus('');
+                setProgress(0);
+            }, 500);
+
         } catch (error) {
             console.error('LipSync Error:', error);
             setExecutionStatus('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
