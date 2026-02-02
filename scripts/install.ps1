@@ -503,7 +503,29 @@ function Install-WanVideo {
     }
 }
 
+
 Install-WanVideo
+
+# 7.7 Install Fill-Nodes (Required for LipSync Audio Crop)
+function Install-FillNodes {
+    Write-Log "`n[FillNodes] Setting up Fill-Nodes (Audio tools)..."
+    $FillDir = Join-Path $CustomNodesDir "ComfyUI_Fill-Nodes"
+    
+    if (-not (Test-Path $FillDir)) {
+        Write-Log "Cloning Fill-Nodes..."
+        Run-Git "clone https://github.com/filliptm/ComfyUI_Fill-Nodes.git `"$FillDir`""
+        
+        if (Test-Path "$FillDir\requirements.txt") {
+            Write-Log "Installing Fill-Nodes requirements..."
+            Run-Pip "install -r `"$FillDir\requirements.txt`""
+        }
+    }
+    else {
+        Write-Log "Fill-Nodes already installed."
+    }
+}
+
+Install-FillNodes
 
 Write-Log "`n[ComfyUI 8.5/9] Installing Character Workflow Nodes..."
 Write-Log "  - ComfyUI-Impact-Pack (SAM, FaceDetailer)"

@@ -59,6 +59,25 @@ if (-not (Test-Path $WanVideoDir)) {
     Set-Location $RootPath
 }
 
+
+# Check and Install Fill-Nodes (Required for Audio Crop)
+$FillDir = Join-Path $CustomNodesDir "ComfyUI_Fill-Nodes"
+if (-not (Test-Path $FillDir)) {
+    Write-Host "`n[FillNodes] Installing missing Fill-Nodes..." -ForegroundColor Yellow
+    try {
+        Set-Location $CustomNodesDir
+        & git clone https://github.com/filliptm/ComfyUI_Fill-Nodes.git
+        if (Test-Path "$FillDir\requirements.txt") {
+            Write-Host "Installing requirements..."
+            & $PyExe -m pip install -r "$FillDir\requirements.txt"
+        }
+    }
+    catch {
+        Write-Host "Failed to install Fill-Nodes: $_" -ForegroundColor Red
+    }
+    Set-Location $RootPath
+}
+
 # 2. Install VoxCPM (The new TTS engine)
 Write-Host "`n[2/4] Installing VoxCPM TTS Node..." -ForegroundColor Yellow
 if (-not (Test-Path $VoxDir)) {
