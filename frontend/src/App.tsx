@@ -8,7 +8,7 @@ import { MODELS } from './config/api';
 
 
 function App() {
-  const [activeTab, setActiveTab] = useState('image');
+  const [activeTab, setActiveTab] = useState('chat');
   const [activeSubTab, setActiveSubTab] = useState<string | null>('z-image');
 
   const handleTabChange = (tab: string, subTab?: string) => {

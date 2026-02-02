@@ -7,7 +7,7 @@ title ComfyFront Launcher
 :: ============================================================================
 if "%1"==":launch_ollama" goto :launch_ollama
 if "%1"==":launch_comfy" goto :launch_comfy
-if "%1"==":launch_vox" goto :launch_vox
+
 if "%1"==":launch_backend" goto :launch_backend
 if "%1"==":launch_frontend" goto :launch_frontend
 
@@ -99,39 +99,11 @@ for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr ":8188"') do taskkill 
 timeout /t 1 >nul
 
 cd /d "%COMFYUI_DIR%"
-"%PYTHON%" -u main.py --windows-standalone-build --port 8188 --listen 127.0.0.1 --reserve-vram 4 --enable-cors-header *
+"%PYTHON%" -u main.py --windows-standalone-build --port 8188 --listen 127.0.0.1 --reserve-vram 4 --enable-cors-header * --preview-method none --auto-launch-mode none
 
 if %errorlevel% neq 0 (
     echo.
     echo [ERROR] ComfyUI crashed with error code %errorlevel%
-    pause
-)
-exit /b
-
-:: ============================================================================
-:: SUBROUTINE: VOXCPM
-:: ============================================================================
-:launch_vox
-set "BASE_DIR=%~dp0"
-if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
-set "VOX_DIR=%BASE_DIR%\VoxCPM"
-set "PYTHON=%BASE_DIR%\python_embeded\python.exe"
-set "PATH=%BASE_DIR%\python_embeded;%BASE_DIR%\python_embeded\Scripts;%BASE_DIR%\git\cmd;%BASE_DIR%\node_embeded;%PATH%"
-
-if not exist "%VOX_DIR%" (
-    echo [ERROR] VoxCPM directory missing: %VOX_DIR%
-    pause
-    exit /b
-)
-
-cd /d "%VOX_DIR%"
-REM Force CPU usage
-set CUDA_VISIBLE_DEVICES=-1
-"%PYTHON%" app.py
-
-if %errorlevel% neq 0 (
-    echo.
-    echo [ERROR] VoxCPM crashed with error code %errorlevel%
     pause
 )
 exit /b
