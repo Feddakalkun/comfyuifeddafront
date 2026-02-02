@@ -57,6 +57,32 @@ if (Test-Path $SetupAudioScript) {
     & $PyExe $SetupAudioScript
 }
 
+# 5. Cleanup Old Files
+Write-Host "`n[5/5] Cleaning up deprecated files..." -ForegroundColor Yellow
+$FilesToDelete = @(
+    "check_vibevoice_files.py", 
+    "cleanup_vibevoice.py",
+    "create_reference_audio.py",
+    "debug-comfyui.bat",
+    "debug_streamer.py",
+    "debug_vibevoice.py",
+    "fix_vibevoice_deps.bat",
+    "reinstall_vibevoice_deps.bat",
+    "repair_environment.bat",
+    "setup_tts_audio.py",
+    "test_load_model.py",
+    "update_dependencies.bat",
+    "VOICE_FEATURES_README.md"
+)
+
+foreach ($file in $FilesToDelete) {
+    $path = Join-Path $RootPath $file
+    if (Test-Path $path) {
+        Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
+        Write-Host "  - Removed: $file"
+    }
+}
+
 Write-Host "`n===================================================" -ForegroundColor Green
 Write-Host "   UPDATE COMPLETE - READY TO GENERATE!" -ForegroundColor Green
 Write-Host "===================================================" -ForegroundColor Green
