@@ -127,10 +127,14 @@ def poll_for_video(prompt_id: str, timeout: int = 600) -> Path:
                         if output_path.exists():
                             print(f"✅ Video Generated: {output_path}")
                             return output_path
-                            
-                # Fallback: Node 460 (Save Image/Frames?) 
-                # The workflow uses VHS for video, so 131 is the key.
+                
+                # If we are here, the job is in history (finished) but Node 131 produced no output or wasn't found.
+                print(f"⚠️ Job {prompt_id} finished but no video found. Outputs: {list(outputs.keys())}")
+                raise Exception("Generation finished without video. First run? Models might have been downloading. Please try again!")
+                
         except Exception as e:
+            if "Generation finished without video" in str(e):
+                raise e
             print(f"⚠️ Polling error: {e}")
             
     raise TimeoutError("LipSync generation timed out")

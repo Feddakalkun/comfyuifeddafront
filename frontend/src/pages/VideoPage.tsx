@@ -201,6 +201,15 @@ export const VideoPage = ({ }: VideoPageProps) => {
                         </>
                     ) : (
                         <div className="space-y-4">
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3">
+                                <span className="text-xl">ℹ️</span>
+                                <div className="text-xs text-blue-200 space-y-1">
+                                    <p className="font-bold">First Run Notice:</p>
+                                    <p>The first generation will download approx. <strong>15GB</strong> of models. This takes time!</p>
+                                    <p>If the process stops without a video, wait for the terminal downloads to finish and then <strong>click "Sync Lips" again</strong>.</p>
+                                </div>
+                            </div>
+
                             {/* Image Upload */}
                             <div>
                                 <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Source Face (Image)</label>
