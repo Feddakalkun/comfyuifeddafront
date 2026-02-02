@@ -270,7 +270,7 @@ export const ChatPage = () => {
 
             // 4. Poll for completion and fetch image
             let attempts = 0;
-            const maxAttempts = 10;
+            const maxAttempts = 60; // Wait up to 120s (60 * 2s) for generation
             let imageUrl: string | null = null;
 
             while (attempts < maxAttempts && !imageUrl) {
