@@ -49,7 +49,16 @@ timeout /t 2 /nobreak >nul
 
 :: 5. Start Frontend
 echo [4/4] Starting ComfyFront UI (Port 5173)...
-cd frontend
+cd /d "%BASE_DIR%\frontend"
+
+:: Ensure local bin is in path (fixes 'vite' not recognized)
+set "PATH=%CD%\node_modules\.bin;%PATH%"
+
+if not exist "node_modules" (
+    echo [INFO] node_modules missing. Installing...
+    call npm install
+)
+
 call npm run dev
 
 pause

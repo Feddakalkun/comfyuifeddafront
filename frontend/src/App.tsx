@@ -4,10 +4,12 @@ import { ImagePage } from './pages/ImagePage';
 import { VideoPage } from './pages/VideoPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ChatPage } from './pages/ChatPage';
+import { LandingPage } from './pages/LandingPage';
 import { MODELS } from './config/api';
 
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true);
   const [activeTab, setActiveTab] = useState('chat');
   const [activeSubTab, setActiveSubTab] = useState<string | null>('z-image');
 
@@ -26,6 +28,8 @@ function App() {
 
   return (
     <div className="flex h-screen bg-[#0a0a0f] text-white overflow-hidden selection:bg-white/20 font-sans">
+      {showLanding && <LandingPage onEnter={() => setShowLanding(false)} />}
+
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}

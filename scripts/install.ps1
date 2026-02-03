@@ -156,6 +156,12 @@ if (-not (Test-Path $NodeExe)) {
     $ExtractedNode = Get-ChildItem -Path $RootPath -Directory -Filter "node-v*-win-x64" | Select-Object -First 1
     if ($ExtractedNode) {
         Rename-Item -Path $ExtractedNode.FullName -NewName "node_embeded"
+        
+        # Ensure npm/npx shims are in the root if they ended up elsewhere
+        $NpmShim = Join-Path $NodeDir "node_modules\npm\bin\npm.cmd"
+        $NpxShim = Join-Path $NodeDir "node_modules\npm\bin\npx.cmd"
+        if (Test-Path $NpmShim) { Copy-Item $NpmShim $NodeDir -Force }
+        if (Test-Path $NpxShim) { Copy-Item $NpxShim $NodeDir -Force }
     }
     Remove-Item $NodeZip -Force
     Write-Log "Portable Node.js configured."
@@ -197,8 +203,16 @@ function Install-Frontend {
     }
 
     Set-Location $FrontendDir
-    # Use portable node
-    & "$NodeExe" "npm" "install"
+    # Use portable node/npm correctly
+    $NpmCmd = Join-Path $NodeDir "npm.cmd"
+    if (Test-Path $NpmCmd) {
+        & "$NpmCmd" "install"
+    }
+    else {
+        # Fallback to direct JS execution if shim is missing
+        $NpmCli = Join-Path $NodeDir "node_modules\npm\bin\npm-cli.js"
+        & "$NodeExe" "$NpmCli" "install"
+    }
     
     Set-Location $RootPath
     Write-Log "[Frontend] Setup complete."
