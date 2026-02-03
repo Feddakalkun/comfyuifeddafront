@@ -106,6 +106,13 @@ if (Test-Path $SetupAudioScript) {
     & $PyExe $SetupAudioScript
 }
 
+# 4b. Patch Whisper Node for ComfyUI API compatibility
+Write-Host "`n[4b] Patching Whisper Node..." -ForegroundColor Yellow
+$WhisperPatchScript = Join-Path $ScriptPath "patch_whisper_node.py"
+if (Test-Path $WhisperPatchScript) {
+    & $PyExe $WhisperPatchScript
+}
+
 # 5. Frontend & Node.js Repair
 Write-Host "`n[5/6] Repairing Node.js & Frontend..." -ForegroundColor Yellow
 $NodeDir = Join-Path $RootPath "node_embeded"

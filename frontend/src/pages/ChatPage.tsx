@@ -98,6 +98,15 @@ export const ChatPage = () => {
                     setAvailableModels(models.map(m => m.name));
                     const preferred = models.find(m => m.name.toLowerCase().includes('qwen') || m.name.toLowerCase().includes('llama'));
                     setSelectedModel(preferred ? preferred.name : models[0].name);
+                } else {
+                    // No models found - Update welcome message
+                    setMessages([{
+                        id: 'no-models',
+                        role: 'assistant',
+                        content: "⚠️ **No AI models detected.**\n\nTo start chatting, please go to the **Settings** page and download a model (like Qwen 2.5 or Llama 3). Once downloaded, refresh this page.",
+                        timestamp: Date.now(),
+                        type: 'text'
+                    }]);
                 }
 
                 // LoRAs
@@ -653,20 +662,23 @@ export const ChatPage = () => {
                         </div>
 
                         {/* Brain Selector */}
-                        {availableModels.length > 0 && (
-                            <div className="flex items-center gap-2 bg-[#121218] border border-white/10 rounded-lg px-2 py-1 z-20 pointer-events-auto shadow-lg">
-                                <span className="text-xs text-slate-500">Brain:</span>
-                                <select
-                                    value={selectedModel}
-                                    onChange={(e) => setSelectedModel(e.target.value)}
-                                    className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none"
-                                >
-                                    {availableModels.map(m => (
+                        <div className="flex items-center gap-2 bg-[#121218] border border-white/10 rounded-lg px-2 py-1 z-20 pointer-events-auto shadow-lg">
+                            <span className="text-xs text-slate-500">Brain:</span>
+                            <select
+                                value={selectedModel}
+                                onChange={(e) => setSelectedModel(e.target.value)}
+                                className="bg-transparent text-xs text-white border-none focus:ring-0 cursor-pointer outline-none"
+                                disabled={availableModels.length === 0}
+                            >
+                                {availableModels.length === 0 ? (
+                                    <option value="">No models found</option>
+                                ) : (
+                                    availableModels.map(m => (
                                         <option key={m} value={m} className="bg-[#121218] text-white py-1">{m}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                                    ))
+                                )}
+                            </select>
+                        </div>
                     </div>
 
                     {/* Font Size Control */}
