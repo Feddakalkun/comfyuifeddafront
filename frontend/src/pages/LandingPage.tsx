@@ -49,14 +49,8 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                 key={videoSrc}
                 autoPlay
                 muted
-                loop={videoSrc.includes('bg.mp4')} // Loop bg, play done once? Or loop both?
+                loop={videoSrc.includes('bg.mp4')}
                 className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-1000"
-                onEnded={() => {
-                    // If done-loading finished, maybe loop it or stay at end
-                    if (videoSrc.includes('done-loading')) {
-                        // Keep it as the final state background
-                    }
-                }}
             >
                 <source src={videoSrc} type="video/mp4" />
             </video>
@@ -99,22 +93,7 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     </button>
-
-                    <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">
-                        v0.1.0 • Built for Speed
-                    </p>
                 </div>
-            </div>
-
-            {/* Decoration */}
-            <div className="absolute bottom-12 left-12 flex gap-4 animate-in slide-in-from-left-8 duration-1000">
-                <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                <span className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Node Connection Active</span>
-            </div>
-
-            <div className="absolute top-12 right-12 text-right animate-in slide-in-from-right-8 duration-1000">
-                <span className="text-[10px] text-white/30 uppercase tracking-[0.5em] block mb-1 font-bold">Location Status</span>
-                <span className="text-xs text-white/80 font-mono">127.0.0.1:8188</span>
             </div>
         </div>
     );
