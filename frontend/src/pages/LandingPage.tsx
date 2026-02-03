@@ -83,12 +83,11 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                     {/* Action Button */}
                     <button
                         onClick={onEnter}
-                        className="group relative px-12 py-5 bg-white text-black font-black text-xl uppercase tracking-widest rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_50px_rgba(255,255,255,0.4)] active:scale-95"
+                        className="group relative px-12 py-5 bg-white text-black font-black text-xl uppercase tracking-widest rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-lg"
                     >
                         <span className="relative z-10 flex items-center gap-3">
                             Enter System <Play className="w-5 h-5 fill-current" />
                         </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     </button>
                 </div>
             </div>
