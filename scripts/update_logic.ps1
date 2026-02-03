@@ -106,8 +106,38 @@ if (Test-Path $SetupAudioScript) {
     & $PyExe $SetupAudioScript
 }
 
-# 5. Cleanup Old Files
-Write-Host "`n[5/5] Cleaning up deprecated files..." -ForegroundColor Yellow
+# 5. Frontend & Node.js Repair
+Write-Host "`n[5/6] Repairing Node.js & Frontend..." -ForegroundColor Yellow
+$NodeDir = Join-Path $RootPath "node_embeded"
+$FrontendDir = Join-Path $RootPath "frontend"
+
+if (Test-Path $NodeDir) {
+    Write-Host "  - Ensuring npm/npx shims..."
+    $NpmShim = Join-Path $NodeDir "node_modules\npm\bin\npm.cmd"
+    $NpxShim = Join-Path $NodeDir "node_modules\npm\bin\npx.cmd"
+    if (Test-Path $NpmShim) { Copy-Item $NpmShim $NodeDir -Force }
+    if (Test-Path $NpxShim) { Copy-Item $NpxShim $NodeDir -Force }
+}
+
+if (Test-Path $FrontendDir) {
+    Write-Host "  - Checking frontend dependencies..."
+    $NpmCmd = Join-Path $NodeDir "npm.cmd"
+    Set-Location $FrontendDir
+    if (Test-Path $NpmCmd) {
+        & "$NpmCmd" "install"
+    }
+    else {
+        $NodeExe = Join-Path $NodeDir "node.exe"
+        $NpmCli = Join-Path $NodeDir "node_modules\npm\bin\npm-cli.js"
+        if (Test-Path $NpmCli) {
+            & "$NodeExe" "$NpmCli" "install"
+        }
+    }
+    Set-Location $RootPath
+}
+
+# 6. Cleanup Old Files
+Write-Host "`n[6/6] Cleaning up deprecated files..." -ForegroundColor Yellow
 $FilesToDelete = @(
     "check_vibevoice_files.py", 
     "cleanup_vibevoice.py",
