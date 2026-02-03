@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { comfyService } from '../services/comfyService';
 import { Loader2, Play, CheckCircle2 } from 'lucide-react';
 
@@ -7,14 +7,8 @@ interface LandingPageProps {
 }
 
 export const LandingPage = ({ onEnter }: LandingPageProps) => {
-    const [isComfyReady, setIsComfyReady] = useState(false);
     const [activeVideo, setActiveVideo] = useState<'bg' | 'grok'>('bg');
     const [showDoneVideo, setShowDoneVideo] = useState(false);
-
-    // Video refs for pre-loading and smooth switching
-    const bgVideoRef = useRef<HTMLVideoElement>(null);
-    const grokVideoRef = useRef<HTMLVideoElement>(null);
-    const doneVideoRef = useRef<HTMLVideoElement>(null);
 
     // 1. Poll for ComfyUI status
     useEffect(() => {
@@ -22,7 +16,6 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
         const checkStatus = async () => {
             const alive = await comfyService.isAlive();
             if (alive && isMounted && !showDoneVideo) {
-                // Comfy is ready! Switch to done-loading.mp4
                 setShowDoneVideo(true);
             }
         };
@@ -36,13 +29,13 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
         };
     }, [showDoneVideo]);
 
-    // 2. Cross-fade logic for loading videos (bg vs grok)
+    // 2. Cross-fade logic for loading videos (Using high-quality ping-pong loops)
     useEffect(() => {
-        if (showDoneVideo) return; // Stop cross-fading if we are ready
+        if (showDoneVideo) return;
 
         const fadeInterval = setInterval(() => {
             setActiveVideo(prev => prev === 'bg' ? 'grok' : 'bg');
-        }, 8000); // Cross-fade every 8 seconds
+        }, 8000);
 
         return () => clearInterval(fadeInterval);
     }, [showDoneVideo]);
@@ -50,12 +43,11 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
     return (
         <div className="fixed inset-0 z-[100] bg-black overflow-hidden flex items-center justify-center font-sans">
 
-            {/* --- LOADING VIDEOS (LAYERED FOR FADE) --- */}
+            {/* --- LOADING VIDEOS (PING-PONG LOOPS) --- */}
             {!showDoneVideo && (
                 <>
-                    {/* Video A: bg.mp4 */}
+                    {/* Video A: bg.mp4 (Ping-Ponged) */}
                     <video
-                        ref={bgVideoRef}
                         autoPlay
                         muted
                         loop
@@ -63,12 +55,11 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[3000ms] ${activeVideo === 'bg' ? 'opacity-60' : 'opacity-0'
                             }`}
                     >
-                        <source src="/loading/bg.mp4" type="video/mp4" />
+                        <source src="/loading/pingpong/bg.mp4" type="video/mp4" />
                     </video>
 
-                    {/* Video B: grok-video.mp4 */}
+                    {/* Video B: grok.mp4 (Ping-Ponged) */}
                     <video
-                        ref={grokVideoRef}
                         autoPlay
                         muted
                         loop
@@ -76,14 +67,13 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[3000ms] ${activeVideo === 'grok' ? 'opacity-60' : 'opacity-0'
                             }`}
                     >
-                        <source src="/loading/grok.mp4" type="video/mp4" />
+                        <source src="/loading/pingpong/grok.mp4" type="video/mp4" />
                     </video>
                 </>
             )}
 
-            {/* --- READY VIDEO (Fades in over everything) --- */}
+            {/* --- READY VIDEO (Ping-Ponged) --- */}
             <video
-                ref={doneVideoRef}
                 autoPlay
                 muted
                 loop
@@ -91,7 +81,7 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ${showDoneVideo ? 'opacity-80' : 'opacity-0 pointer-events-none'
                     }`}
             >
-                <source src="/loading/done-loading.mp4" type="video/mp4" />
+                <source src="/loading/pingpong/done.mp4" type="video/mp4" />
             </video>
 
 
