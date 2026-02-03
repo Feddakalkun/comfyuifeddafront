@@ -61,10 +61,7 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                     <h1 className="text-7xl font-black text-white tracking-[0.2em] uppercase mb-2 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
                         FEDDA
                     </h1>
-                    <div className="h-1 w-24 bg-white mx-auto rounded-full mb-4 shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
-                    <p className="text-slate-400 text-sm tracking-[0.3em] uppercase font-light">
-                        Premium ComfyUI Interface
-                    </p>
+                    <div className="h-1 w-24 bg-white mx-auto rounded-full shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
                 </div>
 
                 <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-700 delay-300">
