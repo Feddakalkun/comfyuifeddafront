@@ -8,52 +8,92 @@ interface LandingPageProps {
 
 export const LandingPage = ({ onEnter }: LandingPageProps) => {
     const [isComfyReady, setIsComfyReady] = useState(false);
-    const [videoSrc, setVideoSrc] = useState('/loading/bg.mp4');
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const [activeVideo, setActiveVideo] = useState<'bg' | 'grok'>('bg');
+    const [showDoneVideo, setShowDoneVideo] = useState(false);
 
-    // Poll for ComfyUI status
+    // Video refs for pre-loading and smooth switching
+    const bgVideoRef = useRef<HTMLVideoElement>(null);
+    const grokVideoRef = useRef<HTMLVideoElement>(null);
+    const doneVideoRef = useRef<HTMLVideoElement>(null);
+
+    // 1. Poll for ComfyUI status
     useEffect(() => {
         let isMounted = true;
         const checkStatus = async () => {
             const alive = await comfyService.isAlive();
-            if (alive && !isComfyReady) {
-                if (isMounted) {
-                    setIsComfyReady(true);
-                    setVideoSrc('/loading/done-loading.mp4');
-                }
+            if (alive && isMounted && !showDoneVideo) {
+                // Comfy is ready! Switch to done-loading.mp4
+                setShowDoneVideo(true);
             }
         };
 
         const interval = setInterval(checkStatus, 3000);
-        checkStatus(); // Initial check
+        checkStatus();
 
         return () => {
             isMounted = false;
             clearInterval(interval);
         };
-    }, [isComfyReady]);
+    }, [showDoneVideo]);
 
-    // Handle video transition
+    // 2. Cross-fade logic for loading videos (bg vs grok)
     useEffect(() => {
-        if (videoRef.current) {
-            videoRef.current.load();
-            videoRef.current.play().catch(e => console.log("Autoplay prevented:", e));
-        }
-    }, [videoSrc]);
+        if (showDoneVideo) return; // Stop cross-fading if we are ready
+
+        const fadeInterval = setInterval(() => {
+            setActiveVideo(prev => prev === 'bg' ? 'grok' : 'bg');
+        }, 8000); // Cross-fade every 8 seconds
+
+        return () => clearInterval(fadeInterval);
+    }, [showDoneVideo]);
 
     return (
         <div className="fixed inset-0 z-[100] bg-black overflow-hidden flex items-center justify-center font-sans">
-            {/* Background Video */}
+
+            {/* --- LOADING VIDEOS (LAYERED FOR FADE) --- */}
+            {!showDoneVideo && (
+                <>
+                    {/* Video A: bg.mp4 */}
+                    <video
+                        ref={bgVideoRef}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[3000ms] ${activeVideo === 'bg' ? 'opacity-60' : 'opacity-0'
+                            }`}
+                    >
+                        <source src="/loading/bg.mp4" type="video/mp4" />
+                    </video>
+
+                    {/* Video B: grok-video.mp4 */}
+                    <video
+                        ref={grokVideoRef}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[3000ms] ${activeVideo === 'grok' ? 'opacity-60' : 'opacity-0'
+                            }`}
+                    >
+                        <source src="/loading/grok.mp4" type="video/mp4" />
+                    </video>
+                </>
+            )}
+
+            {/* --- READY VIDEO (Fades in over everything) --- */}
             <video
-                ref={videoRef}
-                key={videoSrc}
+                ref={doneVideoRef}
                 autoPlay
                 muted
-                loop={videoSrc.includes('bg.mp4')}
-                className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-1000"
+                loop
+                playsInline
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ${showDoneVideo ? 'opacity-80' : 'opacity-0 pointer-events-none'
+                    }`}
             >
-                <source src={videoSrc} type="video/mp4" />
+                <source src="/loading/done-loading.mp4" type="video/mp4" />
             </video>
+
 
             {/* Content Overlay */}
             <div className="relative z-10 flex flex-col items-center text-center px-6">
@@ -66,17 +106,17 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
 
                 <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-700 delay-300">
                     {/* Status Indicator */}
-                    <div className={`flex items-center gap-3 px-4 py-2 rounded-full border transition-all duration-500 ${isComfyReady
+                    <div className={`flex items-center gap-3 px-4 py-2 rounded-full border transition-all duration-500 ${showDoneVideo
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                         : 'bg-white/5 border-white/10 text-slate-500'
                         }`}>
-                        {isComfyReady ? (
+                        {showDoneVideo ? (
                             <CheckCircle2 className="w-4 h-4 animate-pulse" />
                         ) : (
                             <Loader2 className="w-4 h-4 animate-spin" />
                         )}
                         <span className="text-xs font-bold tracking-widest uppercase">
-                            {isComfyReady ? 'ComfyUI Online' : 'Connecting to Backend...'}
+                            {showDoneVideo ? 'ComfyUI Online' : 'Connecting to Backend...'}
                         </span>
                     </div>
 
