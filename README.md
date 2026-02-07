@@ -1,153 +1,75 @@
-# ComfyFront
+# FEDDA Front - Ultimate Local AI Studio
 
-**Premium Web Frontend for ComfyUI**
+**A complete, portable, one-click AI ecosystem for Image, Video, and Chat generation.**
 
-A modern, modular React-based frontend for ComfyUI image/video generation.
+This works out-of-the-box. No complex setup required. We handle Python, Git, Node.js, and everything else for you.
+
+---
+
+## 📦 What's Included?
+This isn't just a frontend. It's a full production studio that installs locally on your PC:
+
+- **🎨 ComfyUI Backend**: The world's most powerful node-based image & video generation engine.
+- **💬 Ollama Integration**: Built-in local LLM server for intelligent chat assistance.
+- **🖥️ Modern Web Dashboard**: A slick, dark-mode React UI to control everything.
+- **🎤 Audio Engine**: Integrated Text-to-Speech (TTS) and Voice-to-Text capabilities.
+- **🔌 100% Portable**: Runs isolated with its own embedded Python, Git, and Node.js. Won't mess up your system!
 
 ---
 
 ## 🚀 Quick Start
 
 ### 1. Installation
-Run the automated installer. This will set up Python, Git, Node.js, ComfyUI, and all dependencies.
+Run the automated installer. It will detect your GPU (RTX 30xx vs 40xx) and optimize libraries (SageAttention/Xformers) automatically.
 
 ```bash
 install.bat
 ```
 
-**⚠️ Installation Estimate:**
+**⚠️ Installation Estimates:**
 - **Fast Internet/PC:** ~20-30 minutes (tested on 1Gbps fiber + NVMe)
 - **Slower Internet/PC:** ~40-60 minutes
 - **Download Size:** ~6-8 GB
-- **Process:** Completely automated. The installer handles Python, Git, Node.js, ComfyUI, Models, and Dependencies. Grab a coffee ☕
+- **Process:** Completely automated. Grab a coffee ☕
 
-### 2. Run the Application
-Start the entire ecosystem (Frontend, Backend, AI Engine).
+### 2. Launch
+Start the entire ecosystem (Frontend, Backend, AI Engines) with one click.
 
 ```bash
 run.bat
 ```
 
-The app will open at **http://localhost:5173**  
-ComfyUI API runs at **http://localhost:8188**
+The app will open automatically at **http://localhost:5173**
 
 ---
 
-## 📁 Project Structure
-
-```
-comfyfront/
-├── frontend/                    # React Frontend
-│   ├── src/
-│   │   ├── components/          # UI Components
-│   │   │   ├── layout/          # Layout components (Sidebar, etc.)
-│   │   │   └── ui/              # Reusable UI components (Button, etc.)
-│   │   ├── pages/               # Page components (ImagePage, VideoPage)
-│   │   ├── services/            # API services (comfyService.ts)
-│   │   ├── hooks/               # Custom React hooks
-│   │   ├── types/               # TypeScript type definitions
-│   │   ├── config/              # Configuration files
-│   │   └── utils/               # Utility functions
-│   └── package.json
-├── ComfyUI/                     # Backend (ComfyUI)
-├── assets/                      # Workflows & resources
-│   └── workflows/               # ComfyUI workflow JSON files
-├── config/                      # Configuration
-│   └── nodes.json               # Custom nodes
-├── scripts/                     # Installation scripts
-│   └── install.ps1
-├── install.bat                  # Main installer
-└── run.bat                      # Launcher
-```
+## ✨ Features
+- **Smart GPU Detection**: Automatically installs the best optimization kernels for your specific NVIDIA card.
+- **Voice Control**: Talk to the AI and have it talk back using local high-quality TTS.
+- **Workflow Library**: Comes pre-loaded with advanced video/image workflows (Wan, LTX-2, Flux).
+- **Auto-Updates**: Built-in scripts to keep your environment fresh.
 
 ---
 
-## 🎨 Features
+## 🔧 For Developers
+If you want to modify the code:
 
-### ✅ **Implemented**
-- Modern dark UI with purple/blue gradients
-- Real-time connection status to ComfyUI
-- Modular component architecture
-- Tab-based navigation (Image, Video, Audio, Logs, Settings)
-- Model selection (Z-Image, Flux, Qwen, etc.)
-- WebSocket support for live updates
-- TypeScript for type safety
+**Project Structure:**
+- `frontend/` - React/Vite application
+- `backend/` - Python audio/utility servers
+- `ComfyUI/` - The generation engine (cloned during install)
+- `assets/` - Workflows and resources
 
-### 🔨 **In Progress**
-- Workflow loading from `assets/workflows/`
-- Image generation integration
-- Gallery with history
-- Video generation UI
-- Advanced parameter controls
-
----
-
-## 🧩 Architecture
-
-### **Frontend Stack**
-- **React 18** - Component framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool & dev server
-- **Lucide React** - Icon library
-- **Framer Motion** - Animations
-
-### **Backend**
-- **ComfyUI** - Generation engine (Port 8188)
-- **Python** - Embedded runtime
-- **WebSocket** - Real-time communication
-
----
-
-## 🔧 Development
-
-### Run Frontend Only (Dev Mode)
+**Dev Commands:**
 ```bash
+# Run just the frontend for UI dev
 cd frontend
 npm run dev
-```
 
-### Run Backend Only
-```bash
-python_embeded\python.exe ComfyUI\main.py --listen 127.0.0.1 --port 8188
-```
-
-### Build for Production
-```bash
-cd frontend
-npm run build
+# Run just the audio backend
+python_embeded\python.exe backend\server.py
 ```
 
 ---
 
-## 📝 File Overview
-
-### **Key Files**
-| File | Purpose |
-|------|---------|
-| `src/services/comfyService.ts` | ComfyUI API communication |
-| `src/hooks/useComfyStatus.ts` | Connection status monitoring |
-| `src/components/layout/Sidebar.tsx` | Main navigation |
-| `src/pages/ImagePage.tsx` | Image generation UI |
-| `src/config/api.ts` | API endpoints & constants |
-
----
-
-## 🎯 Next Steps
-
-1. **Load Workflows** - Implement workflow loader from `assets/workflows/`
-2. **Gallery** - Display generated images with history
-3. **Parameters** - Add advanced controls (steps, CFG, sampler, etc.)
-4. **Video Integration** - Connect video models (Wan, LTX-2)
-5. **Settings** - User preferences and configuration
-
----
-
-## 📚 Resources
-
-- [ComfyUI API Docs](https://github.com/comfyanonymous/ComfyUI)
-- [React Documentation](https://react.dev)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-
----
-
-Made with 💜 by ComfyFront Team
+Made by **Feddakalkun**.
