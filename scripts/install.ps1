@@ -277,8 +277,8 @@ $ComfyDir = Join-Path $RootPath "ComfyUI"
 Write-Log "Upgrading pip..."
 Run-Pip "install --upgrade pip wheel setuptools"
 
-Write-Log "Installing PyTorch (CUDA)..."
-Run-Pip "install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+Write-Log "Installing PyTorch (CUDA 12.1) + Xformers..."
+Run-Pip "install torch torchvision torchaudio xformers --index-url https://download.pytorch.org/whl/cu121 --extra-index-url https://pypi.org/simple"
 if ($LASTEXITCODE -ne 0) {
     Write-Log "CUDA PyTorch failed, trying CPU..."
     Run-Pip "install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
@@ -429,15 +429,14 @@ $Deps = @(
     "webdriver-manager", "beautifulsoup4", "lxml", "shapely",
     "deepdiff", "fal_client", "matplotlib", "scipy", "scikit-image", "scikit-learn",
     "timm", "colour-science", "blend-modes", "loguru",
-    "fastapi", "uvicorn[standard]", "python-multipart",
-    "xformers"
+    "fastapi", "uvicorn[standard]", "python-multipart"
 )
 Run-Pip "install $($Deps -join ' ')"
 
 # 7.3 Install llama-cpp-python separately (with pre-built wheel preference)
 Write-Log "Installing llama-cpp-python..."
 # Try installing with --prefer-binary to avoid building from source if possible
-Run-Pip "install llama-cpp-python --prefer-binary --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu118"
+Run-Pip "install llama-cpp-python --prefer-binary --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121"
 
 # 7.4 Install VoxCPM (TTS Engine)
 function Install-VoxCPM {
