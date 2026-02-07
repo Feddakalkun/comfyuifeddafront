@@ -8,19 +8,23 @@ A modern, modular React-based frontend for ComfyUI image/video generation.
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
-```bash
-# Install backend (ComfyUI)
-install.bat
+### 1. Installation
+Run the automated installer. This will set up Python, Git, Node.js, ComfyUI, and all dependencies.
 
-# Install frontend dependencies (Node.js required)
-cd frontend
-npm install
+```bash
+install.bat
 ```
 
+**⚠️ Installation Estimate:**
+- **Fast Internet/PC:** ~20-30 minutes (tested on 1Gbps fiber + NVMe)
+- **Slower Internet/PC:** ~40-60 minutes
+- **Download Size:** ~6-8 GB
+- **Process:** Completely automated. The installer handles Python, Git, Node.js, ComfyUI, Models, and Dependencies. Grab a coffee ☕
+
 ### 2. Run the Application
+Start the entire ecosystem (Frontend, Backend, AI Engine).
+
 ```bash
-# Start both backend and frontend
 run.bat
 ```
 
