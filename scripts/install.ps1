@@ -429,7 +429,8 @@ $Deps = @(
     "webdriver-manager", "beautifulsoup4", "lxml", "shapely",
     "deepdiff", "fal_client", "matplotlib", "scipy", "scikit-image", "scikit-learn",
     "timm", "colour-science", "blend-modes", "loguru",
-    "fastapi", "uvicorn[standard]", "python-multipart"
+    "fastapi", "uvicorn[standard]", "python-multipart",
+    "xformers"
 )
 Run-Pip "install $($Deps -join ' ')"
 
@@ -656,6 +657,34 @@ else {
 # 10. Install Other Components
 Install-Frontend
 Install-Ollama
+
+# 10.5 Install SageAttention (if GPU supports it / 40-series+)
+function Install-SageAttention {
+    Write-Log "`n[Optimization] Checking GPU architecture..."
+    try {
+        $GPUObject = Get-CimInstance Win32_VideoController -ErrorAction Stop
+        $GPUName = $GPUObject.Name
+        Write-Log "GPU Detected: $GPUName"
+    
+        if ($GPUName -match "RTX 40\d\d" -or $GPUName -match "RTX 50\d\d") {
+            Write-Log "Modern NVIDIA GPU detected. Installing SageAttention for maximum performance..."
+            # Try installing sageattention, but don't fail the whole install if it errors
+            try {
+                Run-Pip "install sageattention"
+            } catch {
+                Write-Log "WARNING: SageAttention installation failed (non-fatal)."
+            }
+        }
+        else {
+            Write-Log "Standard GPU architecture detected. Skipping SageAttention (using xformers/pytorch/sdpa)."
+        }
+    }
+    catch {
+        Write-Log "WARNING: GPU detection failed. Skipping SageAttention check."
+    }
+}
+Install-SageAttention
+
 
 # 11. Final Cleanup
 Write-Log "Skipping desktop shortcut creation (use run.bat)."
