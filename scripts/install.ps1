@@ -308,27 +308,27 @@ foreach ($Node in $NodesConfig) {
         Write-Log "[$($Node.name)] - Local node, skipping git clone"
         continue
     }
-    
-    $NodeDir = Join-Path $CustomNodesDir $Node.folder
-    if (-not (Test-Path $NodeDir)) {
+
+    $NodeInstallDir = Join-Path $CustomNodesDir $Node.folder
+    if (-not (Test-Path $NodeInstallDir)) {
         Write-Log "Installing $($Node.name)..."
-        Run-Git "clone --depth 1 $($Node.url) `"$NodeDir`""
+        Run-Git "clone --depth 1 $($Node.url) `"$NodeInstallDir`""
         if ($LASTEXITCODE -eq 0) {
             Write-Log "[$($Node.name)] - Installed successfully"
             $InstalledCount++
-            
+
             # Install node requirements if requirements.txt exists
-            $NodeReqFile = Join-Path $NodeDir "requirements.txt"
+            $NodeReqFile = Join-Path $NodeInstallDir "requirements.txt"
             if (Test-Path $NodeReqFile) {
                 Write-Log "[$($Node.name)] - Installing node requirements..."
-                
+
                 # Create a filtered requirements file (skip insightface - installed globally)
                 $RequirementsContent = Get-Content $NodeReqFile
                 $FilteredRequirements = $RequirementsContent | Where-Object { $_ -notmatch '^\s*insightface' }
-                
+
                 if ($FilteredRequirements.Count -lt $RequirementsContent.Count) {
                     Write-Log "[$($Node.name)] - Skipping insightface (already installed globally)"
-                    $TempReqFile = Join-Path $NodeDir "requirements_filtered.txt"
+                    $TempReqFile = Join-Path $NodeInstallDir "requirements_filtered.txt"
                     Set-Content -Path $TempReqFile -Value $FilteredRequirements
                     Run-Pip "install -r `"$TempReqFile`" --no-warn-script-location"
                     Remove-Item $TempReqFile -Force
@@ -337,13 +337,13 @@ foreach ($Node in $NodesConfig) {
                     Run-Pip "install -r `"$NodeReqFile`" --no-warn-script-location"
                 }
             }
-            
+
             # Create __init__.py if missing
-            $InitFile = Join-Path $NodeDir "__init__.py"
+            $InitFile = Join-Path $NodeInstallDir "__init__.py"
             if (-not (Test-Path $InitFile)) {
                 # Ensure the directory exists first
-                if (-not (Test-Path $NodeDir)) {
-                    New-Item -ItemType Directory -Path $NodeDir -Force | Out-Null
+                if (-not (Test-Path $NodeInstallDir)) {
+                    New-Item -ItemType Directory -Path $NodeInstallDir -Force | Out-Null
                 }
                 $InitContent = @"
 # $($Node.folder) - Custom nodes for ComfyUI
