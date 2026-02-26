@@ -400,6 +400,14 @@ Run-Pip "install opencv-python>=4.6.0.66"
 Write-Log "Installing opencv-contrib-python (optional extras)..."
 Run-Pip "install opencv-contrib-python"
 
+# --- Reconcile version conflicts from custom node requirements ---
+Write-Log "Reconciling dependency versions..."
+# VibeVoice caps transformers<5.0.0 but ComfyUI core installed 5.x
+# Pin to latest 4.x that satisfies all nodes
+Run-Pip "install `"transformers>=4.51.3,<5.0.0`" --no-warn-script-location"
+# Ensure onnxruntime-gpu installs on Windows (marker mismatch workaround)
+Run-Pip "install onnxruntime-gpu --no-warn-script-location"
+
 Pause-Step
 
 # 7. Comprehensive Dependencies (Updated with fixes)
@@ -689,11 +697,71 @@ Install-SageAttention
 Write-Log "Skipping desktop shortcut creation (use run.bat)."
 Pause-Step
 
+# 12. Smoke Test - verify core imports work
+Write-Log "`n[Verification] Running installation smoke test..."
+$SmokeTestScript = @"
+import sys
+errors = []
+try:
+    import torch
+    gpu = torch.cuda.is_available()
+    print(f'PyTorch {torch.__version__} - CUDA: {gpu}')
+    if gpu:
+        print(f'  GPU: {torch.cuda.get_device_name(0)}')
+except Exception as e:
+    errors.append(f'PyTorch: {e}')
+
+try:
+    import transformers
+    print(f'Transformers {transformers.__version__}')
+except Exception as e:
+    errors.append(f'Transformers: {e}')
+
+try:
+    import numpy
+    print(f'NumPy {numpy.__version__}')
+except Exception as e:
+    errors.append(f'NumPy: {e}')
+
+try:
+    import PIL
+    print(f'Pillow {PIL.__version__}')
+except Exception as e:
+    errors.append(f'Pillow: {e}')
+
+try:
+    import safetensors
+    print(f'Safetensors OK')
+except Exception as e:
+    errors.append(f'Safetensors: {e}')
+
+if errors:
+    print(f'\nWARNING: {len(errors)} import(s) failed:')
+    for e in errors:
+        print(f'  - {e}')
+    sys.exit(1)
+else:
+    print('\nAll core imports passed!')
+    sys.exit(0)
+"@
+$SmokeTestFile = Join-Path $RootPath "smoke_test.py"
+Set-Content -Path $SmokeTestFile -Value $SmokeTestScript
+$SmokeResult = Start-Process -FilePath $PyExe -ArgumentList "$SmokeTestFile" -NoNewWindow -Wait -PassThru
+Remove-Item $SmokeTestFile -Force
+
+if ($SmokeResult.ExitCode -eq 0) {
+    Write-Log "[Verification] Installation verified successfully!"
+}
+else {
+    Write-Log "[Verification] WARNING: Some imports failed. The app may still work but check the log above."
+}
+
+Pause-Step
+
 Write-Log "`n================================================"
 Write-Log " ComfyUI Setup Complete!"
 Write-Log " Returning to main installer..."
 Write-Log "================================================"
 
-# Keep window open for user review
-Write-Host "`nPress any key to continue..." -ForegroundColor Yellow
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+# Return to install.bat which handles the pause
+Write-Host ""
