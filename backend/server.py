@@ -710,6 +710,64 @@ async def run_harvester():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# === WILDCARD ENDPOINTS ===
+
+WILDCARDS_DIR = Path(__file__).parent.parent / "ComfyUI" / "wildcards"
+
+@app.get("/api/wildcards/list")
+async def list_wildcards():
+    """
+    List all .txt wildcard files in the ComfyUI/wildcards folder.
+    Returns names and a small preview of content.
+    """
+    try:
+        if not WILDCARDS_DIR.exists():
+            WILDCARDS_DIR.mkdir(parents=True, exist_ok=True)
+            return {"success": True, "wildcards": []}
+            
+        wildcards = []
+        for f in WILDCARDS_DIR.glob("*.txt"):
+            lines = f.read_text(encoding="utf-8").splitlines()
+            lines = [l.strip() for l in lines if l.strip()]
+            wildcards.append({
+                "name": f.stem,
+                "count": len(lines),
+                "preview": lines[:5]
+            })
+            
+        return {"success": True, "wildcards": wildcards}
+    except Exception as e:
+        print(f"Error listing wildcards: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/wildcards/expand")
+async def expand_wildcards(text: str):
+    """
+    Takes a prompt string and replaces any __wildcard__ tags with random lines
+    from the corresponding text files in ComfyUI/wildcards.
+    """
+    try:
+        import re
+        import random
+        
+        def replace_tag(match):
+            wildcard_name = match.group(1)
+            fpath = WILDCARDS_DIR / f"{wildcard_name}.txt"
+            if fpath.exists():
+                lines = fpath.read_text(encoding="utf-8").splitlines()
+                lines = [l.strip() for l in lines if l.strip()]
+                if lines:
+                    return random.choice(lines)
+            return match.group(0) # Return original if not found
+            
+        expanded = re.sub(r"__(.*?)__", replace_tag, text)
+        return {"success": True, "original": text, "expanded": expanded}
+    except Exception as e:
+        print(f"Wildcard expansion error: {e}")
+        return {"success": False, "error": str(e), "expanded": text}
+
+
 if __name__ == "__main__":
     print("Audio Transcription Server starting on port 8000...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

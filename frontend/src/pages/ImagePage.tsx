@@ -297,9 +297,24 @@ export const ImagePage = ({ modelId }: ImagePageProps) => {
             // Always generate a fresh random seed for variation
             const activeSeed = generateSeed();
 
+            // Expand wildcards if any exist in the prompt
+            let finalPrompt = prompt;
+            if (prompt.includes('__')) {
+                try {
+                    const expandResp = await fetch(`http://localhost:8000/api/wildcards/expand?text=${encodeURIComponent(prompt)}`);
+                    const expandData = await expandResp.json();
+                    if (expandData.success) {
+                        finalPrompt = expandData.expanded;
+                        console.log('✨ Expanded Wildcards:', finalPrompt);
+                    }
+                } catch (e) {
+                    console.warn('Wildcard expansion failed, using raw prompt:', e);
+                }
+            }
+
             console.log('🚀 Preparing Generation:', {
                 model: modelId,
-                prompt: prompt,
+                prompt: finalPrompt,
                 style: style,
                 seed: activeSeed,
                 dualPerson: isDual,
@@ -320,12 +335,12 @@ export const ImagePage = ({ modelId }: ImagePageProps) => {
                 workflow["19"].inputs.height = h;
 
                 // Prompt
-                workflow["146"].inputs.wildcard_text = prompt;
-                workflow["146"].inputs.populated_text = prompt;
+                workflow["146"].inputs.wildcard_text = finalPrompt;
+                workflow["146"].inputs.populated_text = finalPrompt;
                 workflow["146"].inputs.seed = activeSeed;
                 workflow["118"].inputs.text = "";
-                workflow["121"].inputs.text_0 = prompt;
-                workflow["122"].inputs.text_0 = prompt;
+                workflow["121"].inputs.text_0 = finalPrompt;
+                workflow["122"].inputs.text_0 = finalPrompt;
 
                 // Negative
                 workflow["6"].inputs.text = negativePrompt;
@@ -378,7 +393,7 @@ export const ImagePage = ({ modelId }: ImagePageProps) => {
 
                 // Node 33: Positive Prompt
                 if (workflow["33"]) {
-                    workflow["33"].inputs.string = prompt;
+                    workflow["33"].inputs.string = finalPrompt;
                 }
 
                 // Node 34: Negative Prompt

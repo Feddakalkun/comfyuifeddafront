@@ -28,6 +28,7 @@ Thumbs.db
 
 # ComfyUI Backend (DO NOT COMMIT - these are installed by install.bat)
 ComfyUI/
+!ComfyUI/wildcards/
 python_embeded/
 git/
 node_embeded/
