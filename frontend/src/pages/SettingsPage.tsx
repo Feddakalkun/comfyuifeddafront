@@ -34,9 +34,22 @@ export const SettingsPage = () => {
     const [pullProgress, setPullProgress] = useState<OllamaProgress | null>(null);
     const [pullError, setPullError] = useState('');
 
+    // RunPod state
+    const [runpodUrl, setRunpodUrl] = useState('');
+    const [runpodToken, setRunpodToken] = useState('');
+
     useEffect(() => {
         refreshModels();
+        // Load RunPod settings
+        setRunpodUrl(localStorage.getItem('runpodUrl') || '');
+        setRunpodToken(localStorage.getItem('runpodToken') || '');
     }, []);
+
+    const saveRunpodSettings = () => {
+        localStorage.setItem('runpodUrl', runpodUrl);
+        localStorage.setItem('runpodToken', runpodToken);
+        alert('RunPod settings saved!');
+    };
 
     // Update selected model when category changes
     useEffect(() => {
@@ -273,6 +286,47 @@ export const SettingsPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* RunPod Settings Section */}
+            <div className="bg-[#121218] border border-white/5 rounded-2xl p-6 shadow-xl space-y-6">
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    ☁️ Cloud Engines / RunPod Integration
+                </h2>
+                <p className="text-sm text-slate-400">
+                    Enter your RunPod Serverless or Pod endpoint URL and Bearer token below. This allows you to select images in the Gallery and render Wan2.1 First/Last Frame loops directly in the cloud.
+                </p>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                            RunPod Endpoint URL (e.g., https://xyz-8188.proxy.runpod.net/prompt)
+                        </label>
+                        <input
+                            type="text"
+                            value={runpodUrl}
+                            onChange={(e) => setRunpodUrl(e.target.value)}
+                            placeholder="https://[YOUR_POD_ID]-[PORT].proxy.runpod.net/prompt"
+                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-white/20"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                            RunPod Bearer Token (Optional if using Proxy / No-Auth)
+                        </label>
+                        <input
+                            type="password"
+                            value={runpodToken}
+                            onChange={(e) => setRunpodToken(e.target.value)}
+                            placeholder="Bearer xyz123..."
+                            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-white/20"
+                        />
+                    </div>
+                    <Button variant="primary" onClick={saveRunpodSettings}>
+                        Save Cloud Settings
+                    </Button>
+                </div>
+            </div>
+
         </div>
     );
 };

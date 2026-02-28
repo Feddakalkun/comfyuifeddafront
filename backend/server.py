@@ -16,6 +16,10 @@ from audio_service import transcribe_audio, save_temp_audio, cleanup_temp_audio,
 from lipsync_service import generate_lipsync
 from pathlib import Path
 from pydantic import BaseModel
+import json
+import urllib.request
+import urllib.error
+import requests
 
 app = FastAPI()
 
@@ -147,6 +151,104 @@ async def health():
     """Health check endpoint"""
     return {"status": "ok"}
 
+
+# === RUNPOD CLOUD INTEGRATION ===
+
+class RunPodFileDesc(BaseModel):
+    filename: str
+    subfolder: str = ""
+    type: str = "output"
+
+class RunPodAnimateRequest(BaseModel):
+    files: list[RunPodFileDesc]
+    runpod_url: str
+    runpod_token: str = ""
+
+@app.post("/api/runpod/animate")
+async def trigger_runpod_animation(req: RunPodAnimateRequest):
+    """
+    Sends selected files to a RunPod endpoint to generate a Wan2.1 video loop
+    """
+    try:
+        import copy
+        comfy_dir = Path(__file__).parent.parent / "ComfyUI"
+        
+        # 1. Resolve local file paths
+        local_files = []
+        for fdesc in req.files:
+            base_dir = comfy_dir / fdesc.type
+            if fdesc.subfolder:
+                fpath = base_dir / fdesc.subfolder / fdesc.filename
+            else:
+                fpath = base_dir / fdesc.filename
+            if fpath.exists():
+                local_files.append(fpath)
+                
+        if not local_files:
+            raise HTTPException(status_code=400, detail="No valid files selected on disk.")
+            
+        # 2. Upload images to RunPod
+        upload_url = req.runpod_url.replace("/prompt", "/upload/image")
+        remote_filenames = []
+        
+        headers = {}
+        if req.runpod_token:
+            headers["Authorization"] = f"Bearer {req.runpod_token}"
+            
+        print(f"☁️ Uploading {len(local_files)} images to RunPod...")
+        for fpath in local_files:
+            with open(fpath, 'rb') as f:
+                res = requests.post(upload_url, headers=headers, files={'image': (fpath.name, f, 'image/png')})
+                res.raise_for_status()
+                remote_name = res.json().get("name")
+                if remote_name:
+                    remote_filenames.append(remote_name)
+                    
+        if not remote_filenames:
+            raise HTTPException(status_code=500, detail="Failed to upload any images to RunPod.")
+            
+        # 3. Load Workflow
+        workflow_path = Path(__file__).parent / "workflows" / "videos" / "final_runpod_prompt.json"
+        if not workflow_path.exists():
+            raise HTTPException(status_code=500, detail="RunPod workflow JSON not found on server.")
+            
+        with open(workflow_path, "r", encoding="utf-8") as wf_file:
+            wf = json.load(wf_file)
+            
+        # 4. Inject Images (Auto-Loop if we have fewer images than LoadImage nodes)
+        load_image_nodes = [n_id for n_id, data in wf.items() if isinstance(data, dict) and data.get("class_type") == "LoadImage"]
+        load_image_nodes.sort()
+        
+        for i, node_id in enumerate(load_image_nodes):
+            if i < 6:
+                safe_index = i % len(remote_filenames)
+                wf[node_id]["inputs"]["image"] = remote_filenames[safe_index]
+                
+        # (Optional) Inject default RunPod limits or tokens here. Let's send it!
+        payload = {"prompt": wf}
+        
+        print(f"☁️ Sending job to {req.runpod_url}")
+        req_kwargs = {
+            "json": payload,
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        }
+        if req.runpod_token:
+            req_kwargs["headers"]["Authorization"] = f"Bearer {req.runpod_token}"
+            
+        job_res = requests.post(req.runpod_url, **req_kwargs)
+        job_res.raise_for_status()
+        
+        job_data = job_res.json()
+        return {"success": True, "prompt_id": job_data.get("prompt_id", "UNKNOWN")}
+        
+    except requests.exceptions.HTTPError as he:
+        print(f"RunPod HTTP Error: {he.response.text}")
+        raise HTTPException(status_code=he.response.status_code, detail=f"RunPod Endpoint Error: {he.response.text}")
+    except Exception as e:
+        print(f"❌ RunPod Integration Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # === FILE MANAGEMENT ENDPOINTS ===
 

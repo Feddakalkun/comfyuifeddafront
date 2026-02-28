@@ -21,6 +21,7 @@ export const GalleryPage = () => {
     const [filterDate, setFilterDate] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState<'date' | 'model' | 'name'>('date');
+    const [isAnimatingRunPod, setIsAnimatingRunPod] = useState(false);
 
     useEffect(() => {
         loadGallery();
@@ -143,6 +144,41 @@ export const GalleryPage = () => {
         ));
     };
 
+    const handleRunPodAnimate = async () => {
+        const runpodUrl = localStorage.getItem('runpodUrl');
+        if (!runpodUrl) {
+            alert('Please configure your RunPod Endpoint URL in the Settings tab first!');
+            return;
+        }
+
+        const selected = mediaFiles.filter(f => f.selected);
+        if (selected.length === 0) return;
+
+        setIsAnimatingRunPod(true);
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/runpod/animate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    files: selected.map(f => ({ filename: f.filename, subfolder: f.subfolder, type: f.type })),
+                    runpod_url: runpodUrl,
+                    runpod_token: localStorage.getItem('runpodToken') || ''
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'RunPod error');
+            alert(`✅ Successfully sent to RunPod! Job ID: ${data.prompt_id}`);
+
+            // Unselect files after success
+            setMediaFiles(prev => prev.map(f => ({ ...f, selected: false })));
+        } catch (error: any) {
+            console.error('RunPod trigger error:', error);
+            alert(`Failed to trigger RunPod: ${error.message}`);
+        } finally {
+            setIsAnimatingRunPod(false);
+        }
+    };
+
     // Filtering and sorting
     const filteredFiles = mediaFiles
         .filter(f => filterModel === 'all' || f.model === filterModel)
@@ -179,10 +215,20 @@ export const GalleryPage = () => {
                         🗑️ Cleanup Orphans
                     </Button>
                     {selectedCount > 0 && (
-                        <Button variant="ghost" onClick={handleDeleteSelected} className="text-red-400 hover:text-red-300">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete {selectedCount} Selected
-                        </Button>
+                        <>
+                            <Button
+                                variant="primary"
+                                onClick={handleRunPodAnimate}
+                                isLoading={isAnimatingRunPod}
+                                className="bg-blue-600 hover:bg-blue-500 text-white"
+                            >
+                                ☁️ Animate in RunPod
+                            </Button>
+                            <Button variant="ghost" onClick={handleDeleteSelected} className="text-red-400 hover:text-red-300">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete {selectedCount}
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>

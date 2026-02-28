@@ -657,7 +657,27 @@ else {
 Pause-Step
 
 # ============================================================================ 
-# 8.5 INSTALL CHARACTER WORKFLOW NODES (Optional but Recommended)
+# 8.5 INSTALL BUNDLED LORAS
+# ============================================================================ 
+Write-Log "`n[ComfyUI 8.5/9] Installing Free Bundled LoRAs..."
+$TargetLoraDir = Join-Path $ComfyDir "models\loras\z-image"
+if (-not (Test-Path $TargetLoraDir)) {
+    New-Item -ItemType Directory -Path $TargetLoraDir -Force | Out-Null
+}
+
+$SrcLoraDir = Join-Path $RootPath "assets\loras\z-image"
+if (Test-Path $SrcLoraDir) {
+    Copy-Item -Path "$SrcLoraDir\*" -Destination $TargetLoraDir -Recurse -Force
+    Write-Log "Bundled Z-Image LoRAs (Emmy, Zana) installed successfully."
+}
+else {
+    Write-Log "Warning: Bundled LoRAs not found in assets. Skipping."
+}
+
+Pause-Step
+
+# ============================================================================ 
+# 8.6 INSTALL CHARACTER WORKFLOW NODES (Optional but Recommended)
 # ============================================================================ 
 
 
