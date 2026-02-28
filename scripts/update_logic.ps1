@@ -79,17 +79,23 @@ if (-not (Test-Path $FillDir)) {
 }
 
 # Check and Install Derfuu Modded Nodes (Required for Text Concatenate)
-$DerfuuDir = Join-Path $CustomNodesDir "Derfuu-ComfyUI-ModdedNodes"
-if (-not (Test-Path $DerfuuDir)) {
+# Note: git clone creates folder with underscores: Derfuu_ComfyUI_ModdedNodes
+$DerfuuDir1 = Join-Path $CustomNodesDir "Derfuu_ComfyUI_ModdedNodes"
+$DerfuuDir2 = Join-Path $CustomNodesDir "Derfuu-ComfyUI-ModdedNodes"
+if (-not (Test-Path $DerfuuDir1) -and -not (Test-Path $DerfuuDir2)) {
     Write-Host "`n[Derfuu] Installing missing Derfuu Modded Nodes (Text Concatenate)..." -ForegroundColor Yellow
     try {
         Set-Location $CustomNodesDir
-        & git clone https://github.com/Derfuu/Derfuu-ComfyUI-ModdedNodes.git
+        & git clone https://github.com/Derfuu/Derfuu_ComfyUI_ModdedNodes.git
+        Write-Host "  - Derfuu Modded Nodes installed OK!" -ForegroundColor Green
     }
     catch {
         Write-Host "Failed to install Derfuu Modded Nodes: $_" -ForegroundColor Red
     }
     Set-Location $RootPath
+}
+else {
+    Write-Host "[Derfuu] Derfuu Modded Nodes already installed. OK." -ForegroundColor Green
 }
 
 # 2. Install VoxCPM (The new TTS engine)
