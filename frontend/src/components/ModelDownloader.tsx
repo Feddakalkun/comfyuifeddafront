@@ -41,12 +41,11 @@ export const ModelDownloader = ({ modelGroup = "z-image" }: ModelDownloaderProps
 
     useEffect(() => {
         checkStatus();
-        let interval: any;
-        if (isDownloading || !modelStatus.every(m => m.exists)) {
-            interval = setInterval(checkStatus, 2000);
-        }
+        // Dynamic interval: 2s when downloading, 5s when idle
+        const timer = isDownloading ? 2000 : 5000;
+        const interval = setInterval(checkStatus, timer);
         return () => clearInterval(interval);
-    }, [checkStatus, isDownloading, modelStatus]);
+    }, [checkStatus, isDownloading]);
 
     const handleDownloadAll = async () => {
         setIsDownloading(true);
@@ -89,13 +88,13 @@ export const ModelDownloader = ({ modelGroup = "z-image" }: ModelDownloaderProps
                     {isDownloading ? (
                         <div className="flex flex-col items-end gap-1.5 min-w-[200px]">
                             <div className="flex justify-between w-full text-[10px] font-mono text-slate-400">
-                                <span>Downloading Assets...</span>
-                                <span>{Math.round(percent)}%</span>
+                                <span>{totalSize > 0 ? 'Downloading Assets...' : 'Connecting...'}</span>
+                                {totalSize > 0 && <span>{Math.round(percent)}%</span>}
                             </div>
                             <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-white transition-all duration-500"
-                                    style={{ width: `${percent}%` }}
+                                    className={`h-full bg-white transition-all duration-500 ${totalSize === 0 ? 'animate-pulse w-4' : ''}`}
+                                    style={{ width: totalSize > 0 ? `${percent}%` : '5%' }}
                                 />
                             </div>
                         </div>
