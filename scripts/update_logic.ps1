@@ -99,6 +99,46 @@ else {
     Write-Host "[Derfuu] Derfuu Modded Nodes already installed. OK." -ForegroundColor Green
 }
 
+# Check and Install comfy-image-saver (Save Image with Generation Metadata)
+$ImageSaverDir = Join-Path $CustomNodesDir "comfy-image-saver"
+if (-not (Test-Path $ImageSaverDir)) {
+    Write-Host "`n[ImageSaver] Installing comfy-image-saver..." -ForegroundColor Yellow
+    try {
+        Set-Location $CustomNodesDir
+        & git clone https://github.com/giriss/comfy-image-saver.git
+        Write-Host "  - comfy-image-saver installed OK!" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Failed to install comfy-image-saver: $_" -ForegroundColor Red
+    }
+    Set-Location $RootPath
+}
+else {
+    Write-Host "[ImageSaver] comfy-image-saver already installed. OK." -ForegroundColor Green
+}
+
+# Check and Install WAS Node Suite
+$WasDir = Join-Path $CustomNodesDir "was-node-suite-comfyui"
+if (-not (Test-Path $WasDir)) {
+    Write-Host "`n[WAS] Installing WAS Node Suite..." -ForegroundColor Yellow
+    try {
+        Set-Location $CustomNodesDir
+        & git clone https://github.com/WASasquatch/was-node-suite-comfyui.git
+        if (Test-Path "$WasDir\requirements.txt") {
+            Write-Host "  - Installing WAS requirements..."
+            & $PyExe -m pip install -r "$WasDir\requirements.txt"
+        }
+        Write-Host "  - WAS Node Suite installed OK!" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Failed to install WAS Node Suite: $_" -ForegroundColor Red
+    }
+    Set-Location $RootPath
+}
+else {
+    Write-Host "[WAS] WAS Node Suite already installed. OK." -ForegroundColor Green
+}
+
 # 2. Install VoxCPM (The new TTS engine)
 Write-Host "`n[2/4] Installing VoxCPM TTS Node..." -ForegroundColor Yellow
 if (-not (Test-Path $VoxDir)) {
