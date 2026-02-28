@@ -31,7 +31,6 @@ $StableDeps = @(
     "torchvision==0.20.1", 
     "torchaudio==2.5.1",
     "transformers>=4.48.2,<5.0.0", 
-    "tokenizers==0.20.3",
     "accelerate>=0.26.0",
     "bitsandbytes", 
     "soundfile"
@@ -40,6 +39,10 @@ foreach ($dep in $StableDeps) {
     Write-Host "  - Ensuring $dep..."
     & $PyExe -m pip install "$dep" --index-url https://download.pytorch.org/whl/cu124 --extra-index-url https://pypi.org/simple
 }
+
+# Force tokenizers==0.20.3 to fix DLL entry point error (tokenizers_C.pyd incompatible with PyTorch 2.5.1 on newer versions)
+Write-Host "  - Force-pinning tokenizers==0.20.3 (DLL compatibility fix)..."
+& $PyExe -m pip install --force-reinstall "tokenizers==0.20.3"
 
 # Check and Install WanVideo Wrapper
 $WanVideoDir = Join-Path $CustomNodesDir "ComfyUI-WanVideo-Wrapper"
