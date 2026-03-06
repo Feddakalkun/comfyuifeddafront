@@ -96,7 +96,7 @@ Write-Log "========================================="
 # ============================================================================
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "  FEDDAKALKUN - System Compatibility Check" -ForegroundColor Cyan
+Write-Host "  FEDDAKALKUN - Ultimate Frontend" -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -154,7 +154,6 @@ Write-Host "  CPU:      $($CPUInfo.Name)" -ForegroundColor White
 Write-Host "  RAM:      ${RAM_GB} GB" -ForegroundColor White
 
 # GPU Detection
-$VRAMWarning = ""
 try {
     $GPUs = Get-CimInstance Win32_VideoController -ErrorAction Stop
     $NvidiaGPU = $GPUs | Where-Object { $_.Name -match "NVIDIA" } | Select-Object -First 1
@@ -167,7 +166,7 @@ try {
         Write-Host "  This app requires an NVIDIA GPU with CUDA support." -ForegroundColor Red
         Write-Host "  AMD and Intel GPUs are not supported." -ForegroundColor Red
         Write-Host ""
-        Write-Host "  Contact FEDDAKALKUN for help: https://x.com/feddakalkun" -ForegroundColor Yellow
+        Write-Host "  Contact FEDDAKALKUN for help: https://feddakalkun.com" -ForegroundColor Yellow
         Write-Host ""
         Write-Host "Press any key to exit..." -ForegroundColor Yellow
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
@@ -175,22 +174,23 @@ try {
     }
 
     $GPUName = $NvidiaGPU.Name
-    $VRAM_MB = [math]::Round($NvidiaGPU.AdapterRAM / 1MB)
     Write-Host "  GPU:      $GPUName" -ForegroundColor Green
 
-    if ($VRAM_MB -gt 0 -and $VRAM_MB -lt 65536) {
-        $VRAM_GB = [math]::Round($VRAM_MB / 1024)
-        Write-Host "  VRAM:     ${VRAM_GB} GB" -ForegroundColor $(if ($VRAM_GB -ge 8) { "Green" } elseif ($VRAM_GB -ge 6) { "Yellow" } else { "Red" })
+    # Use nvidia-smi for accurate VRAM (Win32_VideoController overflows above 4GB)
+    $VRAM_MB = 0
+    try {
+        $SmiOutput = & nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>$null
+        if ($SmiOutput) {
+            $VRAM_MB = [int]($SmiOutput.Trim())
+        }
+    } catch {}
 
-        if ($VRAM_MB -lt 6144) {
-            $VRAMWarning = "  WARNING: Less than 6GB VRAM. Generation may be very slow or fail."
-        }
-        elseif ($VRAM_MB -lt 8192) {
-            $VRAMWarning = "  NOTE: 6-8GB VRAM. Image gen OK, video may need lower resolution."
-        }
+    if ($VRAM_MB -gt 0) {
+        $VRAM_GB = [math]::Round($VRAM_MB / 1024)
+        Write-Host "  VRAM:     ${VRAM_GB} GB" -ForegroundColor Green
     }
     else {
-        Write-Host "  VRAM:     Could not detect (this is normal)" -ForegroundColor White
+        Write-Host "  VRAM:     Could not detect" -ForegroundColor White
     }
 }
 catch {
@@ -205,20 +205,13 @@ Write-Host "  Disk:     ${FreeSpace_GB} GB free on $($Drive.Name):\" -Foreground
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 
-if ($VRAMWarning) {
-    Write-Host $VRAMWarning -ForegroundColor Yellow
-}
 if ($FreeSpace_GB -lt 10) {
     Write-Host "  WARNING: Low disk space! Need at least 10GB free." -ForegroundColor Red
 }
 
 Write-Host ""
-Write-Host "  STATUS:   COMPATIBLE - Ready to install" -ForegroundColor Green
-Write-Host ""
-Write-Host "  Install will download ~6-8 GB and take 20-60 minutes." -ForegroundColor White
-Write-Host ""
 Write-Host "  If something looks wrong, contact FEDDAKALKUN:" -ForegroundColor Gray
-Write-Host "  https://x.com/feddakalkun" -ForegroundColor Cyan
+Write-Host "  https://feddakalkun.com" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
