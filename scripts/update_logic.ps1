@@ -39,7 +39,7 @@ if (-not (Test-Path $ComfyDir)) {
 }
 
 # ============================================================================
-# 1. CUSTOM NODES — Install missing / Update existing (from nodes.json)
+# 1. CUSTOM NODES - Install missing / Update existing (from nodes.json)
 # ============================================================================
 Write-Host "`n[1/3] Syncing custom nodes from config/nodes.json..." -ForegroundColor Yellow
 
@@ -62,7 +62,7 @@ $FailedCount = 0
 foreach ($Node in $NodesConfig) {
     # Skip local-only nodes
     if ($Node.local -eq $true) {
-        Write-Host "  [$($Node.name)] Local node — skipped" -ForegroundColor Gray
+        Write-Host "  [$($Node.name)] Local node - skipped" -ForegroundColor Gray
         continue
     }
 
@@ -118,7 +118,7 @@ foreach ($Node in $NodesConfig) {
 Write-Host "`n  Summary: $InstalledCount installed, $UpdatedCount updated, $FailedCount failed" -ForegroundColor Cyan
 
 # ============================================================================
-# 2. FRONTEND — npm install
+# 2. FRONTEND - npm install
 # ============================================================================
 Write-Host "`n[2/3] Updating frontend dependencies..." -ForegroundColor Yellow
 $FrontendDir = Join-Path $RootPath "frontend"
@@ -148,14 +148,14 @@ if (Test-Path $FrontendDir) {
             Write-Host "  Frontend dependencies updated." -ForegroundColor Green
         }
         else {
-            Write-Host "  [WARNING] npm not found — run install.bat first" -ForegroundColor Yellow
+            Write-Host "  [WARNING] npm not found - run install.bat first" -ForegroundColor Yellow
         }
     }
     Set-Location $RootPath
 }
 
 # ============================================================================
-# 3. CLEANUP — Remove legacy files and folders from older versions
+# 3. CLEANUP - Remove legacy files and folders from older versions
 # ============================================================================
 Write-Host "`n[3/3] Cleaning up legacy files..." -ForegroundColor Yellow
 
@@ -231,7 +231,7 @@ foreach ($folder in $LegacyFolders) {
 }
 
 if ($CleanedCount -eq 0) {
-    Write-Host "  Nothing to clean up — already current." -ForegroundColor Green
+    Write-Host "  Nothing to clean up - already current." -ForegroundColor Green
 }
 
 # ============================================================================

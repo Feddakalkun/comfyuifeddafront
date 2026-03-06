@@ -19,7 +19,7 @@ $LogsDir = Join-Path $RootPath "logs"
 if (-not (Test-Path $LogsDir)) { New-Item -ItemType Directory -Path $LogsDir | Out-Null }
 $LogFile = Join-Path $LogsDir "install_log.txt"
 
-# Start full transcript — captures ALL console output (pip, git, etc.)
+# Start full transcript - captures ALL console output (pip, git, etc.)
 $TranscriptFile = Join-Path $LogsDir "install_full_log.txt"
 try { Stop-Transcript -ErrorAction SilentlyContinue } catch {}
 Start-Transcript -Path $TranscriptFile -Force
