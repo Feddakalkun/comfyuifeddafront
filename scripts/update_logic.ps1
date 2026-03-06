@@ -7,209 +7,159 @@ Write-Host "===================================================" -ForegroundColo
 Write-Host "      COMFYFRONT UPDATE & REPAIR UTILITY" -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
 
-# Define Paths
+# ============================================================================
+# PATHS
+# ============================================================================
 $PyExe = Join-Path $RootPath "python_embeded\python.exe"
+$GitExe = Join-Path $RootPath "git_embeded\cmd\git.exe"
+$ComfyDir = Join-Path $RootPath "ComfyUI"
+$CustomNodesDir = Join-Path $ComfyDir "custom_nodes"
 
-# Pre-flight Check: Ensure Python Exists
+# Use embedded git if available, otherwise system git
+if (Test-Path $GitExe) {
+    $env:PATH = "$(Split-Path $GitExe);$env:PATH"
+} else {
+    $GitExe = "git"
+}
+
+# ============================================================================
+# PRE-FLIGHT CHECK
+# ============================================================================
 if (-not (Test-Path $PyExe)) {
     Write-Host "`n[ERROR] Embedded Python not found!" -ForegroundColor Red
     Write-Host "File missing: $PyExe" -ForegroundColor Gray
-    Write-Host "It looks like this is a fresh folder or broken install."
-    Write-Host "Please run 'install.bat' strictly BEFORE running update/repair." -ForegroundColor Yellow
-    Write-Host "Updates require an existing python environment."
+    Write-Host "Please run 'install.bat' first before updating." -ForegroundColor Yellow
     exit 1
 }
 
-$ComfyDir = Join-Path $RootPath "ComfyUI"
-$CustomNodesDir = Join-Path $ComfyDir "custom_nodes"
-$VoxDir = Join-Path $CustomNodesDir "ComfyUI-VoxCPM"
-
-# 1. Dependency Repair / Downgrade (Critical for Stability)
-Write-Host "`n[1/4] Enforcing stable dependencies (Downgrading/Pinning)..." -ForegroundColor Yellow
-$StableDeps = @(
-    "torch==2.5.1",
-    "torchvision==0.20.1", 
-    "torchaudio==2.5.1",
-    "transformers>=4.48.2,<5.0.0", 
-    "accelerate>=0.26.0",
-    "bitsandbytes", 
-    "soundfile"
-)
-foreach ($dep in $StableDeps) {
-    Write-Host "  - Ensuring $dep..."
-    & $PyExe -m pip install "$dep" --index-url https://download.pytorch.org/whl/cu124 --extra-index-url https://pypi.org/simple
+if (-not (Test-Path $ComfyDir)) {
+    Write-Host "`n[ERROR] ComfyUI directory not found!" -ForegroundColor Red
+    Write-Host "Please run 'install.bat' first." -ForegroundColor Yellow
+    exit 1
 }
 
-# Force tokenizers==0.20.3 to fix DLL entry point error (tokenizers_C.pyd incompatible with PyTorch 2.5.1 on newer versions)
-Write-Host "  - Force-pinning tokenizers==0.20.3 (DLL compatibility fix)..."
-& $PyExe -m pip install --force-reinstall "tokenizers==0.20.3"
+# ============================================================================
+# 1. CUSTOM NODES — Install missing / Update existing (from nodes.json)
+# ============================================================================
+Write-Host "`n[1/3] Syncing custom nodes from config/nodes.json..." -ForegroundColor Yellow
 
-# Check and Install WanVideo Wrapper
-$WanVideoDir = Join-Path $CustomNodesDir "ComfyUI-WanVideo-Wrapper"
-if (-not (Test-Path $WanVideoDir)) {
-    Write-Host "`n[WanVideo] Installing missing WanVideo nodes..." -ForegroundColor Yellow
-    try {
-        Set-Location $CustomNodesDir
-        & git clone https://github.com/Kijai/ComfyUI-WanVideoWrapper.git $WanVideoDir
-        
-        if (Test-Path "$WanVideoDir\requirements.txt") {
-            Write-Host "Installing requirements..."
-            & $PyExe -m pip install -r "$WanVideoDir\requirements.txt"
+$NodesConfigFile = Join-Path $RootPath "config\nodes.json"
+if (-not (Test-Path $NodesConfigFile)) {
+    Write-Host "  [ERROR] config/nodes.json not found!" -ForegroundColor Red
+    exit 1
+}
+
+$NodesConfig = Get-Content $NodesConfigFile -Raw | ConvertFrom-Json
+
+if (-not (Test-Path $CustomNodesDir)) {
+    New-Item -ItemType Directory -Path $CustomNodesDir -Force | Out-Null
+}
+
+$InstalledCount = 0
+$UpdatedCount = 0
+$FailedCount = 0
+
+foreach ($Node in $NodesConfig) {
+    # Skip local-only nodes
+    if ($Node.local -eq $true) {
+        Write-Host "  [$($Node.name)] Local node — skipped" -ForegroundColor Gray
+        continue
+    }
+
+    $NodeDir_Install = Join-Path $CustomNodesDir $Node.folder
+
+    if (-not (Test-Path $NodeDir_Install)) {
+        # Clone missing node
+        Write-Host "  [$($Node.name)] Installing..." -ForegroundColor White
+        try {
+            & $GitExe clone --depth 1 $Node.url "$NodeDir_Install" 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $InstalledCount++
+                Write-Host "  [$($Node.name)] Installed OK" -ForegroundColor Green
+
+                # Install requirements if present
+                $ReqFile = Join-Path $NodeDir_Install "requirements.txt"
+                if (Test-Path $ReqFile) {
+                    Write-Host "  [$($Node.name)] Installing dependencies..." -ForegroundColor Gray
+                    & $PyExe -m pip install -r "$ReqFile" --no-warn-script-location 2>&1 | Out-Null
+                }
+            } else {
+                Write-Host "  [$($Node.name)] Clone failed!" -ForegroundColor Red
+                $FailedCount++
+            }
         }
-    }
-    catch {
-        Write-Host "Failed to install WanVideo Wrapper: $_" -ForegroundColor Red
-    }
-    Set-Location $RootPath
-}
-
-
-# Check and Install Fill-Nodes (Required for Audio Crop)
-$FillDir = Join-Path $CustomNodesDir "ComfyUI_Fill-Nodes"
-if (-not (Test-Path $FillDir)) {
-    Write-Host "`n[FillNodes] Installing missing Fill-Nodes..." -ForegroundColor Yellow
-    try {
-        Set-Location $CustomNodesDir
-        & git clone https://github.com/filliptm/ComfyUI_Fill-Nodes.git
-        if (Test-Path "$FillDir\requirements.txt") {
-            Write-Host "Installing requirements..."
-            & $PyExe -m pip install -r "$FillDir\requirements.txt"
+        catch {
+            Write-Host "  [$($Node.name)] Error: $_" -ForegroundColor Red
+            $FailedCount++
         }
-    }
-    catch {
-        Write-Host "Failed to install Fill-Nodes: $_" -ForegroundColor Red
-    }
-    Set-Location $RootPath
-}
-
-# Check and Install Derfuu Modded Nodes (Required for Text Concatenate)
-# Note: git clone creates folder with underscores: Derfuu_ComfyUI_ModdedNodes
-$DerfuuDir1 = Join-Path $CustomNodesDir "Derfuu_ComfyUI_ModdedNodes"
-$DerfuuDir2 = Join-Path $CustomNodesDir "Derfuu-ComfyUI-ModdedNodes"
-if (-not (Test-Path $DerfuuDir1) -and -not (Test-Path $DerfuuDir2)) {
-    Write-Host "`n[Derfuu] Installing missing Derfuu Modded Nodes (Text Concatenate)..." -ForegroundColor Yellow
-    try {
-        Set-Location $CustomNodesDir
-        & git clone https://github.com/Derfuu/Derfuu_ComfyUI_ModdedNodes.git
-        Write-Host "  - Derfuu Modded Nodes installed OK!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Failed to install Derfuu Modded Nodes: $_" -ForegroundColor Red
-    }
-    Set-Location $RootPath
-}
-else {
-    Write-Host "[Derfuu] Derfuu Modded Nodes already installed. OK." -ForegroundColor Green
-}
-
-# Check and Install comfy-image-saver (Save Image with Generation Metadata)
-$ImageSaverDir = Join-Path $CustomNodesDir "comfy-image-saver"
-if (-not (Test-Path $ImageSaverDir)) {
-    Write-Host "`n[ImageSaver] Installing comfy-image-saver..." -ForegroundColor Yellow
-    try {
-        Set-Location $CustomNodesDir
-        & git clone https://github.com/giriss/comfy-image-saver.git
-        Write-Host "  - comfy-image-saver installed OK!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Failed to install comfy-image-saver: $_" -ForegroundColor Red
-    }
-    Set-Location $RootPath
-}
-else {
-    Write-Host "[ImageSaver] comfy-image-saver already installed. OK." -ForegroundColor Green
-}
-
-# Check and Install WAS Node Suite
-$WasDir = Join-Path $CustomNodesDir "was-node-suite-comfyui"
-if (-not (Test-Path $WasDir)) {
-    Write-Host "`n[WAS] Installing WAS Node Suite..." -ForegroundColor Yellow
-    try {
-        Set-Location $CustomNodesDir
-        & git clone https://github.com/WASasquatch/was-node-suite-comfyui.git
-        if (Test-Path "$WasDir\requirements.txt") {
-            Write-Host "  - Installing WAS requirements..."
-            & $PyExe -m pip install -r "$WasDir\requirements.txt"
-        }
-        Write-Host "  - WAS Node Suite installed OK!" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "Failed to install WAS Node Suite: $_" -ForegroundColor Red
-    }
-    Set-Location $RootPath
-}
-else {
-    Write-Host "[WAS] WAS Node Suite already installed. OK." -ForegroundColor Green
-}
-
-# 2. Install VoxCPM (The new TTS engine)
-Write-Host "`n[2/4] Installing VoxCPM TTS Node..." -ForegroundColor Yellow
-if (-not (Test-Path $VoxDir)) {
-    Write-Host "  - Cloning ComfyUI-VoxCPM..."
-    Set-Location $CustomNodesDir
-    git clone https://github.com/wildminder/ComfyUI-VoxCPM
-    Set-Location $RootPath
-}
-else {
-    Write-Host "  - Updating ComfyUI-VoxCPM..."
-    Set-Location $VoxDir
-    git pull
-    Set-Location $RootPath
-}
-
-# 3. Install VoxCPM Dependencies
-Write-Host "`n[3/4] Installing VoxCPM requirements..." -ForegroundColor Yellow
-if (Test-Path "$VoxDir\requirements.txt") {
-    & $PyExe -m pip install -r "$VoxDir\requirements.txt"
-}
-
-# 4. Setup Audio Assets
-Write-Host "`n[4/4] Setting up audio assets..." -ForegroundColor Yellow
-$SetupAudioScript = Join-Path $ScriptPath "setup_tts_audio.py"
-if (Test-Path $SetupAudioScript) {
-    & $PyExe $SetupAudioScript
-}
-
-# 4b. Patch Whisper Node for ComfyUI API compatibility
-Write-Host "`n[4b] Patching Whisper Node..." -ForegroundColor Yellow
-$WhisperPatchScript = Join-Path $ScriptPath "patch_whisper_node.py"
-if (Test-Path $WhisperPatchScript) {
-    & $PyExe $WhisperPatchScript
-}
-
-# 5. Frontend & Node.js Repair
-Write-Host "`n[5/6] Repairing Node.js & Frontend..." -ForegroundColor Yellow
-$NodeDir = Join-Path $RootPath "node_embeded"
-$FrontendDir = Join-Path $RootPath "frontend"
-
-if (Test-Path $NodeDir) {
-    Write-Host "  - Ensuring npm/npx shims..."
-    $NpmShim = Join-Path $NodeDir "node_modules\npm\bin\npm.cmd"
-    $NpxShim = Join-Path $NodeDir "node_modules\npm\bin\npx.cmd"
-    if (Test-Path $NpmShim) { Copy-Item $NpmShim $NodeDir -Force }
-    if (Test-Path $NpxShim) { Copy-Item $NpxShim $NodeDir -Force }
-}
-
-if (Test-Path $FrontendDir) {
-    Write-Host "  - Checking frontend dependencies..."
-    $NpmCmd = Join-Path $NodeDir "npm.cmd"
-    Set-Location $FrontendDir
-    if (Test-Path $NpmCmd) {
-        & "$NpmCmd" "install"
     }
     else {
-        $NodeExe = Join-Path $NodeDir "node.exe"
-        $NpmCli = Join-Path $NodeDir "node_modules\npm\bin\npm-cli.js"
+        # Update existing node
+        Write-Host "  [$($Node.name)] Updating..." -ForegroundColor Gray
+        try {
+            Set-Location $NodeDir_Install
+            & $GitExe pull 2>&1 | Out-Null
+            $UpdatedCount++
+            Set-Location $RootPath
+
+            # Re-check requirements in case they changed
+            $ReqFile = Join-Path $NodeDir_Install "requirements.txt"
+            if (Test-Path $ReqFile) {
+                & $PyExe -m pip install -r "$ReqFile" --no-warn-script-location 2>&1 | Out-Null
+            }
+        }
+        catch {
+            Write-Host "  [$($Node.name)] Update failed (non-fatal): $_" -ForegroundColor Yellow
+            Set-Location $RootPath
+        }
+    }
+}
+
+Write-Host "`n  Summary: $InstalledCount installed, $UpdatedCount updated, $FailedCount failed" -ForegroundColor Cyan
+
+# ============================================================================
+# 2. FRONTEND — npm install
+# ============================================================================
+Write-Host "`n[2/3] Updating frontend dependencies..." -ForegroundColor Yellow
+$FrontendDir = Join-Path $RootPath "frontend"
+
+if (Test-Path $FrontendDir) {
+    $NodeExeDir = Join-Path $RootPath "node_embeded"
+
+    # Ensure npm shims exist
+    if (Test-Path $NodeExeDir) {
+        $NpmShim = Join-Path $NodeExeDir "node_modules\npm\bin\npm.cmd"
+        $NpxShim = Join-Path $NodeExeDir "node_modules\npm\bin\npx.cmd"
+        if (Test-Path $NpmShim) { Copy-Item $NpmShim $NodeExeDir -Force }
+        if (Test-Path $NpxShim) { Copy-Item $NpxShim $NodeExeDir -Force }
+    }
+
+    Set-Location $FrontendDir
+    $NpmCmd = Join-Path $NodeExeDir "npm.cmd"
+    if (Test-Path $NpmCmd) {
+        & "$NpmCmd" "install" 2>&1 | Out-Null
+        Write-Host "  Frontend dependencies updated." -ForegroundColor Green
+    }
+    else {
+        $NodeExe = Join-Path $NodeExeDir "node.exe"
+        $NpmCli = Join-Path $NodeExeDir "node_modules\npm\bin\npm-cli.js"
         if (Test-Path $NpmCli) {
-            & "$NodeExe" "$NpmCli" "install"
+            & "$NodeExe" "$NpmCli" "install" 2>&1 | Out-Null
+            Write-Host "  Frontend dependencies updated." -ForegroundColor Green
+        }
+        else {
+            Write-Host "  [WARNING] npm not found — run install.bat first" -ForegroundColor Yellow
         }
     }
     Set-Location $RootPath
 }
 
-# 6. Cleanup Old Files
-Write-Host "`n[6/6] Cleaning up deprecated files..." -ForegroundColor Yellow
-$FilesToDelete = @(
+# ============================================================================
+# 3. CLEANUP — Remove legacy files and folders from older versions
+# ============================================================================
+Write-Host "`n[3/3] Cleaning up legacy files..." -ForegroundColor Yellow
+
+$LegacyFiles = @(
     "check_vibevoice_files.py",
     "cleanup_vibevoice.py",
     "create_reference_audio.py",
@@ -217,16 +167,19 @@ $FilesToDelete = @(
     "debug_streamer.py",
     "debug_vibevoice.py",
     "fix_vibevoice_deps.bat",
+    "fix_gpu.bat",
+    "download_premium_loras.bat",
     "reinstall_vibevoice_deps.bat",
     "repair_environment.bat",
     "setup_tts_audio.py",
     "test_load_model.py",
     "update_dependencies.bat",
-    "VOICE_FEATURES_README.md"
+    "VOICE_FEATURES_README.md",
+    "requirements-lock.txt",
+    "LOG.md"
 )
 
-# Clean up duplicate/legacy folders
-$FoldersToDelete = @(
+$LegacyFolders = @(
     "assets\loading-screen",
     "assets\workflows",
     "ComfyUI\custom_nodes\ComfyUI_Searge_LLM",
@@ -251,40 +204,38 @@ $FoldersToDelete = @(
     "ComfyUI\custom_nodes\ComfyUI-Timer-Nodes",
     "ComfyUI\custom_nodes\comfyui-various",
     "ComfyUI\custom_nodes\was-node-suite-comfyui",
-    "ComfyUI\custom_nodes\ComfyUI-Image-Saver"
+    "ComfyUI\custom_nodes\ComfyUI-Image-Saver",
+    "ComfyUI\custom_nodes\ComfyUI-VoxCPM",
+    "ComfyUI\custom_nodes\ComfyUI_Fill-Nodes",
+    "ComfyUI\custom_nodes\Derfuu_ComfyUI_ModdedNodes"
 )
 
-# Clean up duplicate loading videos (now in frontend/public/loading/pingpong/)
-$LegacyLoadingFiles = @(
-    "frontend\public\loading\bg.mp4",
-    "frontend\public\loading\done-loading.mp4",
-    "frontend\public\loading\grok.mp4"
-)
-
-foreach ($file in $FilesToDelete) {
+$CleanedCount = 0
+foreach ($file in $LegacyFiles) {
     $path = Join-Path $RootPath $file
     if (Test-Path $path) {
         Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
-        Write-Host "  - Removed: $file"
+        Write-Host "  Removed: $file" -ForegroundColor Gray
+        $CleanedCount++
     }
 }
 
-foreach ($folder in $FoldersToDelete) {
+foreach ($folder in $LegacyFolders) {
     $path = Join-Path $RootPath $folder
     if (Test-Path $path) {
         Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Host "  - Removed folder: $folder"
+        Write-Host "  Removed folder: $folder" -ForegroundColor Gray
+        $CleanedCount++
     }
 }
 
-foreach ($file in $LegacyLoadingFiles) {
-    $path = Join-Path $RootPath $file
-    if (Test-Path $path) {
-        Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
-        Write-Host "  - Removed legacy: $file"
-    }
+if ($CleanedCount -eq 0) {
+    Write-Host "  Nothing to clean up — already current." -ForegroundColor Green
 }
 
+# ============================================================================
+# DONE
+# ============================================================================
 Write-Host "`n===================================================" -ForegroundColor Green
 Write-Host "   UPDATE COMPLETE - READY TO GENERATE!" -ForegroundColor Green
 Write-Host "===================================================" -ForegroundColor Green

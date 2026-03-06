@@ -531,41 +531,6 @@ __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
     }
 }
 
-# --- CRITICAL FIX: Patch Efficiency Nodes ---
-$EffNodeFile = Join-Path $CustomNodesDir "Efficiency-Nodes\py\smZ_cfg_denoiser.py"
-if (Test-Path $EffNodeFile) {
-    Write-Log "Patching Efficiency Nodes..."
-    $EffContent = Get-Content $EffNodeFile -Raw
-    if ($EffContent -match "CompVisVDenoiser") {
-        $EffContent = $EffContent.Replace(
-            "from comfy.samplers import KSampler, CompVisVDenoiser, KSamplerX0Inpaint",
-            "from comfy.samplers import KSampler, KSamplerX0Inpaint"
-        )
-        $EffContent = $EffContent.Replace(
-            "from comfy.k_diffusion.external import CompVisDenoiser",
-            "from comfy.k_diffusion.external import CompVisDenoiser, CompVisVDenoiser"
-        )
-        Set-Content -Path $EffNodeFile -Value $EffContent
-        Write-Log "Efficiency Nodes patched successfully."
-    }
-}
-
-# Enforce compatible OpenCV setup (opencv-python for transparent-background, contrib for extras)
-Write-Log "Cleaning up OpenCV variants (headless conflicts)..."
-Run-Pip "uninstall -y opencv-python-headless opencv-contrib-python-headless"
-Write-Log "Installing opencv-python (required by transparent-background)..."
-Run-Pip "install opencv-python>=4.6.0.66"
-Write-Log "Installing opencv-contrib-python (optional extras)..."
-Run-Pip "install opencv-contrib-python"
-
-# --- Reconcile version conflicts from custom node requirements ---
-Write-Log "Reconciling dependency versions..."
-# VibeVoice caps transformers<5.0.0 but ComfyUI core installed 5.x
-# Pin to latest 4.x that satisfies all nodes
-Run-Pip "install `"transformers>=4.51.3,<5.0.0`" --no-warn-script-location"
-# Ensure onnxruntime-gpu installs on Windows (marker mismatch workaround)
-Run-Pip "install onnxruntime-gpu --no-warn-script-location"
-
 Pause-Step
 
 # 7. Comprehensive Dependencies (Updated with fixes)
@@ -601,40 +566,12 @@ Run-Pip "install $($Deps -join ' ')"
 
 # 7.3 (Removed) llama-cpp-python no longer needed - Ollama handles all LLM tasks
 
-# 7.4 Install VoxCPM (TTS Engine)
-function Install-VoxCPM {
-    Write-Log "`n[VoxCPM] Setting up VoxCPM TTS..."
-    $VoxDir = Join-Path $ComfyDir "custom_nodes\ComfyUI-VoxCPM"
-    
-    if (-not (Test-Path $VoxDir)) {
-        Write-Log "Cloning VoxCPM..."
-        Run-Git "clone https://github.com/wildminder/ComfyUI-VoxCPM `"$VoxDir`""
-    }
-    else {
-        Write-Log "VoxCPM already present, ensuring dependencies..."
-    }
-    
-    if (Test-Path $VoxDir) {
-        Write-Log "Installing VoxCPM dependencies..."
-        if (Test-Path "$VoxDir\requirements.txt") {
-            Run-Pip "install -r `"$VoxDir\requirements.txt`""
-        }
-        Write-Log "[VoxCPM] Requirement check complete."
-    }
-}
-
-# Run the installation
-Install-VoxCPM
-
-# 7.5 Setup Audio Assets
+# 7.4 Setup Audio Assets (if script exists)
 Write-Log "`n[Audio Setup] Configuring TTS assets..."
 $AudioScript = Join-Path $ScriptPath "setup_tts_audio.py"
 if (Test-Path $AudioScript) {
     Start-Process -FilePath $PyExe -ArgumentList "$AudioScript" -NoNewWindow -Wait
     Write-Log "Audio assets configured."
-}
-else {
-    Write-Log "WARNING: Audio setup script not found at $AudioScript"
 }
 
 Pause-Step
@@ -673,113 +610,6 @@ if (Test-Path $SrcLoraDir) {
 else {
     Write-Log "Warning: Bundled LoRAs not found in assets. Skipping."
 }
-
-Pause-Step
-
-# ============================================================================ 
-# 8.6 INSTALL CHARACTER WORKFLOW NODES (Optional but Recommended)
-# ============================================================================ 
-
-
-# 7.6 Install WanVideo Wrapper (Required for LipSync)
-function Install-WanVideo {
-    Write-Log "`n[WanVideo] Setting up WanVideo Wrapper..."
-    $WanDir = Join-Path $CustomNodesDir "ComfyUI-WanVideo-Wrapper"
-    
-    if (-not (Test-Path $WanDir)) {
-        Write-Log "Cloning WanVideo Wrapper..."
-        Run-Git "clone https://github.com/Kijai/ComfyUI-WanVideoWrapper.git `"$WanDir`""
-        
-        if (Test-Path "$WanDir\requirements.txt") {
-            Write-Log "Installing WanVideo requirements..."
-            Run-Pip "install -r `"$WanDir\requirements.txt`""
-        }
-    }
-    else {
-        Write-Log "WanVideo Wrapper already installed."
-    }
-}
-
-
-Install-WanVideo
-
-# 7.7 Install Fill-Nodes (Required for LipSync Audio Crop)
-function Install-FillNodes {
-    Write-Log "`n[FillNodes] Setting up Fill-Nodes (Audio tools)..."
-    $FillDir = Join-Path $CustomNodesDir "ComfyUI_Fill-Nodes"
-    
-    if (-not (Test-Path $FillDir)) {
-        Write-Log "Cloning Fill-Nodes..."
-        Run-Git "clone https://github.com/filliptm/ComfyUI_Fill-Nodes.git `"$FillDir`""
-        
-        if (Test-Path "$FillDir\requirements.txt") {
-            Write-Log "Installing Fill-Nodes requirements..."
-            Run-Pip "install -r `"$FillDir\requirements.txt`""
-        }
-    }
-    else {
-        Write-Log "Fill-Nodes already installed."
-    }
-}
-
-Install-FillNodes
-
-Write-Log "`n[ComfyUI 8.5/9] Installing Character Workflow Nodes..."
-Write-Log "  - ComfyUI-Impact-Pack (SAM, FaceDetailer)"
-Write-Log "  - ComfyUI InstantID (facial identity)"
-Write-Log "  - AutoCropFaces (intelligent detection)"
-
-$CustomNodesDir = Join-Path $ComfyDir "custom_nodes"
-
-# Helper function for node installation
-function Install-CustomNode {
-    param([string]$NodeName, [string]$RepoUrl, [string]$FolderName)
-    
-    $NodeDir = Join-Path $CustomNodesDir $FolderName
-    
-    if (-not (Test-Path $NodeDir)) {
-        Write-Log "  Installing $NodeName..."
-        try {
-            Set-Location $CustomNodesDir
-            & git clone $RepoUrl $FolderName
-            
-            # Install requirements if requirements.txt exists and is not empty
-            $ReqFile = Join-Path $NodeDir "requirements.txt"
-            if (Test-Path $ReqFile) {
-                $reqContent = Get-Content $ReqFile -Raw
-                if ($reqContent.Trim().Length -gt 0) {
-                    Write-Log "    Installing dependencies for $NodeName..."
-                    & $PyExe -m pip install -r $ReqFile
-                }
-                else {
-                    Write-Log "    requirements.txt is empty, skipping pip install."
-                }
-            }
-            else {
-                Write-Log "    No requirements.txt found, skipping pip install."
-            }
-            
-            Write-Log "  ✓ $NodeName installed successfully"
-        }
-        catch {
-            Write-Log "  ⚠️  WARNING: Failed to install $NodeName (non-fatal)"
-            Write-Log "    You can install it manually later or skip it"
-        }
-    }
-    else {
-        Write-Log "  ✓ $NodeName already installed"
-    }
-}
-
-
-# Install character workflow nodes
-Install-CustomNode "ComfyUI-Impact-Pack" "https://github.com/ltdrdata/ComfyUI-Impact-Pack.git" "ComfyUI-Impact-Pack"
-Install-CustomNode "ComfyUI InstantID" "https://github.com/cubiq/ComfyUI_InstantID.git" "comfyui_instantid"
-Install-CustomNode "AutoCropFaces" "https://github.com/liusida/ComfyUI-AutoCropFaces.git" "ComfyUI-AutoCropFaces"
-Install-CustomNode "ComfyUI_LayerStyle_Advance" "https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git" "ComfyUI_LayerStyle_Advance"
-
-Set-Location $RootPath
-Write-Log "Character workflow nodes installation complete."
 
 Pause-Step
 
