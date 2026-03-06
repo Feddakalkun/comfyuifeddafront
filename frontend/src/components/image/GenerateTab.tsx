@@ -22,18 +22,15 @@ export const GenerateTab = ({ isGenerating, setIsGenerating }: GenerateTabProps)
     const [steps, setSteps] = useState(9);
     const [cfg, setCfg] = useState(1);
     const [dimensions, setDimensions] = useState('1024x1536');
-    const [style, setStyle] = useState('No Style');
     const [seed, setSeed] = useState(-1);
     const [selectedLoras, setSelectedLoras] = useState<SelectedLora[]>([]);
     const [availableLoras, setAvailableLoras] = useState<string[]>([]);
-    const [availableStyles, setAvailableStyles] = useState<string[]>(['No Style']);
 
     useEffect(() => {
         const load = async () => {
             try {
-                const [loras, styles] = await Promise.all([comfyService.getLoras(), comfyService.getStyles()]);
+                const loras = await comfyService.getLoras();
                 setAvailableLoras(loras);
-                if (styles.length > 0) setAvailableStyles(styles);
             } catch (err) { console.error("Failed to load data", err); }
         };
         load();
@@ -74,9 +71,6 @@ export const GenerateTab = ({ isGenerating, setIsGenerating }: GenerateTabProps)
             const [w, h] = dimensions.split('x').map(Number);
             workflow["30"].inputs.width = w;
             workflow["30"].inputs.height = h;
-
-            // Node 31: Style
-            workflow["31"].inputs.styles = style;
 
             // Node 126: Power Lora Loader
             if (selectedLoras.length > 0) {
@@ -148,14 +142,6 @@ export const GenerateTab = ({ isGenerating, setIsGenerating }: GenerateTabProps)
                                 <option value="1504x1504">1504x1504 (1:1 Large)</option>
                                 <option value="1920x1080">1920x1080 (16:9)</option>
                                 <option value="1080x1920">1080x1920 (9:16)</option>
-                            </select>
-                        </div>
-
-                        {/* Style */}
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-2">Style</label>
-                            <select value={style} onChange={(e) => setStyle(e.target.value)} className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-white/20">
-                                {availableStyles.map((s) => (<option key={s} value={s}>{s}</option>))}
                             </select>
                         </div>
 

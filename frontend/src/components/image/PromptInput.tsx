@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Eye, Upload, X, Loader2, BookOpen } from 'lucide-react';
+import { Sparkles, Eye, Upload, Loader2, BookOpen } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { ollamaService } from '../../services/ollamaService';
 import { assistantService } from '../../services/assistantService';
@@ -20,7 +20,7 @@ export const PromptInput = ({ prompt, setPrompt, negativePrompt, setNegativeProm
     const { toast } = useToast();
     const [isEnhancing, setIsEnhancing] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [isDescribing, setIsDescribing] = useState(false);
+    const [, setIsDescribing] = useState(false);
     const [showPromptLibrary, setShowPromptLibrary] = useState(false);
 
     const enhancePrompt = async () => {

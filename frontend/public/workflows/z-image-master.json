@@ -32,7 +32,7 @@
   "6": {
     "inputs": {
       "text": [
-        "32",
+        "33",
         0
       ],
       "clip": [
@@ -48,7 +48,7 @@
   "7": {
     "inputs": {
       "text": [
-        "35",
+        "34",
         0
       ],
       "clip": [
@@ -164,12 +164,12 @@
     },
     "class_type": "HuggingFaceDownloader",
     "_meta": {
-      "title": "🤗 HuggingFace Model Downloader Pro"
+      "title": "\u00f0\u0178\u00a4\u2014 HuggingFace Model Downloader Pro"
     }
   },
   "29": {
     "inputs": {
-      "text": "=== DOWNLOAD REPORT ===\nTotal files: 6\nSuccessful downloads: 0\nAlready existed: 6\nInterrupted: 0\nFailed: 0\nMax concurrent: 3\nSpeed limit: Unlimited\nResume enabled: True\nValidation enabled: False\nAuto-organize: False\n\nDetails:\n✓ z_image_turbo_bf16.safetensors: Already exists (11.46 GB)\n✓ qwen_3_4b.safetensors: Already exists (7.49 GB)\n✓ z-image-vae.safetensors: Already exists (319.77 MB)\n✓ Z-Image-Turbo-Fun-Controlnet-Union.safetensors: Already exists (2.89 GB)\n✓ lotus-depth-g-v2-0-disparity.safetensors: Already exists (3.23 GB)\n✓ vae-ft-mse-840000-ema-pruned.safetensors: Already exists (319.14 MB)",
+      "text": "=== DOWNLOAD REPORT ===\nTotal files: 6\nSuccessful downloads: 0\nAlready existed: 6\nInterrupted: 0\nFailed: 0\nMax concurrent: 3\nSpeed limit: Unlimited\nResume enabled: True\nValidation enabled: False\nAuto-organize: False\n\nDetails:\n\u00e2\u0153\u201c z_image_turbo_bf16.safetensors: Already exists (11.46 GB)\n\u00e2\u0153\u201c qwen_3_4b.safetensors: Already exists (7.49 GB)\n\u00e2\u0153\u201c z-image-vae.safetensors: Already exists (319.77 MB)\n\u00e2\u0153\u201c Z-Image-Turbo-Fun-Controlnet-Union.safetensors: Already exists (2.89 GB)\n\u00e2\u0153\u201c lotus-depth-g-v2-0-disparity.safetensors: Already exists (3.23 GB)\n\u00e2\u0153\u201c vae-ft-mse-840000-ema-pruned.safetensors: Already exists (319.14 MB)",
       "anything": [
         "28",
         0
@@ -189,35 +189,7 @@
     },
     "class_type": "AspectRatioImageSize",
     "_meta": {
-      "title": "🧩 Aspect Ratio Image Size"
-    }
-  },
-  "31": {
-    "inputs": {
-      "styles": "No Style",
-      "csv_file_path": "styles.csv"
-    },
-    "class_type": "Load Styles CSV",
-    "_meta": {
-      "title": "Load Styles CSV"
-    }
-  },
-  "32": {
-    "inputs": {
-      "delimiter": ", ",
-      "clean_whitespace": "true",
-      "text_a": [
-        "33",
-        0
-      ],
-      "text_b": [
-        "31",
-        0
-      ]
-    },
-    "class_type": "Text Concatenate",
-    "_meta": {
-      "title": "Text Concatenate"
+      "title": "\u00f0\u0178\u00a7\u00a9 Aspect Ratio Image Size"
     }
   },
   "33": {
@@ -238,30 +210,12 @@
       "title": "NEGATIVE PROMPT"
     }
   },
-  "35": {
-    "inputs": {
-      "delimiter": ", ",
-      "clean_whitespace": "true",
-      "text_a": [
-        "34",
-        0
-      ],
-      "text_b": [
-        "31",
-        1
-      ]
-    },
-    "class_type": "Text Concatenate",
-    "_meta": {
-      "title": "Text Concatenate"
-    }
-  },
   "126": {
     "inputs": {
       "PowerLoraLoaderHeaderWidget": {
         "type": "PowerLoraLoaderHeaderWidget"
       },
-      "➕ Add Lora": "",
+      "\u00e2\u017e\u2022 Add Lora": "",
       "model": [
         "16",
         0

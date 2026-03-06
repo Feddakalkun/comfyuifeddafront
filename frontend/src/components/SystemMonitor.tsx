@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { comfyService } from '../services/comfyService';
-import { Cpu, Trash2, Activity, HardDrive, Zap } from 'lucide-react';
+import { Trash2, Zap } from 'lucide-react';
 
 export const SystemMonitor = () => {
     const [stats, setStats] = useState<any>(null);

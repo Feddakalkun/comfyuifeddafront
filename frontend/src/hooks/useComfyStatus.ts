@@ -7,7 +7,7 @@ export const useComfyStatus = (pollInterval: number = 3000) => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        let intervalId: NodeJS.Timeout;
+        let intervalId: ReturnType<typeof setInterval>;
 
         const checkStatus = async () => {
             try {

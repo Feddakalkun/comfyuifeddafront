@@ -29,16 +29,6 @@
       "title": "Show Any"
     }
   },
-  "153": {
-    "inputs": {
-      "styles": "No Style",
-      "csv_file_path": "styles.csv"
-    },
-    "class_type": "Load Styles CSV",
-    "_meta": {
-      "title": "Load Styles CSV"
-    }
-  },
   "154": {
     "inputs": {
       "samples": [
@@ -53,24 +43,6 @@
     "class_type": "VAEDecode",
     "_meta": {
       "title": "VAE Decode"
-    }
-  },
-  "155": {
-    "inputs": {
-      "delimiter": ", ",
-      "clean_whitespace": "true",
-      "text_a": [
-        "165",
-        0
-      ],
-      "text_b": [
-        "153",
-        0
-      ]
-    },
-    "class_type": "Text Concatenate",
-    "_meta": {
-      "title": "Text Concatenate"
     }
   },
   "156": {
@@ -182,8 +154,8 @@
   "161": {
     "inputs": {
       "text": [
-        "153",
-        1
+        "200",
+        0
       ],
       "clip": [
         "167",
@@ -339,7 +311,7 @@
   "171": {
     "inputs": {
       "text": [
-        "155",
+        "165",
         0
       ],
       "clip": [
@@ -389,6 +361,15 @@
     "class_type": "LayerMask: PersonMaskUltra",
     "_meta": {
       "title": "LayerMask: PersonMaskUltra(Advance)"
+    }
+  },
+  "200": {
+    "inputs": {
+      "string": "blurry, low quality, distorted"
+    },
+    "class_type": "String Literal",
+    "_meta": {
+      "title": "NEGATIVE PROMPT"
     }
   }
 }

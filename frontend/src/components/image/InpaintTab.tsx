@@ -96,6 +96,9 @@ export const InpaintTab = ({ isGenerating, setIsGenerating }: InpaintTabProps) =
             // Node 164: LoadImage
             workflow["164"].inputs.image = uploaded.name;
 
+            // Node 200: Negative Prompt
+            workflow["200"].inputs.string = negativePrompt;
+
             // Node 173: PersonMaskUltra — mask regions
             workflow["173"].inputs.face = maskFace;
             workflow["173"].inputs.hair = maskHair;

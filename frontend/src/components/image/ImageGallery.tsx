@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Maximize2, X, Loader2, Trash2, Video } from 'lucide-react';
+import { Sparkles, Maximize2, X, Trash2, Video } from 'lucide-react';
 import { comfyService } from '../../services/comfyService';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { useToast } from '../ui/Toast';

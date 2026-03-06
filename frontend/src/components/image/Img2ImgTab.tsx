@@ -23,10 +23,8 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating }: Img2ImgTabProps) =
     const [steps, setSteps] = useState(9);
     const [cfg, setCfg] = useState(1);
     const [denoise, setDenoise] = useState(0.5);
-    const [style, setStyle] = useState('No Style');
     const [selectedLoras, setSelectedLoras] = useState<SelectedLora[]>([]);
     const [availableLoras, setAvailableLoras] = useState<string[]>([]);
-    const [availableStyles, setAvailableStyles] = useState<string[]>(['No Style']);
 
     const [inputImage, setInputImage] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -34,9 +32,8 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating }: Img2ImgTabProps) =
     useEffect(() => {
         const load = async () => {
             try {
-                const [loras, styles] = await Promise.all([comfyService.getLoras(), comfyService.getStyles()]);
+                const loras = await comfyService.getLoras();
                 setAvailableLoras(loras);
-                if (styles.length > 0) setAvailableStyles(styles);
             } catch (err) { console.error("Failed to load data", err); }
         };
         load();
@@ -90,9 +87,6 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating }: Img2ImgTabProps) =
 
             // Node 38: Negative Prompt
             workflow["38"].inputs.string = negativePrompt;
-
-            // Node 51: Style
-            workflow["51"].inputs.styles = style;
 
             // Node 52: LoadImage
             workflow["52"].inputs.image = uploaded.name;
@@ -170,12 +164,6 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating }: Img2ImgTabProps) =
                             <input type="range" min="1" max="20" step="0.5" value={cfg} onChange={(e) => setCfg(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
                         </div>
 
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-2">Style</label>
-                            <select value={style} onChange={(e) => setStyle(e.target.value)} className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-white/20">
-                                {availableStyles.map((s) => (<option key={s} value={s}>{s}</option>))}
-                            </select>
-                        </div>
                     </div>
                 )}
             </div>

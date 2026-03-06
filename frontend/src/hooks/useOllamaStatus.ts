@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { comfyService } from '../services/comfyService';
 
 export const useOllamaStatus = () => {
     const [isConnected, setIsConnected] = useState(false);

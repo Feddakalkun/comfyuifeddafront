@@ -1,6 +1,6 @@
 // Compact Ollama model manager for the header area
 import { useState, useEffect } from 'react';
-import { Download, BrainCircuit, Eye, Loader2, X, ChevronDown } from 'lucide-react';
+import { Download, BrainCircuit, Eye, Loader2, ChevronDown } from 'lucide-react';
 import { ollamaService } from '../services/ollamaService';
 import { useToast } from './ui/Toast';
 import type { OllamaModel, OllamaProgress } from '../services/ollamaService';

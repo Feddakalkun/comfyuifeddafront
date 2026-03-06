@@ -1,6 +1,6 @@
 // Dedicated Videos Page — cinematic Netflix-style layout
 import { useState, useEffect, useRef } from 'react';
-import { Film, Play, Pause, Download, Trash2, Search, Maximize2 } from 'lucide-react';
+import { Film, Play, Download, Trash2, Search, Maximize2 } from 'lucide-react';
 import { useToast } from '../components/ui/Toast';
 import { BACKEND_API } from '../config/api';
 
@@ -24,7 +24,6 @@ export const VideosPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedVideo, setExpandedVideo] = useState<VideoFile | null>(null);
-    const [playingId, setPlayingId] = useState<string | null>(null);
     const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
 
     useEffect(() => {
@@ -73,23 +72,6 @@ export const VideosPage = () => {
             toast(`Deleted ${video.filename}`, 'success');
         } catch {
             toast('Failed to delete video', 'error');
-        }
-    };
-
-    const togglePlay = (filename: string) => {
-        const el = videoRefs.current.get(filename);
-        if (!el) return;
-
-        if (playingId === filename) {
-            el.pause();
-            setPlayingId(null);
-        } else {
-            // Pause any other playing video
-            if (playingId) {
-                videoRefs.current.get(playingId)?.pause();
-            }
-            el.play();
-            setPlayingId(filename);
         }
     };
 

@@ -15,7 +15,7 @@
   "5": {
     "inputs": {
       "text": [
-        "121",
+        "147",
         0
       ],
       "speak_and_recognation": {
@@ -348,57 +348,6 @@
       "title": "GrowMask"
     }
   },
-  "114": {
-    "inputs": {
-      "delimiter": ", ",
-      "clean_whitespace": "true",
-      "text_a": [
-        "117",
-        0
-      ],
-      "text_b": [
-        "118",
-        0
-      ]
-    },
-    "class_type": "Text Concatenate",
-    "_meta": {
-      "title": "Text Concatenate"
-    }
-  },
-  "117": {
-    "inputs": {
-      "text": [
-        "147",
-        0
-      ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
-    },
-    "class_type": "Text Multiline",
-    "_meta": {
-      "title": "Prompt"
-    }
-  },
-  "118": {
-    "inputs": {
-      "text": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
-    },
-    "class_type": "Text Multiline",
-    "_meta": {
-      "title": "Additional Info"
-    }
-  },
   "119": {
     "inputs": {
       "text": "",
@@ -412,19 +361,6 @@
     "class_type": "Text Multiline",
     "_meta": {
       "title": "Detailer Face Prompt"
-    }
-  },
-  "121": {
-    "inputs": {
-      "text_0": "",
-      "text": [
-        "114",
-        0
-      ]
-    },
-    "class_type": "ShowText|pysssss",
-    "_meta": {
-      "title": "Debug Text 1"
     }
   },
   "124": {

@@ -91,8 +91,12 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
             workflow["46"].inputs.steps = steps;
             workflow["46"].inputs.cfg = cfg;
 
-            // Node 147: Main prompt
-            workflow["147"].inputs.text = finalPrompt;
+            // Node 147: Main prompt (concat with person B description if dual mode)
+            let fullPrompt = finalPrompt;
+            if (dualPersonMode && personB.description) {
+                fullPrompt = `${finalPrompt}, ${personB.description}`;
+            }
+            workflow["147"].inputs.text = fullPrompt;
 
             // Node 6: Negative prompt
             workflow["6"].inputs.text = negativePrompt;
@@ -122,7 +126,6 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
 
                 // Detailer face descriptions
                 workflow["119"].inputs.text = personA.description;
-                workflow["118"].inputs.text = personB.description;
 
                 // Save to dual person path
                 workflow["145"].inputs.filename_prefix = "FEDDA/Image/z-image-2person";

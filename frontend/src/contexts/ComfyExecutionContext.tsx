@@ -73,7 +73,7 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
 
     const nodeMapRef = useRef<Record<string, { name: string; classType: string }>>({});
     const executedNodesRef = useRef<Set<string>>(new Set());
-    const doneTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const doneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const activePromptIdRef = useRef<string | null>(null);
 
     // Connect WebSocket once on mount
@@ -193,21 +193,6 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
             setCurrentNodeName('Error');
             throw err;
         }
-    }, []);
-
-    // Public method to set error from external sources (e.g. fetch error responses)
-    const setExecutionError = useCallback((err: ExecutionError) => {
-        setState('error');
-        setError(err);
-        setCurrentNodeName('Error');
-
-        // Auto-clear after 10s
-        if (doneTimerRef.current) clearTimeout(doneTimerRef.current);
-        doneTimerRef.current = setTimeout(() => {
-            setState('idle');
-            setCurrentNodeName('');
-            setError(null);
-        }, 10000);
     }, []);
 
     return (

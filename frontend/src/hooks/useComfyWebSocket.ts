@@ -15,12 +15,12 @@ export const useComfyWebSocket = (
     useEffect(() => {
         if (!enabled) return;
 
-        comfyService.connectWebSocket((data) => {
-            messageHandler.current(data);
+        const disconnect = comfyService.connectWebSocket({
+            onStatus: (data: any) => messageHandler.current(data),
         });
 
         return () => {
-            comfyService.disconnectWebSocket();
+            disconnect();
         };
     }, [enabled]);
 };
