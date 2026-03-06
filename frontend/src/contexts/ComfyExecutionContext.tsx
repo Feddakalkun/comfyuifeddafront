@@ -93,6 +93,12 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
                     setProgress(100);
                     setIsDownloaderNode(false);
 
+                    // Backup: ensure lastCompletedPromptId is set even if 'executed' event was missed
+                    // (happens on first run when WebSocket reconnects due to React Strict Mode)
+                    if (activePromptIdRef.current) {
+                        setLastCompletedPromptId(activePromptIdRef.current);
+                    }
+
                     // Fade to idle after 5s
                     doneTimerRef.current = setTimeout(() => {
                         setState('idle');

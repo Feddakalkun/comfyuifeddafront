@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Maximize2, X, Trash2, Video } from 'lucide-react';
 import { comfyService } from '../../services/comfyService';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
@@ -44,8 +44,14 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
     }, [generatedImages, galleryKey]);
 
     // Fetch results when execution completes
+    const lastFetchedPromptRef = useRef<string | null>(null);
+
     useEffect(() => {
         if (!lastCompletedPromptId) return;
+        // Skip if we already fetched for this prompt
+        if (lastFetchedPromptRef.current === lastCompletedPromptId) return;
+        lastFetchedPromptRef.current = lastCompletedPromptId;
+
         const fetchResults = async () => {
             try {
                 await new Promise(r => setTimeout(r, 800));
@@ -73,6 +79,16 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
         };
         fetchResults();
     }, [lastCompletedPromptId]);
+
+    // Safety fallback: if execution finished but isGenerating is still stuck, force reset
+    useEffect(() => {
+        if (execState === 'done' && isGenerating) {
+            const timer = setTimeout(() => {
+                setIsGenerating(false);
+            }, 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [execState, isGenerating]);
 
     const handleDeleteImage = async (imageUrl: string, index: number) => {
         try {
