@@ -6,6 +6,7 @@ import { useToast } from '../ui/Toast';
 import { PromptInput } from './PromptInput';
 import { LoraStack } from './LoraStack';
 import type { SelectedLora } from './LoraStack';
+import { DimensionSelector } from './DimensionSelector';
 
 interface GenerateTabProps {
     isGenerating: boolean;
@@ -133,17 +134,7 @@ export const GenerateTab = ({ isGenerating, setIsGenerating }: GenerateTabProps)
                         </div>
 
                         {/* Dimensions */}
-                        <div>
-                            <label className="block text-xs text-slate-400 mb-2">Dimensions</label>
-                            <select value={dimensions} onChange={(e) => setDimensions(e.target.value)} className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-white/20">
-                                <option value="1024x1536">1024x1536 (2:3 Portrait)</option>
-                                <option value="1536x1024">1536x1024 (3:2 Landscape)</option>
-                                <option value="1024x1024">1024x1024 (1:1 Square)</option>
-                                <option value="1504x1504">1504x1504 (1:1 Large)</option>
-                                <option value="1920x1080">1920x1080 (16:9)</option>
-                                <option value="1080x1920">1080x1920 (9:16)</option>
-                            </select>
-                        </div>
+                        <DimensionSelector dimensions={dimensions} setDimensions={setDimensions} />
 
                         {/* Seed */}
                         <div>

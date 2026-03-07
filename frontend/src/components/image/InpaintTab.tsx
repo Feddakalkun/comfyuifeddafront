@@ -7,6 +7,7 @@ import { PromptInput } from './PromptInput';
 import { LoraStack } from './LoraStack';
 import type { SelectedLora } from './LoraStack';
 import { ImageUpload } from './ImageUpload';
+import { DimensionSelector } from './DimensionSelector';
 
 interface InpaintTabProps {
     isGenerating: boolean;
@@ -23,6 +24,7 @@ export const InpaintTab = ({ isGenerating, setIsGenerating }: InpaintTabProps) =
     const [steps, setSteps] = useState(6);
     const [cfg, setCfg] = useState(1);
     const [denoise, setDenoise] = useState(0.77);
+    const [dimensions, setDimensions] = useState('1024x1024');
     const [selectedLoras, setSelectedLoras] = useState<SelectedLora[]>([]);
     const [availableLoras, setAvailableLoras] = useState<string[]>([]);
 
@@ -106,6 +108,11 @@ export const InpaintTab = ({ isGenerating, setIsGenerating }: InpaintTabProps) =
             workflow["173"].inputs.clothes = maskClothes;
             workflow["173"].inputs.accessories = maskAccessories;
             workflow["173"].inputs.background = maskBackground;
+
+            // Node 159: Inpaint Crop and Stitch — output target dimensions
+            const [w, h] = dimensions.split('x').map(Number);
+            workflow["159"].inputs.output_target_width = w;
+            workflow["159"].inputs.output_target_height = h;
 
             // Node 170: Power Lora Loader
             if (selectedLoras.length > 0) {
@@ -205,6 +212,9 @@ export const InpaintTab = ({ isGenerating, setIsGenerating }: InpaintTabProps) =
                             <label className="block text-xs text-slate-400 mb-2">CFG Scale: {cfg}</label>
                             <input type="range" min="1" max="20" step="0.5" value={cfg} onChange={(e) => setCfg(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
                         </div>
+
+                        {/* Output Dimensions */}
+                        <DimensionSelector dimensions={dimensions} setDimensions={setDimensions} />
                     </div>
                 )}
             </div>

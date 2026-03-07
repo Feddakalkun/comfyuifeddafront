@@ -4,6 +4,7 @@ import { comfyService } from '../../services/comfyService';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { useToast } from '../ui/Toast';
 import { PromptInput } from './PromptInput';
+import { DimensionSelector } from './DimensionSelector';
 
 interface PersonConfig {
     lora: string;
@@ -26,6 +27,7 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [steps, setSteps] = useState(9);
     const [cfg, setCfg] = useState(1.1);
+    const [dimensions, setDimensions] = useState('768x1152');
     const [dualPersonMode, setDualPersonMode] = useState(false);
 
     const [personA, setPersonA] = useState<PersonConfig>({ lora: '', strength: 0.95, description: '', label: 'man' });
@@ -101,9 +103,15 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
             // Node 6: Negative prompt
             workflow["6"].inputs.text = negativePrompt;
 
-            // Node 19: Dimensions (HQ uses fixed 768x1152)
-            workflow["19"].inputs.width = 768;
-            workflow["19"].inputs.height = 1152;
+            // Node 19: Dimensions
+            const [w, h] = dimensions.split('x').map(Number);
+            workflow["19"].inputs.width = w;
+            workflow["19"].inputs.height = h;
+
+            // Detailer guide size matches largest dimension
+            const maxDim = Math.max(w, h);
+            workflow["102"].inputs.guide_size = maxDim;
+            workflow["102"].inputs.max_size = maxDim;
 
             // Detailer seed
             workflow["102"].inputs.seed = Math.floor(Math.random() * 1000000000000000);
@@ -255,6 +263,9 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
                             <label className="block text-xs text-slate-400 mb-2">CFG Scale: {cfg}</label>
                             <input type="range" min="1" max="20" step="0.5" value={cfg} onChange={(e) => setCfg(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
                         </div>
+
+                        {/* Dimensions */}
+                        <DimensionSelector dimensions={dimensions} setDimensions={setDimensions} />
                     </div>
                 )}
             </div>
