@@ -77,33 +77,47 @@ function App() {
             {/* Live Execution Status */}
             <ExecutionStatusBar />
 
-            {/* Content Area */}
+            {/* Content Area — keep-alive pattern preserves state across tab switches */}
             <div className="flex-1 overflow-auto relative z-0">
-              {activeTab === 'image' && currentModel.id === 'qwen-angle' && (
-                <QwenAnglePage
-                  modelId={currentModel.id}
-                  modelLabel={currentModel.label}
-                />
-              )}
+              {/* Image Pages */}
+              <div className="h-full" style={{ display: activeTab === 'image' && currentModel.id === 'qwen-angle' ? undefined : 'none' }}>
+                <QwenAnglePage modelId={currentModel.id} modelLabel={currentModel.label} />
+              </div>
+              <div className="h-full" style={{ display: activeTab === 'image' && currentModel.id !== 'qwen-angle' ? undefined : 'none' }}>
+                <ImagePage modelId={currentModel.id} modelLabel={currentModel.label} />
+              </div>
 
-              {activeTab === 'image' && currentModel.id !== 'qwen-angle' && (
-                <ImagePage
-                  modelId={currentModel.id}
-                  modelLabel={currentModel.label}
-                />
-              )}
+              {/* Video Page */}
+              <div className="h-full" style={{ display: activeTab === 'video' ? undefined : 'none' }}>
+                <VideoPage modelId={currentModel.id} modelLabel={currentModel.label} />
+              </div>
 
-              {activeTab === 'video' && (
-                <VideoPage
-                  modelId={currentModel.id}
-                  modelLabel={currentModel.label}
-                />
-              )}
-
-              {activeTab === 'chat' && (
+              {/* Chat Page */}
+              <div className="h-full" style={{ display: activeTab === 'chat' ? undefined : 'none' }}>
                 <ChatPage />
-              )}
+              </div>
 
+              {/* Gallery Page */}
+              <div className="h-full" style={{ display: activeTab === 'gallery' ? undefined : 'none' }}>
+                <GalleryPage />
+              </div>
+
+              {/* Videos Page */}
+              <div className="h-full" style={{ display: activeTab === 'videos' ? undefined : 'none' }}>
+                <VideosPage />
+              </div>
+
+              {/* Library Page */}
+              <div className="h-full" style={{ display: activeTab === 'library' ? undefined : 'none' }}>
+                <LibraryPage />
+              </div>
+
+              {/* Settings Page */}
+              <div className="h-full" style={{ display: activeTab === 'settings' ? undefined : 'none' }}>
+                <SettingsPage />
+              </div>
+
+              {/* Lightweight pages — conditional render is fine */}
               {activeTab === 'audio' && (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center text-slate-500">
@@ -112,7 +126,6 @@ function App() {
                   </div>
                 </div>
               )}
-
 
               {activeTab === 'logs' && (
                 <div className="bg-[#121218] border border-white/5 rounded-2xl p-6 h-full overflow-auto font-mono text-xs">
@@ -123,14 +136,6 @@ function App() {
                   </div>
                 </div>
               )}
-
-              {activeTab === 'gallery' && <GalleryPage />}
-
-              {activeTab === 'videos' && <VideosPage />}
-
-              {activeTab === 'library' && <LibraryPage />}
-
-              {activeTab === 'settings' && <SettingsPage />}
             </div>
           </main>
         </div>

@@ -52,9 +52,8 @@ export const MODELS = {
         { id: 'qwen-angle', label: 'Qwen Multi-Angle', icon: 'Box' },
     ],
     VIDEO: [
-        { id: 'wan2.1', label: 'Wan 2.1', icon: 'Video' },
-        { id: 'wan2.2', label: 'Wan 2.2', icon: 'Video' },
-        { id: 'ltx-2', label: 'LTX-2', icon: 'Video' },
+        { id: 'lipsync', label: 'Lipsync', icon: 'Mic2' },
+        { id: 'scene-builder', label: 'Scene Builder', icon: 'Film' },
     ],
     AUDIO: [
         { id: 'generic', label: 'Coming Soon', icon: 'Music' },

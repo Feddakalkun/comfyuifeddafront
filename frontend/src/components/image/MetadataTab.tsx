@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Upload, X, Play, FileText, Copy, Check, ChevronDown } from 'lucide-react';
+import { X, Play, FileText, Copy, Check, ChevronDown } from 'lucide-react';
 import { comfyService } from '../../services/comfyService';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { useToast } from '../ui/Toast';

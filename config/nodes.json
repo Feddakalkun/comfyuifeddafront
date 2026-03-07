@@ -81,6 +81,43 @@
   },
 
   {
+    "name": "ComfyUI-LTXVideo",
+    "url": "https://github.com/Lightricks/ComfyUI-LTXVideo.git",
+    "folder": "ComfyUI-LTXVideo",
+    "note": "LTX-2 video nodes — LTXVGemmaCLIPModelLoader, LTXVPreprocess, advanced samplers, upscalers, IC-LoRA support"
+  },
+  {
+    "name": "ComfyUI-KJNodes",
+    "url": "https://github.com/kijai/ComfyUI-KJNodes.git",
+    "folder": "ComfyUI-KJNodes",
+    "note": "VAELoaderKJ, ImageResizeKJv2 — used in LTX-2 lipsync workflow"
+  },
+  {
+    "name": "ComfyUI-MelBandRoFormer",
+    "url": "https://github.com/kijai/ComfyUI-MelBandRoFormer.git",
+    "folder": "ComfyUI-MelBandRoFormer",
+    "note": "Audio vocal separation — MelBandRoFormerModelLoader, MelBandRoFormerSampler for LTX-2 lipsync"
+  },
+{
+    "name": "ComfyUI_Comfyroll_CustomNodes",
+    "url": "https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git",
+    "folder": "ComfyUI_Comfyroll_CustomNodes",
+    "note": "CR Prompt Text — text input node used in LTX-2 lipsync workflow"
+  },
+  {
+    "name": "ComfyUI-Image-Selector",
+    "url": "https://github.com/SLAPaper/ComfyUI-Image-Selector.git",
+    "folder": "ComfyUI-Image-Selector",
+    "note": "ImageSelector — frame selection in LTX-2 workflows"
+  },
+  {
+    "name": "comfyui-various",
+    "url": "https://github.com/jamesWalker55/comfyui-various.git",
+    "folder": "comfyui-various",
+    "note": "JWFloatToInteger — type conversion used in LTX-2 lipsync workflow"
+  },
+
+  {
     "name": "ComfyUI-WanVideoWrapper",
     "url": "https://github.com/kijai/ComfyUI-WanVideoWrapper.git",
     "folder": "ComfyUI-WanVideoWrapper",

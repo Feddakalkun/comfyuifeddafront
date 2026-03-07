@@ -221,6 +221,63 @@ export const assistantService = {
         }
     },
 
+    // Generate 6 consistent image prompts for scene building
+    generateScenePrompts: async (
+        modelName: string,
+        description: string,
+        loraStyle: string
+    ): Promise<{ prompts: string[]; seed: number }> => {
+        const systemPrompt = `You are a cinematic storyboard designer. Generate exactly 6 image prompts for keyframes of a video sequence.
+
+Requirements:
+- Each prompt describes ONE distinct frame/moment in the sequence
+- Same character/subject throughout for visual consistency
+- Vary the pose, action, and camera angle across the 6 frames to create motion
+- Include style reference: "${loraStyle || 'photorealistic'}"
+- Generate a random seed number (large integer) to be shared across all images
+- Output ONLY valid JSON, no extra text
+
+JSON format:
+{
+  "prompts": ["prompt 1", "prompt 2", "prompt 3", "prompt 4", "prompt 5", "prompt 6"],
+  "seed": 123456789012345
+}`;
+
+        try {
+            const response = await fetch('/ollama/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: modelName,
+                    prompt: description,
+                    system: systemPrompt,
+                    stream: false,
+                    format: 'json',
+                    options: { temperature: 0.8 }
+                }),
+            });
+
+            if (!response.ok) throw new Error('Failed to generate scene prompts');
+            const data = await response.json();
+
+            let result = data.response;
+            if (typeof result === 'string') {
+                result = JSON.parse(result);
+            }
+
+            await ollamaService.unloadModel(modelName);
+
+            if (!result.prompts || result.prompts.length !== 6) {
+                throw new Error('AI did not return exactly 6 prompts');
+            }
+
+            return result as { prompts: string[]; seed: number };
+        } catch (error) {
+            console.error('Scene prompt generation failed:', error);
+            throw error;
+        }
+    },
+
     // General Chat
     chat: async (modelName: string, messages: { role: string; content: string; images?: string[] }[]): Promise<string> => {
         try {

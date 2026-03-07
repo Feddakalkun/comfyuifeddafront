@@ -14,7 +14,7 @@ interface ImageGalleryProps {
 }
 
 export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating, setIsGenerating, galleryKey, onSendToTab }: ImageGalleryProps) => {
-    const { state: execState, progress: execProgress, currentNodeName, outputReadyCount, lastOutputImages } = useComfyExecution();
+    const { state: execState, progress: execProgress, currentNodeName, lastOutputImages } = useComfyExecution();
     const { toast } = useToast();
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 

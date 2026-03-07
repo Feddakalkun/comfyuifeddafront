@@ -33,9 +33,9 @@ export const ImagePage = ({ modelId }: ImagePageProps) => {
         return saved ? JSON.parse(saved) : [];
     });
 
-    const handleSendToTab = useCallback((tab: ImageMode, imageUrl: string) => {
+    const handleSendToTab = useCallback((tab: string, imageUrl: string) => {
         setPendingImageUrl(imageUrl);
-        setActiveMode(tab);
+        setActiveMode(tab as ImageMode);
     }, []);
 
     return (

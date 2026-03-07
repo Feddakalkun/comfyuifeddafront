@@ -91,6 +91,18 @@ class ComfyUIService {
     }
 
     /**
+     * Interrupt the currently running workflow execution
+     */
+    async interrupt(): Promise<void> {
+        const response = await fetch(`${COMFY_API.BASE_URL}/interrupt`, {
+            method: 'POST',
+        });
+        if (!response.ok) {
+            throw new Error('Failed to interrupt execution');
+        }
+    }
+
+    /**
      * Get current queue status
      */
     async getQueue(): Promise<{ queue_running: ComfyQueueItem[]; queue_pending: ComfyQueueItem[] }> {

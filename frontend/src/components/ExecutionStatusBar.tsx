@@ -1,7 +1,7 @@
 // Live ComfyUI Execution Status Bar
 // Shows under the header during workflow execution
 import { useComfyExecution } from '../contexts/ComfyExecutionContext';
-import { Loader2, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Loader2, Download, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 
 export const ExecutionStatusBar = () => {
     const {
@@ -12,6 +12,7 @@ export const ExecutionStatusBar = () => {
         error,
         totalNodes,
         completedNodes,
+        cancelExecution,
     } = useComfyExecution();
 
     // Don't render when idle
@@ -97,6 +98,16 @@ export const ExecutionStatusBar = () => {
                     {progress}%
                 </span>
             )}
+
+            {/* Cancel Button */}
+            <button
+                onClick={cancelExecution}
+                className="ml-2 px-2.5 py-1 bg-red-500/10 hover:bg-red-500/25 border border-red-500/30 hover:border-red-500/50 rounded-lg text-red-400 hover:text-red-300 text-xs font-medium transition-all flex items-center gap-1.5 shrink-0"
+                title="Cancel execution"
+            >
+                <XCircle className="w-3.5 h-3.5" />
+                Cancel
+            </button>
         </div>
     );
 };

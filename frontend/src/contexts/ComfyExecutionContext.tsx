@@ -12,6 +12,12 @@ interface ExecutionError {
     nodeId?: string;
 }
 
+interface OutputFile {
+    filename: string;
+    subfolder: string;
+    type: string;
+}
+
 interface ComfyExecutionContextType {
     state: ExecutionState;
     currentNodeName: string;
@@ -23,9 +29,11 @@ interface ComfyExecutionContextType {
     completedNodes: number;
     lastCompletedPromptId: string | null;
     outputReadyCount: number; // increments on each 'executed' event (per output node)
-    lastOutputImages: { filename: string; subfolder: string; type: string }[]; // images from latest executed event
+    lastOutputImages: OutputFile[]; // images from latest executed event
+    lastOutputVideos: OutputFile[]; // videos/gifs from latest executed event
     // Queue a workflow: builds node map, sends to ComfyUI, returns prompt_id
     queueWorkflow: (workflow: Record<string, any>) => Promise<string>;
+    cancelExecution: () => Promise<void>;
 }
 
 const ComfyExecutionContext = createContext<ComfyExecutionContextType | null>(null);
@@ -73,7 +81,8 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
 
     const [lastCompletedPromptId, setLastCompletedPromptId] = useState<string | null>(null);
     const [outputReadyCount, setOutputReadyCount] = useState(0);
-    const [lastOutputImages, setLastOutputImages] = useState<{ filename: string; subfolder: string; type: string }[]>([]);
+    const [lastOutputImages, setLastOutputImages] = useState<OutputFile[]>([]);
+    const [lastOutputVideos, setLastOutputVideos] = useState<OutputFile[]>([]);
 
     const nodeMapRef = useRef<Record<string, { name: string; classType: string }>>({});
     const executedNodesRef = useRef<Set<string>>(new Set());
@@ -145,9 +154,16 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
             onCompleted: (promptId, output) => {
                 activePromptIdRef.current = promptId;
                 setLastCompletedPromptId(promptId);
-                // Accumulate images (don't replace — React batching can lose intermediate values)
+                // Accumulate images
                 if (output?.images && Array.isArray(output.images)) {
                     setLastOutputImages(prev => [...prev, ...output.images]);
+                }
+                // Accumulate videos (VHS_VideoCombine outputs as 'gifs' or 'videos')
+                if (output?.gifs && Array.isArray(output.gifs)) {
+                    setLastOutputVideos(prev => [...prev, ...output.gifs]);
+                }
+                if (output?.videos && Array.isArray(output.videos)) {
+                    setLastOutputVideos(prev => [...prev, ...output.videos]);
                 }
                 setOutputReadyCount(prev => prev + 1);
             },
@@ -163,6 +179,29 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
         return () => disconnect();
     }, []);
 
+    // Cancel/interrupt the current execution
+    const cancelExecution = useCallback(async () => {
+        try {
+            await comfyService.interrupt();
+            // Clear any pending done timer
+            if (doneTimerRef.current) {
+                clearTimeout(doneTimerRef.current);
+                doneTimerRef.current = null;
+            }
+            setState('idle');
+            setCurrentNodeName('');
+            setCurrentNodeId(null);
+            setProgress(0);
+            setError(null);
+            setIsDownloaderNode(false);
+            setCompletedNodes(0);
+            setTotalNodes(0);
+            executedNodesRef.current.clear();
+        } catch (err: any) {
+            console.error('Cancel failed:', err);
+        }
+    }, []);
+
     // Queue workflow with node map building
     const queueWorkflow = useCallback(async (workflow: Record<string, any>): Promise<string> => {
         // Build node map from workflow
@@ -173,6 +212,7 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
         setCompletedNodes(0);
         setOutputReadyCount(0);
         setLastOutputImages([]);
+        setLastOutputVideos([]);
 
         // Reset state
         setState('executing');
@@ -225,7 +265,9 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
             lastCompletedPromptId,
             outputReadyCount,
             lastOutputImages,
+            lastOutputVideos,
             queueWorkflow,
+            cancelExecution,
         }}>
             {children}
         </ComfyExecutionContext.Provider>
