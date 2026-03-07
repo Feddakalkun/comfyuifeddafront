@@ -152,7 +152,7 @@ export const QwenAnglePage = ({ modelId }: QwenAnglePageProps) => {
         <div className="flex flex-col h-full overflow-hidden">
             <ModelDownloader modelGroup="qwen-angle" />
 
-            <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 h-full overflow-y-auto custom-scrollbar">
+            <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 h-full overflow-y-auto custom-scrollbar">
                 {/* Left: Controls */}
                 <div className="lg:col-span-1 space-y-4">
                     {/* Image Upload */}

@@ -44,18 +44,18 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
         }
     }, [generatedImages, galleryKey]);
 
-    // Fetch results when execution completes
+    // Fetch results when execution fully completes (state goes to 'done')
     const lastFetchedPromptRef = useRef<string | null>(null);
 
     useEffect(() => {
+        if (execState !== 'done') return;
         if (!lastCompletedPromptId) return;
-        // Skip if we already fetched for this prompt
         if (lastFetchedPromptRef.current === lastCompletedPromptId) return;
         lastFetchedPromptRef.current = lastCompletedPromptId;
 
         const fetchResults = async () => {
             try {
-                await new Promise(r => setTimeout(r, 800));
+                await new Promise(r => setTimeout(r, 500));
                 const history = await comfyService.getHistory(lastCompletedPromptId);
                 const results = history[lastCompletedPromptId];
                 if (results?.outputs) {
@@ -79,7 +79,7 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
             }
         };
         fetchResults();
-    }, [lastCompletedPromptId]);
+    }, [execState, lastCompletedPromptId]);
 
     // Safety fallback: if execution finished but isGenerating is still stuck, force reset
     useEffect(() => {
@@ -114,55 +114,59 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
 
     return (
         <>
-            <div className="lg:col-span-2 bg-[#121218] border border-white/5 rounded-2xl p-1 flex flex-col items-center justify-center relative overflow-hidden group min-h-[600px] animate-in slide-in-from-right-4 duration-500">
+            <div className="lg:col-span-1 bg-[#121218] border border-white/5 rounded-2xl p-1 flex flex-col relative overflow-hidden group min-h-[400px] animate-in slide-in-from-right-4 duration-500">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
 
-                {isGenerating || execState === 'executing' ? (
-                    <div className="z-10 w-full max-w-md p-8 text-center space-y-6">
-                        <div className="relative w-24 h-24 mx-auto">
-                            <div className="absolute inset-0 border-4 border-white/20 rounded-full animate-pulse"></div>
-                            <div className="absolute inset-0 border-t-4 border-white rounded-full animate-spin"></div>
-                            <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-white animate-bounce" />
+                {/* Compact generating indicator — stays at top, doesn't replace gallery */}
+                {(isGenerating || execState === 'executing') && (
+                    <div className="z-10 w-full px-4 py-3 bg-white/5 border-b border-white/10 flex items-center gap-3 shrink-0">
+                        <div className="relative w-8 h-8 shrink-0">
+                            <div className="absolute inset-0 border-2 border-white/20 rounded-full"></div>
+                            <div className="absolute inset-0 border-t-2 border-white rounded-full animate-spin"></div>
+                            <Sparkles className="absolute inset-0 m-auto w-3.5 h-3.5 text-white" />
                         </div>
-                        <div className="space-y-2">
-                            <p className="text-white font-medium text-lg tracking-tight">{currentNodeName || 'Initializing...'}</p>
-                            {execProgress > 0 && <p className="text-white font-bold text-2xl">{execProgress}%</p>}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-white text-xs font-medium truncate">{currentNodeName || 'Initializing...'}</p>
+                            {execProgress > 0 && (
+                                <div className="w-full h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
+                                    <div className="h-full bg-white transition-all duration-300" style={{ width: `${execProgress}%` }}></div>
+                                </div>
+                            )}
                         </div>
-                        {execProgress > 0 && (
-                            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-white transition-all duration-300 shadow-[0_0_10px_rgba(255,255,255,0.3)]" style={{ width: `${execProgress}%` }}></div>
-                            </div>
-                        )}
-                        <p className="text-slate-500 text-sm animate-pulse">Processing your vision...</p>
+                        {execProgress > 0 && <span className="text-white text-xs font-bold shrink-0">{execProgress}%</span>}
                     </div>
-                ) : generatedImages.length === 0 ? (
-                    <div className="text-center">
-                        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-500">
-                            <Sparkles className="w-10 h-10 text-slate-600" />
+                )}
+
+                {generatedImages.length === 0 && !(isGenerating || execState === 'executing') ? (
+                    <div className="flex-1 flex items-center justify-center text-center">
+                        <div>
+                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-500">
+                                <Sparkles className="w-7 h-7 text-slate-600" />
+                            </div>
+                            <p className="text-slate-500 font-medium text-sm">Ready for input</p>
+                            <p className="text-xs text-slate-600 mt-1">Generate a masterpiece</p>
                         </div>
-                        <p className="text-slate-500 font-medium">Ready for input</p>
-                        <p className="text-xs text-slate-600 mt-1">Generate a masterpiece</p>
                     </div>
                 ) : (
-                    <div className="w-full h-full p-4 overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="w-full flex-1 p-3 overflow-y-auto custom-scrollbar">
+                        <div className="grid grid-cols-2 gap-3">
                             {generatedImages.map((img, idx) => (
                                 <div key={idx} className="group/card relative aspect-square bg-black/20 rounded-xl overflow-hidden border border-white/10 hover:border-white/50 transition-all duration-300">
                                     <img src={img} alt={`Generated ${idx}`} draggable className="w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover/card:scale-110" onClick={() => setSelectedImage(img)} />
-                                    <div className="absolute inset-0 bg-black/0 group-hover/card:bg-black/40 transition-all duration-300 opacity-0 group-hover/card:opacity-100 flex items-center justify-center gap-2">
-                                        <button onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition-all" title="View full size">
-                                            <Maximize2 className="w-4 h-4 text-white" />
+                                    <div className="absolute inset-0 bg-black/0 group-hover/card:bg-black/40 transition-all duration-300 opacity-0 group-hover/card:opacity-100 flex items-center justify-center gap-1.5">
+                                        <button onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }} className="p-2 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition-all" title="View full size">
+                                            <Maximize2 className="w-3.5 h-3.5 text-white" />
                                         </button>
                                         {onSendToTab && (
-                                            <button onClick={(e) => { e.stopPropagation(); onSendToTab('metadata', img); }} className="p-2.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-full backdrop-blur-sm transition-all" title="Read metadata">
-                                                <FileText className="w-4 h-4 text-amber-400" />
+                                            <button onClick={(e) => { e.stopPropagation(); onSendToTab('metadata', img); }} className="p-2 bg-amber-500/20 hover:bg-amber-500/30 rounded-full backdrop-blur-sm transition-all" title="Read metadata">
+                                                <FileText className="w-3.5 h-3.5 text-amber-400" />
                                             </button>
                                         )}
-                                        <button onClick={(e) => { e.stopPropagation(); localStorage.setItem('active_input_image', img); toast('Image selected for Video generation! Go to Video tab.', 'success'); }} className="p-2.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-full backdrop-blur-sm transition-all" title="Use as input for Video">
-                                            <Video className="w-4 h-4 text-blue-400" />
+                                        <button onClick={(e) => { e.stopPropagation(); localStorage.setItem('active_input_image', img); toast('Image selected for Video generation! Go to Video tab.', 'success'); }} className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-full backdrop-blur-sm transition-all" title="Use as input for Video">
+                                            <Video className="w-3.5 h-3.5 text-blue-400" />
                                         </button>
-                                        <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this image permanently?')) handleDeleteImage(img, idx); }} className="p-2.5 bg-red-500/20 hover:bg-red-500/30 rounded-full backdrop-blur-sm transition-all" title="Delete">
-                                            <Trash2 className="w-4 h-4 text-red-400" />
+                                        <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this image permanently?')) handleDeleteImage(img, idx); }} className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-full backdrop-blur-sm transition-all" title="Delete">
+                                            <Trash2 className="w-3.5 h-3.5 text-red-400" />
                                         </button>
                                     </div>
                                 </div>

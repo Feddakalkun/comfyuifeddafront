@@ -62,7 +62,7 @@ export const ImagePage = ({ modelId }: ImagePageProps) => {
             </div>
 
             {/* Content Area */}
-            <div className="p-8 pt-0 grid grid-cols-1 lg:grid-cols-3 gap-8 h-full overflow-y-auto custom-scrollbar">
+            <div className="p-8 pt-0 grid grid-cols-1 lg:grid-cols-2 gap-8 h-full overflow-y-auto custom-scrollbar">
                 {/* Left: Tab Controls */}
                 <div className="lg:col-span-1">
                     {activeMode === 'generate' && <GenerateTab isGenerating={isGenerating} setIsGenerating={setIsGenerating} />}
