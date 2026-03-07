@@ -145,9 +145,9 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
             onCompleted: (promptId, output) => {
                 activePromptIdRef.current = promptId;
                 setLastCompletedPromptId(promptId);
-                // Extract images directly from the executed event output
+                // Accumulate images (don't replace — React batching can lose intermediate values)
                 if (output?.images && Array.isArray(output.images)) {
-                    setLastOutputImages(output.images);
+                    setLastOutputImages(prev => [...prev, ...output.images]);
                 }
                 setOutputReadyCount(prev => prev + 1);
             },

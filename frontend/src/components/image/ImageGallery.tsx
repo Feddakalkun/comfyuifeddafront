@@ -54,9 +54,9 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
         }
     }, [execState]);
 
-    // Each time outputReadyCount bumps, lastOutputImages has fresh data from the event
+    // When lastOutputImages accumulates new entries, add them to gallery (deduped)
     useEffect(() => {
-        if (outputReadyCount === 0 || lastOutputImages.length === 0) return;
+        if (lastOutputImages.length === 0) return;
 
         const newImages: string[] = [];
         for (const img of lastOutputImages) {
@@ -69,7 +69,7 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
         if (newImages.length > 0) {
             setGeneratedImages(prev => [...newImages, ...prev]);
         }
-    }, [outputReadyCount]);
+    }, [lastOutputImages]);
 
     // Clear isGenerating when workflow finishes
     useEffect(() => {
