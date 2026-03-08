@@ -1057,7 +1057,22 @@ async def tiktok_download_video(req: TikTokDownloadRequest):
 @app.get("/api/tiktok/download-status/{job_id}")
 async def tiktok_download_status(job_id: str):
     _check_tiktok()
-    return tiktok_service.get_download_progress(job_id)
+    raw = tiktok_service.get_download_progress(job_id)
+    # Normalize status for frontend compatibility
+    status = raw.get("status", "not_found")
+    if status == "completed":
+        status = "done"
+    # Build a human-readable message from the log
+    log = raw.get("log", [])
+    message = log[-1] if log else ""
+    return {
+        "status": status,
+        "message": message,
+        "progress": raw.get("progress", 0),
+        "log": log,
+        "videos": raw.get("videos", []),
+        "downloaded": len(raw.get("videos", [])),
+    }
 
 @app.get("/api/tiktok/profiles")
 async def tiktok_list_profiles():
@@ -1067,14 +1082,23 @@ async def tiktok_list_profiles():
 @app.get("/api/tiktok/videos/{profile}")
 async def tiktok_list_videos(profile: str):
     _check_tiktok()
-    return {"videos": tiktok_service.list_videos(profile)}
+    videos = tiktok_service.list_videos(profile)
+    # Add thumbnail_url for each video (generate lazily)
+    for v in videos:
+        try:
+            thumb = tiktok_service.get_video_thumbnail(v["path"])
+            v["thumbnail_url"] = thumb
+        except Exception:
+            v["thumbnail_url"] = None
+    return {"videos": videos}
 
 @app.post("/api/tiktok/extract-frames")
 async def tiktok_extract_frames(req: TikTokExtractRequest):
     _check_tiktok()
     try:
-        frames = tiktok_service.extract_frames(req.video_path, req.count)
-        return {"frames": frames}
+        frame_paths = tiktok_service.extract_frames(req.video_path, req.count)
+        # Return as objects so frontend can access .path
+        return {"frames": [{"path": p} for p in frame_paths]}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -1092,7 +1116,12 @@ async def tiktok_caption_frames(req: TikTokCaptionRequest):
 @app.get("/api/tiktok/caption-status/{job_id}")
 async def tiktok_caption_status(job_id: str):
     _check_tiktok()
-    return tiktok_service.get_caption_status(job_id)
+    raw = tiktok_service.get_caption_status(job_id)
+    # Normalize status: backend uses "completed", frontend expects "done"
+    normalized = dict(raw)
+    if normalized.get("status") == "completed":
+        normalized["status"] = "done"
+    return normalized
 
 @app.get("/api/tiktok/serve/{path:path}")
 async def tiktok_serve_file(path: str):

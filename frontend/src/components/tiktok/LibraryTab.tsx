@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FolderOpen, Play, ArrowLeft, Scissors } from 'lucide-react';
+import { FolderOpen, Play, ArrowLeft, Scissors, RefreshCw } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
+import { useToast } from '../ui/Toast';
 
 interface Profile {
     name: string;
@@ -20,19 +21,25 @@ interface LibraryTabProps {
 }
 
 export const LibraryTab = ({ onExtractFrames }: LibraryTabProps) => {
+    const { toast } = useToast();
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
     const [videos, setVideos] = useState<VideoFile[]>([]);
     const [loading, setLoading] = useState(false);
     const [previewVideo, setPreviewVideo] = useState<string | null>(null);
+    const [loadingProfiles, setLoadingProfiles] = useState(false);
 
     const loadProfiles = async () => {
+        setLoadingProfiles(true);
         try {
             const res = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/profiles`);
+            if (!res.ok) throw new Error(`Server error: ${res.status} ${res.statusText}`);
             const data = await res.json();
             setProfiles(data.profiles || []);
         } catch (err) {
-            console.error('Failed to load profiles:', err);
+            toast(`Failed to load profiles: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        } finally {
+            setLoadingProfiles(false);
         }
     };
 
@@ -43,10 +50,14 @@ export const LibraryTab = ({ onExtractFrames }: LibraryTabProps) => {
         setSelectedProfile(profile);
         try {
             const res = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/videos/${encodeURIComponent(profile)}`);
+            if (!res.ok) throw new Error(`Server error: ${res.status} ${res.statusText}`);
             const data = await res.json();
             setVideos(data.videos || []);
+            if ((data.videos || []).length === 0) {
+                toast('No videos found in this profile folder', 'info');
+            }
         } catch (err) {
-            console.error('Failed to load videos:', err);
+            toast(`Failed to load videos: ${err instanceof Error ? err.message : String(err)}`, 'error');
         } finally {
             setLoading(false);
         }
@@ -63,6 +74,17 @@ export const LibraryTab = ({ onExtractFrames }: LibraryTabProps) => {
     if (!selectedProfile) {
         return (
             <div className="space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                    <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Profiles</div>
+                    <button
+                        onClick={loadProfiles}
+                        disabled={loadingProfiles}
+                        className="text-slate-500 hover:text-slate-300 transition-colors"
+                        title="Refresh"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 ${loadingProfiles ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
                 {profiles.length === 0 ? (
                     <div className="text-center py-12 text-slate-500">
                         <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -138,6 +160,7 @@ export const LibraryTab = ({ onExtractFrames }: LibraryTabProps) => {
                                         src={`${BACKEND_API.BASE_URL}/api/tiktok/serve/${encodeURIComponent(v.thumbnail_url)}`}
                                         className="w-full h-full object-cover"
                                         alt=""
+                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                     />
                                 ) : (
                                     <Play className="w-6 h-6 text-slate-600" />
@@ -153,7 +176,10 @@ export const LibraryTab = ({ onExtractFrames }: LibraryTabProps) => {
                                 <div className="flex items-center justify-between mt-1.5">
                                     <span className="text-[9px] text-slate-600">{v.size_mb.toFixed(1)} MB</span>
                                     <button
-                                        onClick={() => onExtractFrames(v.path, v.filename)}
+                                        onClick={() => {
+                                            onExtractFrames(v.path, v.filename);
+                                            toast(`Extracting frames from ${v.filename}`, 'info');
+                                        }}
                                         className="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
                                         title="Extract frames"
                                     >

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Download, User, Video, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Download, User, Video, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
+import { useToast } from '../ui/Toast';
 
 const COOKIE_OPTIONS = [
     { value: 'none', label: 'No Cookies' },
@@ -14,12 +15,15 @@ interface DownloadJob {
     type: 'profile' | 'video';
     url: string;
     status: 'downloading' | 'done' | 'error';
-    progress?: string;
+    message?: string;
+    progress?: number;
     downloaded?: number;
-    total?: number;
+    log?: string[];
+    showLog?: boolean;
 }
 
 export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () => void }) => {
+    const { toast } = useToast();
     const [profileUrl, setProfileUrl] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
     const [cookieSource, setCookieSource] = useState('none');
@@ -33,24 +37,35 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
         pollRef.current[jobId] = setInterval(async () => {
             try {
                 const res = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/download-status/${jobId}`);
+                if (!res.ok) throw new Error(`Status check failed: ${res.status}`);
                 const data = await res.json();
                 setJobs(prev => prev.map(j => {
                     if (j.jobId !== jobId) return j;
                     if (data.status === 'done' || data.status === 'error') {
                         clearInterval(pollRef.current[jobId]);
                         delete pollRef.current[jobId];
-                        if (data.status === 'done') onDownloadComplete?.();
+                        if (data.status === 'done') {
+                            toast('Download complete!', 'success');
+                            onDownloadComplete?.();
+                        } else {
+                            // Extract meaningful error from log
+                            const errLine = (data.log || []).find((l: string) =>
+                                l.toLowerCase().includes('error') || l.toLowerCase().includes('failed')
+                            ) || data.message || 'Download failed';
+                            toast(`Download error: ${errLine}`, 'error');
+                        }
                     }
                     return {
                         ...j,
                         status: data.status,
-                        progress: data.message,
+                        message: data.message,
+                        progress: data.progress,
                         downloaded: data.downloaded,
-                        total: data.total,
+                        log: data.log || [],
                     };
                 }));
-            } catch {
-                // keep polling
+            } catch (err) {
+                // keep polling silently
             }
         }, 1500);
     };
@@ -69,10 +84,15 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: profileUrl.trim(),
-                    cookie_source: cookieSource === 'none' ? null : cookieSource,
+                    cookie_source: cookieSource === 'none' ? 'none' : cookieSource,
                     limit: limit ? parseInt(limit) : null,
                 }),
             });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: res.statusText }));
+                toast(`Failed to start download: ${err.detail || res.statusText}`, 'error');
+                return;
+            }
             const data = await res.json();
             if (data.job_id) {
                 const job: DownloadJob = {
@@ -80,13 +100,15 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                     type: 'profile',
                     url: profileUrl,
                     status: 'downloading',
+                    log: [],
                 };
                 setJobs(prev => [job, ...prev]);
                 pollJob(data.job_id);
                 setProfileUrl('');
+                toast('Profile download started', 'info');
             }
         } catch (err) {
-            console.error('Download failed:', err);
+            toast(`Could not reach backend: ${err instanceof Error ? err.message : String(err)}`, 'error');
         }
     };
 
@@ -98,9 +120,14 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: videoUrl.trim(),
-                    cookie_source: cookieSource === 'none' ? null : cookieSource,
+                    cookie_source: cookieSource === 'none' ? 'none' : cookieSource,
                 }),
             });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: res.statusText }));
+                toast(`Failed to start download: ${err.detail || res.statusText}`, 'error');
+                return;
+            }
             const data = await res.json();
             if (data.job_id) {
                 const job: DownloadJob = {
@@ -108,14 +135,20 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                     type: 'video',
                     url: videoUrl,
                     status: 'downloading',
+                    log: [],
                 };
                 setJobs(prev => [job, ...prev]);
                 pollJob(data.job_id);
                 setVideoUrl('');
+                toast('Video download started', 'info');
             }
         } catch (err) {
-            console.error('Download failed:', err);
+            toast(`Could not reach backend: ${err instanceof Error ? err.message : String(err)}`, 'error');
         }
+    };
+
+    const toggleLog = (jobId: string) => {
+        setJobs(prev => prev.map(j => j.jobId === jobId ? { ...j, showLog: !j.showLog } : j));
     };
 
     return (
@@ -188,17 +221,52 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                 <div className="space-y-2">
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 px-1">Downloads</div>
                     {jobs.map(job => (
-                        <div key={job.jobId} className="bg-[#121218] border border-white/5 rounded-xl p-4 flex items-center gap-3">
-                            {job.status === 'downloading' && <Loader2 className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />}
-                            {job.status === 'done' && <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
-                            {job.status === 'error' && <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />}
-                            <div className="flex-1 min-w-0">
-                                <div className="text-xs text-white truncate">{job.url}</div>
-                                <div className="text-[10px] text-slate-500 mt-0.5">
-                                    {job.progress || (job.status === 'downloading' ? 'Starting...' : job.status)}
-                                    {job.downloaded !== undefined && job.total ? ` (${job.downloaded}/${job.total})` : ''}
+                        <div key={job.jobId} className="bg-[#121218] border border-white/5 rounded-xl p-4 space-y-2">
+                            <div className="flex items-center gap-3">
+                                {job.status === 'downloading' && <Loader2 className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />}
+                                {job.status === 'done' && <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+                                {job.status === 'error' && <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />}
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-xs text-white truncate">{job.url}</div>
+                                    <div className="text-[10px] text-slate-500 mt-0.5">
+                                        {job.message || (job.status === 'downloading' ? 'Starting...' : job.status)}
+                                        {job.downloaded !== undefined && job.downloaded > 0 ? ` (${job.downloaded} downloaded)` : ''}
+                                    </div>
                                 </div>
+                                {/* Progress bar */}
+                                {job.status === 'downloading' && typeof job.progress === 'number' && job.progress > 0 && (
+                                    <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">{job.progress.toFixed(0)}%</span>
+                                )}
+                                {/* Log toggle */}
+                                {job.log && job.log.length > 0 && (
+                                    <button
+                                        onClick={() => toggleLog(job.jobId)}
+                                        className="text-slate-600 hover:text-slate-300 flex-shrink-0"
+                                        title="Toggle log"
+                                    >
+                                        {job.showLog ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                    </button>
+                                )}
                             </div>
+                            {/* Progress bar */}
+                            {job.status === 'downloading' && typeof job.progress === 'number' && job.progress > 0 && (
+                                <div className="w-full h-0.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-500 transition-all"
+                                        style={{ width: `${job.progress}%` }}
+                                    />
+                                </div>
+                            )}
+                            {/* Expandable log */}
+                            {job.showLog && job.log && job.log.length > 0 && (
+                                <div className="mt-2 bg-black/50 rounded-lg p-3 max-h-40 overflow-y-auto">
+                                    {job.log.slice(-20).map((line, i) => (
+                                        <div key={i} className="text-[9px] font-mono text-slate-400 leading-relaxed whitespace-pre-wrap break-all">
+                                            {line}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

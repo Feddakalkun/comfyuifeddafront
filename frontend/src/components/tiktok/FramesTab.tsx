@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Sparkles, Image, Paintbrush } from 'lucide-react';
+import { Loader2, Sparkles, Image, Paintbrush, AlertCircle } from 'lucide-react';
 import { BACKEND_API } from '../../config/api';
+import { useToast } from '../ui/Toast';
 
 interface FrameData {
     path: string;
@@ -17,17 +18,21 @@ interface FramesTabProps {
 }
 
 export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpaint, onSendToRecreate }: FramesTabProps) => {
+    const { toast } = useToast();
     const [frames, setFrames] = useState<FrameData[]>([]);
     const [frameCount, setFrameCount] = useState(6);
     const [extracting, setExtracting] = useState(false);
     const [captioning, setCaptioning] = useState(false);
+    const [captionProgress, setCaptionProgress] = useState<{ done: number; total: number } | null>(null);
     const [captionMethod, setCaptionMethod] = useState<'ollama' | 'comfy'>('ollama');
     const [captionModel, setCaptionModel] = useState('llava');
+    const [extractError, setExtractError] = useState<string | null>(null);
 
     const extractFrames = async () => {
         if (!videoPath) return;
         setExtracting(true);
         setFrames([]);
+        setExtractError(null);
         try {
             const res = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/extract-frames`, {
                 method: 'POST',
@@ -35,15 +40,27 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
                 body: JSON.stringify({ video_path: videoPath, count: frameCount }),
             });
             const data = await res.json();
-            if (data.frames) {
+            if (!res.ok) {
+                const msg = data.detail || `Server error ${res.status}`;
+                setExtractError(msg);
+                toast(`Frame extraction failed: ${msg}`, 'error');
+                return;
+            }
+            if (data.frames && data.frames.length > 0) {
                 setFrames(data.frames.map((f: { path: string }) => ({
                     path: f.path,
                     url: `${BACKEND_API.BASE_URL}/api/tiktok/serve/${encodeURIComponent(f.path)}`,
                     caption: '',
                 })));
+                toast(`Extracted ${data.frames.length} frames`, 'success');
+            } else {
+                setExtractError('No frames were extracted. Check that ffmpeg is installed.');
+                toast('No frames extracted — is ffmpeg installed?', 'error');
             }
         } catch (err) {
-            console.error('Frame extraction failed:', err);
+            const msg = err instanceof Error ? err.message : String(err);
+            setExtractError(msg);
+            toast(`Frame extraction failed: ${msg}`, 'error');
         } finally {
             setExtracting(false);
         }
@@ -57,6 +74,7 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
     const handleCaptionAll = async () => {
         if (frames.length === 0) return;
         setCaptioning(true);
+        setCaptionProgress({ done: 0, total: frames.length });
         try {
             const res = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/caption-frames`, {
                 method: 'POST',
@@ -68,24 +86,45 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
                 }),
             });
             const data = await res.json();
+            if (!res.ok) {
+                const msg = data.detail || `Server error ${res.status}`;
+                toast(`Captioning failed: ${msg}`, 'error');
+                setCaptioning(false);
+                return;
+            }
 
             if (data.job_id) {
                 // Poll for completion
                 const poll = setInterval(async () => {
-                    const statusRes = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/caption-status/${data.job_id}`);
-                    const statusData = await statusRes.json();
-                    if (statusData.status === 'done') {
-                        clearInterval(poll);
-                        setCaptioning(false);
-                        if (statusData.captions) {
-                            setFrames(prev => prev.map(f => ({
-                                ...f,
-                                caption: statusData.captions[f.path] || f.caption,
-                            })));
+                    try {
+                        const statusRes = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/caption-status/${data.job_id}`);
+                        const statusData = await statusRes.json();
+
+                        // Update progress
+                        if (statusData.done !== undefined) {
+                            setCaptionProgress({ done: statusData.done, total: statusData.total || frames.length });
                         }
-                    } else if (statusData.status === 'error') {
-                        clearInterval(poll);
-                        setCaptioning(false);
+
+                        if (statusData.status === 'done' || statusData.status === 'completed') {
+                            clearInterval(poll);
+                            setCaptioning(false);
+                            setCaptionProgress(null);
+                            if (statusData.captions) {
+                                setFrames(prev => prev.map(f => ({
+                                    ...f,
+                                    caption: statusData.captions[f.path] || f.caption,
+                                })));
+                                toast('All frames captioned!', 'success');
+                            }
+                        } else if (statusData.status === 'error') {
+                            clearInterval(poll);
+                            setCaptioning(false);
+                            setCaptionProgress(null);
+                            const msg = statusData.error || 'Unknown captioning error';
+                            toast(`Captioning error: ${msg}`, 'error');
+                        }
+                    } catch {
+                        // keep polling
                     }
                 }, 2000);
             } else if (data.captions) {
@@ -95,10 +134,14 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
                     caption: data.captions[f.path] || f.caption,
                 })));
                 setCaptioning(false);
+                setCaptionProgress(null);
+                toast('Captioning complete!', 'success');
             }
         } catch (err) {
-            console.error('Captioning failed:', err);
+            const msg = err instanceof Error ? err.message : String(err);
+            toast(`Captioning failed: ${msg}`, 'error');
             setCaptioning(false);
+            setCaptionProgress(null);
         }
     };
 
@@ -144,6 +187,14 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
                 </div>
             </div>
 
+            {/* Extract error */}
+            {extractError && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-red-300">{extractError}</div>
+                </div>
+            )}
+
             {/* Caption Controls */}
             {frames.length > 0 && (
                 <div className="bg-[#121218] border border-white/5 rounded-2xl p-4 space-y-3">
@@ -160,8 +211,8 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
                             <input
                                 value={captionModel}
                                 onChange={e => setCaptionModel(e.target.value)}
-                                placeholder="Model name"
-                                className="w-28 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                                placeholder="Model name (e.g. llava)"
+                                className="w-32 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
                             />
                         )}
                     </div>
@@ -171,8 +222,20 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
                         className="w-full py-2.5 rounded-xl font-bold text-sm tracking-wider uppercase transition-all bg-white text-black hover:bg-slate-200 disabled:opacity-30"
                     >
                         {captioning ? <Loader2 className="w-3.5 h-3.5 inline animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 inline mr-1" />}
-                        {captioning ? 'Captioning...' : 'Auto-Caption All'}
+                        {captioning
+                            ? captionProgress
+                                ? `Captioning ${captionProgress.done}/${captionProgress.total}...`
+                                : 'Captioning...'
+                            : 'Auto-Caption All'}
                     </button>
+                    {captioning && captionProgress && (
+                        <div className="w-full h-0.5 bg-white/5 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-emerald-500 transition-all"
+                                style={{ width: `${(captionProgress.done / captionProgress.total) * 100}%` }}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -185,6 +248,7 @@ export const FramesTab = ({ videoPath, videoName, onSendToImg2Img, onSendToInpai
                                 src={frame.url}
                                 alt={`Frame ${idx + 1}`}
                                 className="w-full aspect-video object-cover"
+                                onError={e => { (e.target as HTMLImageElement).src = ''; }}
                             />
                             <div className="p-2 space-y-1.5">
                                 <textarea

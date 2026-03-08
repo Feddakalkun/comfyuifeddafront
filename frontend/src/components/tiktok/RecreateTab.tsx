@@ -4,6 +4,7 @@ import { LoraStack } from '../image/LoraStack';
 import type { SelectedLora } from '../image/LoraStack';
 import { comfyService } from '../../services/comfyService';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
+import { useToast } from '../ui/Toast';
 
 interface FrameData {
     path: string;
@@ -16,6 +17,7 @@ interface RecreateTabProps {
 }
 
 export const RecreateTab = ({ frames }: RecreateTabProps) => {
+    const { toast } = useToast();
     const { queueWorkflow, lastCompletedPromptId, lastOutputImages, outputReadyCount } = useComfyExecution();
 
     const [selectedLoras, setSelectedLoras] = useState<SelectedLora[]>([]);
@@ -29,7 +31,9 @@ export const RecreateTab = ({ frames }: RecreateTabProps) => {
             try {
                 const loras = await comfyService.getLoras();
                 setAvailableLoras(loras);
-            } catch (err) { console.error('Failed to load loras:', err); }
+            } catch (err) {
+                toast(`Failed to load LoRAs: ${err instanceof Error ? err.message : String(err)}`, 'error');
+            }
         };
         load();
     }, []);
@@ -117,7 +121,8 @@ export const RecreateTab = ({ frames }: RecreateTabProps) => {
                 await queueWorkflow(workflow);
             }
         } catch (err) {
-            console.error('Recreation failed:', err);
+            const msg = err instanceof Error ? err.message : String(err);
+            toast(`Recreation failed: ${msg}`, 'error');
         } finally {
             setGenerating(false);
         }
