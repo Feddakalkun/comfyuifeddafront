@@ -1,7 +1,14 @@
 // ComfyUI API Configuration
+// Desktop mode: uses .env.development with localhost URLs
+// Docker mode: falls back to relative URLs through Nginx reverse proxy
+
+const COMFY_BASE = import.meta.env.VITE_COMFY_URL || '/comfy';
+const BACKEND_BASE = import.meta.env.VITE_BACKEND_URL || '';
+const WS_PROTO = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_HOST = import.meta.env.VITE_COMFY_WS_URL || `${WS_PROTO}//${window.location.host}/comfy/ws`;
 
 export const COMFY_API = {
-    BASE_URL: 'http://127.0.0.1:8199',
+    BASE_URL: COMFY_BASE,
 
     ENDPOINTS: {
         PROMPT: '/prompt',
@@ -13,12 +20,12 @@ export const COMFY_API = {
         OBJECT_INFO: '/object_info',
     },
 
-    WS_URL: 'ws://127.0.0.1:8199/ws',
+    WS_URL: WS_HOST,
 };
 
 // Backend API Configuration (FastAPI server)
 export const BACKEND_API = {
-    BASE_URL: 'http://127.0.0.1:8000',
+    BASE_URL: BACKEND_BASE,
 
     ENDPOINTS: {
         FILES_LIST: '/api/files/list',

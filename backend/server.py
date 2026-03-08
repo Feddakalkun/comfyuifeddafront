@@ -32,10 +32,15 @@ import shutil
 
 app = FastAPI()
 
-# CORS for frontend
+# CORS for frontend — configurable via env var for Docker/RunPod
+import os
+CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174").split(",")
+# Base URL prefix for ComfyUI view URLs returned to frontend
+# Desktop: "http://127.0.0.1:8199" (direct), Docker: "/comfy" (Nginx proxy)
+COMFY_VIEW_BASE = os.environ.get("COMFY_VIEW_BASE", "http://127.0.0.1:8199")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"],  # Vite dev server
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -482,7 +487,7 @@ async def download_runpod_output(req: RunPodDownloadRequest):
         return {
             "success": True,
             "local_path": str(local_path),
-            "url": f"http://127.0.0.1:8199/view?filename={req.filename}&subfolder=runpod&type=output"
+            "url": f"{COMFY_VIEW_BASE}/view?filename={req.filename}&subfolder=runpod&type=output"
         }
 
     except Exception as e:
@@ -509,10 +514,10 @@ async def list_output_files():
                 rel_path = file_path.relative_to(comfy_output)
                 
                 # Extract subfolder and model info
-                parts = str(rel_path.parent).split('\\')
+                subfolder = str(rel_path.parent).replace('\\', '/')
+                parts = subfolder.split('/')
                 model = parts[0] if len(parts) > 0 and parts[0] != '.' else 'unknown'
                 date_folder = parts[1] if len(parts) > 1 else 'unknown'
-                subfolder = str(rel_path.parent).replace('\\', '/')
                 
                 # Get file stats
                 stat = file_path.stat()
@@ -525,7 +530,7 @@ async def list_output_files():
                     "dateFolder": date_folder,
                     "size": stat.st_size,
                     "modified": stat.st_mtime,
-                    "url": f"http://127.0.0.1:8199/view?filename={file_path.name}&subfolder={subfolder}&type=output"
+                    "url": f"{COMFY_VIEW_BASE}/view?filename={file_path.name}&subfolder={subfolder}&type=output"
                 })
         
         # Sort by modified time (newest first)

@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, BookOpen, RefreshCw, ChevronDown, Tag, X, Zap, Sparkles, Wand2, MousePointer2 } from 'lucide-react';
+import { BACKEND_API } from '../config/api';
 
 interface PromptEntry {
     id: number;
@@ -93,8 +94,8 @@ export function PromptLibrary({ onSelect, isOpen, onClose }: PromptLibraryProps)
         setIsLoading(true);
         try {
             const [libResp, wildResp] = await Promise.all([
-                fetch('http://localhost:8000/api/prompts/library'),
-                fetch('http://localhost:8000/api/wildcards/list')
+                fetch(`${BACKEND_API.BASE_URL}/api/prompts/library`),
+                fetch(`${BACKEND_API.BASE_URL}/api/wildcards/list`)
             ]);
 
             if (libResp.ok) {
@@ -125,7 +126,7 @@ export function PromptLibrary({ onSelect, isOpen, onClose }: PromptLibraryProps)
     const handleHarvest = async () => {
         setIsHarvesting(true);
         try {
-            const resp = await fetch('http://localhost:8000/api/prompts/harvest', { method: 'POST' });
+            const resp = await fetch(`${BACKEND_API.BASE_URL}/api/prompts/harvest`, { method: 'POST' });
             const json = await resp.json();
             if (json.success) {
                 await loadData();

@@ -153,7 +153,7 @@ function App() {
                   <div className="text-slate-500">
                     <p>[INFO] ComfyFront initialize</p>
                     <p>[INFO] Connecting to ComfyUI backend...</p>
-                    <p className="text-emerald-400">[SUCCESS] Connected to 127.0.0.1:8199</p>
+                    <p className="text-emerald-400">[SUCCESS] Connected to ComfyUI</p>
                   </div>
                 </div>
               )}

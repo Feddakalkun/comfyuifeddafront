@@ -5,6 +5,7 @@ import { DownloadTab } from '../components/tiktok/DownloadTab';
 import { LibraryTab } from '../components/tiktok/LibraryTab';
 import { FramesTab } from '../components/tiktok/FramesTab';
 import { RecreateTab } from '../components/tiktok/RecreateTab';
+import { BACKEND_API } from '../config/api';
 
 type TikTokMode = 'download' | 'library' | 'frames' | 'recreate';
 
@@ -103,7 +104,7 @@ export const TikTokPage = ({ onSendToImg2Img, onSendToInpaint }: TikTokPageProps
                             <div className="max-w-full max-h-full flex flex-col items-center gap-4">
                                 <video
                                     key={selectedVideoPath}
-                                    src={`http://127.0.0.1:8000/api/tiktok/serve/${encodeURIComponent(selectedVideoPath)}`}
+                                    src={`${BACKEND_API.BASE_URL}/api/tiktok/serve/${encodeURIComponent(selectedVideoPath)}`}
                                     className="max-w-full max-h-[70vh] rounded-lg shadow-[0_0_80px_rgba(255,255,255,0.08)]"
                                     controls
                                     loop

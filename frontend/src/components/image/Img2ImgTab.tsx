@@ -7,6 +7,7 @@ import { PromptInput } from './PromptInput';
 import { LoraStack } from './LoraStack';
 import type { SelectedLora } from './LoraStack';
 import { ImageUpload } from './ImageUpload';
+import { BACKEND_API } from '../../config/api';
 
 interface Img2ImgTabProps {
     isGenerating: boolean;
@@ -79,7 +80,7 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating, initialImageUrl, onC
             let finalPrompt = prompt;
             if (prompt.includes('__')) {
                 try {
-                    const expandResp = await fetch(`http://localhost:8000/api/wildcards/expand?text=${encodeURIComponent(prompt)}`);
+                    const expandResp = await fetch(`${BACKEND_API.BASE_URL}/api/wildcards/expand?text=${encodeURIComponent(prompt)}`);
                     const expandData = await expandResp.json();
                     if (expandData.success) finalPrompt = expandData.expanded;
                 } catch { /* use raw */ }

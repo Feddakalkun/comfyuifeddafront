@@ -5,6 +5,7 @@ import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
 import { useToast } from '../ui/Toast';
 import { PromptInput } from './PromptInput';
 import { DimensionSelector } from './DimensionSelector';
+import { BACKEND_API } from '../../config/api';
 
 interface PersonConfig {
     lora: string;
@@ -82,7 +83,7 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
             let finalPrompt = prompt;
             if (prompt.includes('__')) {
                 try {
-                    const expandResp = await fetch(`http://localhost:8000/api/wildcards/expand?text=${encodeURIComponent(prompt)}`);
+                    const expandResp = await fetch(`${BACKEND_API.BASE_URL}/api/wildcards/expand?text=${encodeURIComponent(prompt)}`);
                     const expandData = await expandResp.json();
                     if (expandData.success) finalPrompt = expandData.expanded;
                 } catch { /* use raw */ }

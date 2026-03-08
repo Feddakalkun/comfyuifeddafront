@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Download, Loader2, AlertTriangle } from 'lucide-react';
+import { BACKEND_API } from '../config/api';
 
 interface ModelInfo {
     id: string;
@@ -26,7 +27,7 @@ export const ModelDownloader = ({ modelGroup = "z-image" }: ModelDownloaderProps
 
     const checkStatus = useCallback(async () => {
         try {
-            const resp = await fetch(`http://localhost:8000/api/models/status?group=${modelGroup}`);
+            const resp = await fetch(`${BACKEND_API.BASE_URL}/api/models/status?group=${modelGroup}`);
             const data = await resp.json();
             if (data.success) {
                 setModelStatus(data.models);
@@ -54,7 +55,7 @@ export const ModelDownloader = ({ modelGroup = "z-image" }: ModelDownloaderProps
         const missing = modelStatus.filter(m => !m.exists || m.progress.status === 'error');
         for (const m of missing) {
             try {
-                await fetch(`http://localhost:8000/api/models/download?model_id=${m.id}&group=${modelGroup}`, { method: 'POST' });
+                await fetch(`${BACKEND_API.BASE_URL}/api/models/download?model_id=${m.id}&group=${modelGroup}`, { method: 'POST' });
             } catch (e) {
                 console.error(`Failed to start download for ${m.id}`, e);
             }
@@ -64,7 +65,7 @@ export const ModelDownloader = ({ modelGroup = "z-image" }: ModelDownloaderProps
     const handlePurge = async () => {
         if (!confirm("Are you sure? This will delete existing model files to allow a fresh download.")) return;
         try {
-            await fetch(`http://localhost:8000/api/models/purge?group=${modelGroup}`, { method: 'POST' });
+            await fetch(`${BACKEND_API.BASE_URL}/api/models/purge?group=${modelGroup}`, { method: 'POST' });
             await checkStatus();
         } catch (e) {
             console.error('Purge failed:', e);

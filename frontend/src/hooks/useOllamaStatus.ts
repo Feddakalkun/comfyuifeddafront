@@ -16,7 +16,7 @@ export const useOllamaStatus = () => {
                 // However, updated ComfyUI install might include Ollama.
 
                 // Let's try a simple fetch to the default Ollama port
-                const response = await fetch('http://127.0.0.1:11434/api/tags', {
+                const response = await fetch('/ollama/tags', {
                     method: 'GET',
                     // mode: 'no-cors' // opaque response, assumes it's up if no network error
                 }).catch(() => null);
