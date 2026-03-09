@@ -258,6 +258,39 @@ async def get_hardware_stats():
         print(f"âš ï¸ GPU Stats Error: {e}")
         return {"status": "error", "message": "NVIDIA GPU not detected or driver error"}
 
+@app.get("/api/system/node-install-status")
+async def node_install_status():
+    """
+    RunPod node-install progress for first boot optimization.
+    Safe outside RunPod: returns marker existence and optional bg log tail.
+    """
+    workspace = Path("/workspace")
+    core_marker = workspace / ".nodes_core_installed"
+    full_marker = workspace / ".nodes_full_installed"
+    bg_log = Path("/var/log/node_install_bg.log")
+
+    tail = []
+    if bg_log.exists():
+        try:
+            lines = bg_log.read_text(encoding="utf-8", errors="ignore").splitlines()
+            tail = lines[-20:]
+        except Exception:
+            tail = []
+
+    phase = "pending"
+    if core_marker.exists() and not full_marker.exists():
+        phase = "core_ready_full_installing"
+    elif full_marker.exists():
+        phase = "completed"
+
+    return {
+        "success": True,
+        "phase": phase,
+        "core_installed": core_marker.exists(),
+        "full_installed": full_marker.exists(),
+        "bg_log_tail": tail,
+    }
+
 @app.get("/health")
 async def health():
     """Health check endpoint"""

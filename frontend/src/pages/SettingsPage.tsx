@@ -22,6 +22,14 @@ const VISION_MODELS = [
     { id: 'user-v4/joycaption-beta', label: 'JoyCaption Beta', description: 'Uncensored JoyCaption (Llama-based VLM).' }
 ];
 
+interface NodeInstallStatus {
+    success: boolean;
+    phase: 'pending' | 'core_ready_full_installing' | 'completed';
+    core_installed: boolean;
+    full_installed: boolean;
+    bg_log_tail: string[];
+}
+
 export const SettingsPage = () => {
     const { toast } = useToast();
     const [installedModels, setInstalledModels] = useState<OllamaModel[]>([]);
@@ -41,6 +49,8 @@ export const SettingsPage = () => {
     const [runpodUrl, setRunpodUrl] = useState('');
     const [runpodToken, setRunpodToken] = useState('');
     const [runpodExplorerUrl, setRunpodExplorerUrl] = useState('');
+    const [nodeInstallStatus, setNodeInstallStatus] = useState<NodeInstallStatus | null>(null);
+    const [isLoadingNodeStatus, setIsLoadingNodeStatus] = useState(false);
 
     useEffect(() => {
         refreshModels();
@@ -122,6 +132,22 @@ export const SettingsPage = () => {
         }
     };
 
+    const refreshNodeInstallStatus = async () => {
+        setIsLoadingNodeStatus(true);
+        try {
+            const res = await fetch('/api/system/node-install-status');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data?.success) {
+                setNodeInstallStatus(data);
+            }
+        } catch {
+            // likely not running in RunPod/docker backend
+        } finally {
+            setIsLoadingNodeStatus(false);
+        }
+    };
+
     const openRunpodExplorer = async () => {
         const candidates = explorerCandidates();
         if (candidates.length === 0) {
@@ -139,6 +165,12 @@ export const SettingsPage = () => {
 
         toast('Could not reach RunPod file explorer. Set full Explorer URL (e.g. /lab/tree).', 'error');
     };
+
+    useEffect(() => {
+        refreshNodeInstallStatus();
+        const timer = setInterval(refreshNodeInstallStatus, 6000);
+        return () => clearInterval(timer);
+    }, []);
 
     // Update selected model when category changes
     useEffect(() => {
@@ -422,6 +454,37 @@ export const SettingsPage = () => {
                             If empty, explorer defaults to your endpoint base URL. For Jupyter/Lab file browser, paste the full /lab/tree URL.
                         </p>
                     </div>
+                    <div className="rounded-xl border border-white/10 bg-black/20 p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <div className="text-xs uppercase tracking-wider text-slate-400">Node Install Status</div>
+                            <button
+                                onClick={refreshNodeInstallStatus}
+                                className="text-xs text-slate-300 hover:text-white"
+                                type="button"
+                            >
+                                {isLoadingNodeStatus ? 'Checking...' : 'Refresh'}
+                            </button>
+                        </div>
+                        {nodeInstallStatus ? (
+                            <>
+                                <div className="text-sm text-slate-200">
+                                    {nodeInstallStatus.phase === 'completed'
+                                        ? 'Completed'
+                                        : nodeInstallStatus.phase === 'core_ready_full_installing'
+                                            ? 'Core ready, full install running in background'
+                                            : 'Pending / starting'}
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                    Core: {nodeInstallStatus.core_installed ? 'yes' : 'no'} | Full: {nodeInstallStatus.full_installed ? 'yes' : 'no'}
+                                </div>
+                                {nodeInstallStatus.bg_log_tail?.length > 0 && (
+                                    <pre className="text-[11px] text-slate-500 max-h-28 overflow-auto whitespace-pre-wrap">{nodeInstallStatus.bg_log_tail.slice(-6).join('\n')}</pre>
+                                )}
+                            </>
+                        ) : (
+                            <div className="text-xs text-slate-500">Status unavailable (works in docker/runpod backend).</div>
+                        )}
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         <Button variant="secondary" onClick={() => openExternal(deriveComfyUiUrl(), 'ComfyUI')}>
                             <ExternalLink className="w-4 h-4" /> Open ComfyUI
@@ -439,6 +502,7 @@ export const SettingsPage = () => {
         </CatalogShell>
     );
 };
+
 
 
 
