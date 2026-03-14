@@ -8,12 +8,16 @@ export const SystemMonitor = () => {
     const [loading, setLoading] = useState(false);
 
     const updateStats = async () => {
-        const [sysData, hwData] = await Promise.all([
-            comfyService.getSystemStats(),
-            comfyService.getHardwareStats()
-        ]);
-        if (sysData) setStats(sysData);
-        if (hwData) setGpuStats(hwData);
+        try {
+            const [sysData, hwData] = await Promise.all([
+                comfyService.getSystemStats(),
+                comfyService.getHardwareStats()
+            ]);
+            if (sysData) setStats(sysData);
+            if (hwData) setGpuStats(hwData);
+        } catch {
+            // Silently fail - ComfyUI may be starting up
+        }
     };
 
     useEffect(() => {
