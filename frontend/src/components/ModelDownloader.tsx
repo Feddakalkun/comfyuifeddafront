@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Download, Loader2, AlertTriangle } from 'lucide-react';
 import { BACKEND_API } from '../config/api';
+import { useToast } from './ui/Toast';
 
 interface ModelInfo {
     id: string;
@@ -30,10 +31,12 @@ const MODEL_GROUP_LABELS: Record<string, string> = {
 };
 
 export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: ModelDownloaderProps) => {
+    const { toast } = useToast();
     const [modelStatus, setModelStatus] = useState<ModelInfo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDownloading, setIsDownloading] = useState(false);
     const didNotifyReadyRef = useRef(false);
+    const wasDownloadingRef = useRef(false);
 
     const checkStatus = useCallback(async () => {
         try {
@@ -58,6 +61,22 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
         return () => clearInterval(interval);
     }, [checkStatus, isDownloading]);
 
+    // Notify when download completes
+    useEffect(() => {
+        if (wasDownloadingRef.current && !isDownloading && modelStatus.length > 0) {
+            const allInstalled = modelStatus.every((m) => m.exists);
+            const anyError = modelStatus.some((m) => m.progress.status === 'error');
+
+            if (allInstalled) {
+                const groupLabel = MODEL_GROUP_LABELS[modelGroup] || modelGroup;
+                toast(`✓ ${groupLabel} models installed successfully!`, 'success');
+            } else if (anyError) {
+                toast('Some model downloads failed. Check your connection and try again.', 'error');
+            }
+        }
+        wasDownloadingRef.current = isDownloading;
+    }, [isDownloading, modelStatus, modelGroup, toast]);
+
     const allInstalled = modelStatus.length > 0 && modelStatus.every((m) => m.exists);
 
     useEffect(() => {
@@ -77,22 +96,55 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
     const handleDownloadAll = async () => {
         setIsDownloading(true);
         const missing = modelStatus.filter((m) => !m.exists || m.progress.status === 'error');
+
+        if (missing.length === 0) {
+            toast('All models already installed!', 'success');
+            return;
+        }
+
+        const groupLabel = MODEL_GROUP_LABELS[modelGroup] || modelGroup;
+        const totalSizeGB = missing.reduce((acc, m) => acc + (m.size_gb || 0), 0);
+        toast(`Starting download of ${missing.length} model(s) for ${groupLabel} (~${totalSizeGB.toFixed(1)}GB total)...`, 'info');
+
         for (const m of missing) {
             try {
-                await fetch(`${BACKEND_API.BASE_URL}/api/models/download?model_id=${m.id}&group=${modelGroup}`, { method: 'POST' });
+                const resp = await fetch(`${BACKEND_API.BASE_URL}/api/models/download?model_id=${m.id}&group=${modelGroup}`, { method: 'POST' });
+                const data = await resp.json();
+                if (!data.success) {
+                    console.error(`Failed to start download for ${m.id}:`, data.error);
+                    toast(`Failed to start download for ${m.name}: ${data.error}`, 'error');
+                }
             } catch (e) {
                 console.error(`Failed to start download for ${m.id}`, e);
+                toast(`Network error starting download for ${m.name}`, 'error');
             }
         }
     };
 
     const handlePurge = async () => {
-        if (!confirm('Are you sure? This will delete existing model files to allow a fresh download.')) return;
+        const groupLabel = MODEL_GROUP_LABELS[modelGroup] || modelGroup;
+        if (!confirm(`Delete ${groupLabel} model files and restart download?\n\nThis will remove incomplete/corrupted files and start a fresh download.`)) return;
+
         try {
-            await fetch(`${BACKEND_API.BASE_URL}/api/models/purge?group=${modelGroup}`, { method: 'POST' });
+            toast(`Purging ${groupLabel} models...`, 'info');
+            const resp = await fetch(`${BACKEND_API.BASE_URL}/api/models/purge?group=${modelGroup}`, { method: 'POST' });
+            const data = await resp.json();
+
+            if (!data.success) {
+                toast(`Purge failed: ${data.error}`, 'error');
+                return;
+            }
+
             await checkStatus();
+
+            // Auto-start download after purge
+            toast(`Files purged. Starting fresh download...`, 'info');
+            setTimeout(() => {
+                handleDownloadAll();
+            }, 1000);
         } catch (e) {
             console.error('Purge failed:', e);
+            toast('Failed to purge model files. Is the backend running?', 'error');
         }
     };
 
