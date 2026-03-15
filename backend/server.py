@@ -1132,15 +1132,26 @@ async def trigger_download(model_id: str, group: str = "z-image"):
     """Trigger background download for a specific model."""
     if group not in REQUIRED_MODELS:
         return {"success": False, "error": "Unknown group"}
-    
+
     model_to_download = next((m for m in REQUIRED_MODELS[group] if m['id'] == model_id), None)
     if not model_to_download:
         return {"success": False, "error": "Model ID not found"}
-        
+
+    # Auto-purge corrupt/incomplete files (< 1GB = clearly incomplete)
+    target_path = COMFY_MODELS_DIR / model_to_download['path']
+    if target_path.exists():
+        fsize_gb = target_path.stat().st_size / (1024**3)
+        if fsize_gb < 1.0:  # Less than 1GB = incomplete/corrupt
+            print(f"Auto-purging incomplete file: {target_path.name} ({fsize_gb:.2f}GB)")
+            try:
+                target_path.unlink()
+            except Exception as e:
+                print(f"Failed to auto-purge {target_path}: {e}")
+
     # Start thread
     thread = threading.Thread(target=start_download, args=(model_to_download,))
     thread.start()
-    
+
     return {"success": True, "message": f"Download started for {model_id}"}
 
 

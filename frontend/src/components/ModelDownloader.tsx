@@ -159,12 +159,12 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
     const totalRequiredGb = modelStatus.reduce((acc, m) => acc + (m.size_gb || 0), 0);
     const requiredSizeLabel = totalRequiredGb >= 10 ? totalRequiredGb.toFixed(0) : totalRequiredGb.toFixed(1);
 
-    const mainMessage = hasCorrupt ? 'Corrupted File Detected' : hasError ? 'Download Corrupted' : 'Required Models Missing';
-    const subMessage = hasCorrupt
-        ? `One or more ${groupLabel} model files are incomplete. LoRAs are safe.`
-        : hasError
-            ? `The ${groupLabel} download was interrupted. Purge and restart for a clean copy.`
-            : `${groupLabel} base models are required for generation (~${requiredSizeLabel}GB total)`;
+    // Simplify UI: backend auto-purges corrupt files, so just show "missing"
+    const hasMissing = modelStatus.some((m) => !m.exists);
+    const mainMessage = hasMissing ? 'Required Models Missing' : 'Download Error';
+    const subMessage = hasMissing
+        ? `${groupLabel} base models are required for generation (~${requiredSizeLabel}GB total)`
+        : `The ${groupLabel} download failed. Click to retry.`;
 
     if (allInstalled && !isDownloading && !hasError && !hasCorrupt) {
         return (
@@ -185,14 +185,12 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
 
     return (
         <div className="mx-8 mt-6 bg-[#121218] border border-white/10 rounded-xl overflow-hidden animate-in slide-in-from-top-2 duration-300">
-            <div className={`flex flex-col ${(hasError || hasCorrupt) ? 'bg-red-950/5' : ''}`}>
+            <div className="flex flex-col">
                 <div className="flex items-center justify-between px-6 py-4">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
                             {isDownloading ? (
                                 <Loader2 className="w-5 h-5 text-white animate-spin" />
-                            ) : (hasError || hasCorrupt) ? (
-                                <AlertTriangle className="w-5 h-5 text-slate-500" />
                             ) : (
                                 <Download className="w-5 h-5 text-white/60" />
                             )}
@@ -223,27 +221,15 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
                             </div>
                         ) : (
                             <button
-                                onClick={(hasError || hasCorrupt) ? handlePurge : handleDownloadAll}
+                                onClick={handleDownloadAll}
                                 className="px-6 py-2.5 bg-white hover:bg-slate-200 text-black text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all active:scale-95"
                             >
-                                {(hasError || hasCorrupt) ? 'Purge & Restart' : 'Download All Models'}
+                                Download All Models
                             </button>
                         )}
                     </div>
                 </div>
 
-                {hasCorrupt && !isDownloading && (
-                    <div className="px-6 pb-4 pt-2 border-t border-white/5 flex flex-wrap gap-4">
-                        {corruptModels.map((m) => (
-                            <div key={m.id} className="flex flex-col">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{m.id}</span>
-                                <span className="text-[11px] text-red-400 font-mono">
-                                    {m.actual_size_gb}GB / {m.size_gb}GB (Incomplete)
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                )}
             </div>
         </div>
     );
