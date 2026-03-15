@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Download, Loader2, AlertTriangle } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { BACKEND_API } from '../config/api';
 import { useToast } from './ui/Toast';
 import { getStoredHFToken } from './HFTokenSettings';
@@ -39,6 +39,7 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
     const [modelStatus, setModelStatus] = useState<ModelInfo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [backendUp, setBackendUp] = useState(true);
     const didNotifyReadyRef = useRef(false);
     const wasDownloadingRef = useRef(false);
 
@@ -48,11 +49,14 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
             const data = await resp.json();
             if (data.success && Array.isArray(data.models)) {
                 setModelStatus(data.models);
-                const downloading = data.models.some((m: ModelInfo) => m.progress?.status === 'downloading');
+                // Only count downloads for models that are NOT yet installed
+                const downloading = data.models.some((m: ModelInfo) => !m.exists && m.progress?.status === 'downloading');
                 setIsDownloading(downloading);
+                setBackendUp(true);
             }
-        } catch (e) {
-            console.error('Status check failed:', e);
+        } catch {
+            // Silent when backend is down — no console spam
+            setBackendUp(false);
         } finally {
             setIsLoading(false);
         }
@@ -60,18 +64,19 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
 
     useEffect(() => {
         checkStatus();
-        const timer = isDownloading ? 2000 : 5000;
+        // Poll fast during downloads, normal when up, slow backoff when backend is down
+        const timer = isDownloading ? 2000 : backendUp ? 5000 : 15000;
         const interval = setInterval(checkStatus, timer);
         return () => clearInterval(interval);
-    }, [checkStatus, isDownloading]);
+    }, [checkStatus, isDownloading, backendUp]);
 
     // Notify when download completes
     useEffect(() => {
         if (wasDownloadingRef.current && !isDownloading && modelStatus.length > 0) {
-            const allInstalled = modelStatus.every((m) => m.exists);
-            const anyError = modelStatus.some((m) => m.progress.status === 'error');
+            const allReady = modelStatus.every((m) => m.exists);
+            const anyError = modelStatus.some((m) => !m.exists && m.progress.status === 'error');
 
-            if (allInstalled) {
+            if (allReady) {
                 const groupLabel = MODEL_GROUP_LABELS[modelGroup] || modelGroup;
                 toast(`✓ ${groupLabel} models installed successfully!`, 'success');
             } else if (anyError) {
@@ -98,13 +103,14 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
     }, [allInstalled, onModelsReady]);
 
     const handleDownloadAll = async () => {
-        setIsDownloading(true);
-        const missing = modelStatus.filter((m) => !m.exists || m.progress.status === 'error');
+        const missing = modelStatus.filter((m) => !m.exists);
 
         if (missing.length === 0) {
             toast('All models already installed!', 'success');
             return;
         }
+
+        setIsDownloading(true);
 
         const groupLabel = MODEL_GROUP_LABELS[modelGroup] || modelGroup;
         const totalSizeGB = missing.reduce((acc, m) => acc + (m.size_gb || 0), 0);
@@ -165,20 +171,21 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
     if (modelStatus.length === 0 && !isDownloading) return null;
 
     const groupLabel = MODEL_GROUP_LABELS[modelGroup] || modelGroup;
-    const corruptModels = modelStatus.filter((m) => m.is_corrupt);
-    const hasCorrupt = corruptModels.length > 0;
-    const hasError = modelStatus.some((m) => m.progress.status === 'error');
+    const hasCorrupt = modelStatus.some((m) => m.is_corrupt);
+    const hasError = modelStatus.some((m) => !m.exists && m.progress.status === 'error');
+    const hasMissing = modelStatus.some((m) => !m.exists);
 
     const totalRequiredGb = modelStatus.reduce((acc, m) => acc + (m.size_gb || 0), 0);
     const requiredSizeLabel = totalRequiredGb >= 10 ? totalRequiredGb.toFixed(0) : totalRequiredGb.toFixed(1);
 
-    // Simplify UI: backend auto-purges corrupt files, so just show "missing"
-    const hasMissing = modelStatus.some((m) => !m.exists);
-    const mainMessage = hasMissing ? 'Required Models Missing' : 'Download Error';
+    const mainMessage = hasMissing ? 'Required Models Missing' : hasError ? 'Download Error' : '';
     const subMessage = hasMissing
         ? `${groupLabel} base models are required for generation (~${requiredSizeLabel}GB total)`
-        : `The ${groupLabel} download failed. Click to retry.`;
+        : hasError
+            ? `The ${groupLabel} download failed. Click to retry.`
+            : '';
 
+    // All good — just show a small repair button
     if (allInstalled && !isDownloading && !hasError && !hasCorrupt) {
         return (
             <div className="mx-8 mt-4 flex justify-end">
@@ -192,8 +199,10 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
         );
     }
 
-    const totalDownloaded = modelStatus.reduce((acc, m) => acc + (m.progress.downloaded || 0), 0);
-    const totalSize = modelStatus.reduce((acc, m) => acc + (m.progress.total || 0), 0);
+    // Calculate aggregate progress from non-installed models only
+    const pendingModels = modelStatus.filter((m) => !m.exists);
+    const totalDownloaded = pendingModels.reduce((acc, m) => acc + (m.progress.downloaded || 0), 0);
+    const totalSize = pendingModels.reduce((acc, m) => acc + (m.progress.total || 0), 0);
     const percent = totalSize > 0 ? (totalDownloaded / totalSize) * 100 : 0;
 
     return (
@@ -243,12 +252,12 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
                     </div>
                 </div>
 
-                {/* Detailed model status breakdown */}
-                {(isDownloading || !allInstalled) && (
+                {/* Only show breakdown when there are missing models */}
+                {!allInstalled && (
                     <div className="px-6 pb-4 pt-2 border-t border-white/5 space-y-2">
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">Model Status</div>
                         {modelStatus.map((m) => {
-                            const isModelDownloading = m.progress?.status === 'downloading';
+                            const isModelDownloading = !m.exists && m.progress?.status === 'downloading';
                             const modelPercent = m.progress?.total > 0 ? (m.progress.downloaded / m.progress.total) * 100 : 0;
 
                             return (

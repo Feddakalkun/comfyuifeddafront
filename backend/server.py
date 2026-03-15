@@ -363,7 +363,7 @@ async def manual_refresh_models():
     if success:
         return {"success": True, "message": "Models refreshed"}
     else:
-        raise HTTPException(status_code=500, detail="Failed to refresh models on ComfyUI side")
+        return {"success": False, "error": "ComfyUI not ready or refresh failed"}
 
 
 # === RUNPOD CLOUD INTEGRATION ===
@@ -1034,7 +1034,7 @@ def start_download(model_info, hf_token=None):
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
     total_bytes = int(model_info.get('size_gb', 0) * 1024**3)
-    download_progress[model_id] = {"status": "downloading", "downloaded": 0, "total": total_bytes, "name": model_info['name']}
+    download_progress[model_id] = {"status": "downloading", "downloaded": 0, "total": total_bytes, "name": model_info['name'], "speed": 0, "eta": 0}
 
     try:
         # Build curl command with optional Hugging Face token
@@ -1151,10 +1151,18 @@ async def get_models_status(group: str = "z-image"):
             threshold = 0.5 if m['size_gb'] < 1.0 else 0.95
             if fsize_gb < (m['size_gb'] * threshold):
                 is_corrupt = True
-        
+
+        # If actively downloading, DON'T report as exists (even if file is growing on disk)
+        model_exists = exists and not is_corrupt and not is_downloading
+
+        # Clear stale progress for installed models (only completed/error, NEVER downloading)
+        if model_exists and current_prog.get('status') in ('completed', 'error'):
+            current_prog = {"status": "idle", "downloaded": 0, "total": 0}
+            download_progress.pop(m['id'], None)
+
         results.append({
             **m,
-            "exists": exists and not is_corrupt,
+            "exists": model_exists,
             "is_corrupt": is_corrupt,
             "actual_size_gb": round(full_path.stat().st_size / (1024**3), 3) if exists else 0,
             "progress": current_prog
@@ -1183,6 +1191,10 @@ async def trigger_download(model_id: str, group: str = "z-image", hf_token: Opti
                 target_path.unlink()
             except Exception as e:
                 print(f"Failed to auto-purge {target_path}: {e}")
+
+    # Pre-set progress so frontend sees "downloading" immediately (before thread starts)
+    total_bytes = int(model_to_download.get('size_gb', 0) * 1024**3)
+    download_progress[model_id] = {"status": "downloading", "downloaded": 0, "total": total_bytes, "name": model_to_download['name'], "speed": 0, "eta": 0}
 
     # Start thread with optional HF token
     thread = threading.Thread(target=start_download, args=(model_to_download, hf_token))
