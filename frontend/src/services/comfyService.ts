@@ -6,6 +6,7 @@ import { addUiLog } from './uiLogger';
 class ComfyUIService {
     private clientId: string;
     private ws: WebSocket | null = null;
+    private wsReady: boolean = false;
 
     constructor() {
         this.clientId = this.generateClientId();
@@ -13,6 +14,24 @@ class ComfyUIService {
 
     private generateClientId(): string {
         return `comfyfront_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /**
+     * Wait for WebSocket to be ready (connected)
+     */
+    private async waitForWebSocket(timeout = 5000): Promise<void> {
+        if (this.wsReady && this.ws?.readyState === WebSocket.OPEN) {
+            return;
+        }
+
+        const startTime = Date.now();
+        while (!this.wsReady || this.ws?.readyState !== WebSocket.OPEN) {
+            if (Date.now() - startTime > timeout) {
+                console.warn('WebSocket not ready after timeout, proceeding anyway');
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
     }
 
     /**
@@ -58,6 +77,9 @@ class ComfyUIService {
      * Queue a prompt for generation
      */
     async queuePrompt(workflow: any): Promise<{ prompt_id: string }> {
+        // Wait for WebSocket to be ready before queueing to prevent first-batch failures
+        await this.waitForWebSocket();
+
         const payload: ComfyPrompt = {
             prompt: workflow,
             client_id: this.clientId,
@@ -291,9 +313,11 @@ class ComfyUIService {
         onExecuting?: (nodeId: string | null) => void;
         onCompleted?: (promptId: string, output?: any) => void;
     }): () => void {
+        this.wsReady = false;
         this.ws = new WebSocket(`${COMFY_API.WS_URL}?clientId=${this.clientId}`);
 
         this.ws.onopen = () => {
+            this.wsReady = true;
             // Silently connect - status shown in UI indicator
         };
 
@@ -323,13 +347,19 @@ class ComfyUIService {
         };
 
         this.ws.onerror = () => {
+            this.wsReady = false;
             // Silently ignore WebSocket errors - connection status shown in UI
+        };
+
+        this.ws.onclose = () => {
+            this.wsReady = false;
         };
 
         return () => {
             if (this.ws) {
                 this.ws.close();
                 this.ws = null;
+                this.wsReady = false;
             }
         };
     }
