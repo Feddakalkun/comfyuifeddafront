@@ -230,6 +230,50 @@ export const ModelDownloader = ({ modelGroup = 'z-image', onModelsReady }: Model
                     </div>
                 </div>
 
+                {/* Detailed model status breakdown */}
+                {(isDownloading || !allInstalled) && (
+                    <div className="px-6 pb-4 pt-2 border-t border-white/5 space-y-2">
+                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">Model Status</div>
+                        {modelStatus.map((m) => {
+                            const isModelDownloading = m.progress?.status === 'downloading';
+                            const modelPercent = m.progress?.total > 0 ? (m.progress.downloaded / m.progress.total) * 100 : 0;
+
+                            return (
+                                <div key={m.id} className="bg-black/20 rounded-lg p-3 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-white">
+                                                {m.exists ? '✓' : isModelDownloading ? '⏳' : m.progress?.status === 'error' ? '🔴' : '❌'}
+                                            </span>
+                                            <span className="text-xs text-slate-300">{m.name}</span>
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 font-mono">
+                                            {m.exists ? (
+                                                <span className="text-emerald-400">Installed</span>
+                                            ) : isModelDownloading ? (
+                                                <span className="text-blue-400">
+                                                    {(m.progress.downloaded / (1024**3)).toFixed(2)}GB / {m.size_gb}GB ({Math.round(modelPercent)}%)
+                                                </span>
+                                            ) : m.progress?.status === 'error' ? (
+                                                <span className="text-red-400">Error</span>
+                                            ) : (
+                                                <span className="text-slate-600">{m.size_gb}GB required</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {isModelDownloading && (
+                                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-blue-400 transition-all duration-500"
+                                                style={{ width: `${modelPercent}%` }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

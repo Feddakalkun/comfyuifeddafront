@@ -1047,12 +1047,23 @@ def start_download(model_info):
             model_info['url']
         ]
 
+        print(f"[DOWNLOAD] Starting {model_info['name']} ({model_info['size_gb']}GB) from {model_info['url'][:80]}...")
         process = subprocess.Popen(curl_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Poll file size for progress while curl runs
+        last_log_time = 0
         while process.poll() is None:
             if target_path.exists():
-                download_progress[model_id]['downloaded'] = target_path.stat().st_size
+                current_size = target_path.stat().st_size
+                download_progress[model_id]['downloaded'] = current_size
+
+                # Log progress every 10 seconds
+                current_time = time.time()
+                if current_time - last_log_time >= 10:
+                    progress_gb = current_size / (1024**3)
+                    percent = (current_size / total_bytes * 100) if total_bytes > 0 else 0
+                    print(f"[DOWNLOAD] {model_id}: {progress_gb:.2f}GB / {model_info['size_gb']}GB ({percent:.1f}%)")
+                    last_log_time = current_time
             time.sleep(1)
 
         if process.returncode == 0 and target_path.exists():
