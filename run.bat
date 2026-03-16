@@ -46,9 +46,9 @@ start "FEDDA Update" /WAIT cmd /c "%BASE_DIR%\scripts\run_update.bat"
 set "UPDATE_EXIT=%errorlevel%"
 
 if %UPDATE_EXIT% equ 0 (
-    echo [✓] Update completed successfully.
+    echo [OK] Update completed successfully.
 ) else (
-    echo [⚠] Update check failed (error code %UPDATE_EXIT%) - launching anyway.
+    echo [WARN] Update check failed (error code %UPDATE_EXIT%) - launching anyway.
 )
 echo.
 
