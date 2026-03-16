@@ -36,9 +36,43 @@ function Test-Command {
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-# ============================================================================
-# 0. BANNER + SYSTEM CHECK
-# ============================================================================
+function Install-EmbeddedOllama {
+    param([string]$RootPath, [string]$LogFile)
+    
+    $OllamaDir = Join-Path $RootPath "ollama_embeded"
+    $OllamaExe = Join-Path $OllamaDir "ollama.exe"
+    
+    if (Test-Path $OllamaExe) {
+        Write-Step "Embedded Ollama already installed." "Green"
+        return $true
+    }
+    
+    Write-Header "INSTALLING EMBEDDED OLLAMA"
+    Write-Step "Downloading Ollama portable binary (v0.5.4)..." "Yellow"
+    
+    New-Item -ItemType Directory -Path $OllamaDir -Force | Out-Null
+    $OllamaZip = Join-Path $OllamaDir "ollama.zip"
+    
+    try {
+        # Download Ollama
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri "https://github.com/ollama/ollama/releases/download/v0.5.4/ollama-windows-amd64.zip" -OutFile $OllamaZip
+        
+        Write-Step "Extracting Ollama..." "Yellow"
+        Expand-Archive -Path $OllamaZip -DestinationPath $OllamaDir -Force
+        Remove-Item $OllamaZip -Force
+        
+        Write-Step "Embedded Ollama installed successfully!" "Green"
+        Write-Host "  Run 'ollama serve' to start Ollama." -ForegroundColor Gray
+        return $true
+    }
+    catch {
+        Write-Step "Failed to download Ollama: $_" "Red"
+        return $false
+    }
+}
+
+
 Clear-Host
 Write-Host ""
 Write-Host "  ========================================================" -ForegroundColor Cyan
@@ -172,12 +206,14 @@ if (-not $OllamaRunning) {
     if ($OllamaInstalled) {
         Write-Host "    1) Continue install (Ollama will be used when you start it)" -ForegroundColor Gray
         Write-Host "    2) Cancel and start Ollama first (recommended)" -ForegroundColor Gray
+        Write-Host "    3) Download & install embedded Ollama (portable, no system install needed)" -ForegroundColor Gray
     } else {
         Write-Host "    1) Continue install (skip AI chat)" -ForegroundColor Gray
-        Write-Host "    2) Cancel and download Ollama first (from https://ollama.ai)" -ForegroundColor Gray
+        Write-Host "    2) Cancel and download Ollama from https://ollama.ai" -ForegroundColor Gray
+        Write-Host "    3) Download & install embedded Ollama (portable, included)" -ForegroundColor Gray
     }
     Write-Host ""
-    $OllamaChoice = Read-Host "  Enter 1 or 2 (default: 1)"
+    $OllamaChoice = Read-Host "  Enter 1, 2, or 3 (default: 1)"
     
     if ($OllamaChoice -eq "2") {
         Write-Host ""
@@ -185,14 +221,28 @@ if (-not $OllamaRunning) {
             Write-Host "  Start Ollama with: ollama serve" -ForegroundColor Cyan
             Write-Host "  Then run this installer again." -ForegroundColor White
         } else {
-            Write-Host "  Getting Ollama from https://ollama.ai" -ForegroundColor Cyan
-            Write-Host "  Download and install, then run this installer again." -ForegroundColor White
+            Write-Host "  Download from https://ollama.ai" -ForegroundColor Cyan
+            Write-Host "  Then run this installer again." -ForegroundColor White
         }
         Write-Host ""
         Read-Host "  Press Enter to exit"
         exit 0
     }
-    Write-Host "  Continuing install without Ollama..." -ForegroundColor Yellow
+    elseif ($OllamaChoice -eq "3") {
+        $EmbeddedSuccess = Install-EmbeddedOllama -RootPath $RootPath -LogFile $LogFile
+        if (-not $EmbeddedSuccess) {
+            Write-Host ""
+            Write-Host "  Failed to download embedded Ollama. Check your internet connection." -ForegroundColor Red
+            Write-Host "  You can still continue without it." -ForegroundColor Yellow
+        } else {
+            Write-Host "  Embedded Ollama is ready. It will start with run.bat." -ForegroundColor Green
+            $OllamaRunning = $true
+        }
+    }
+    
+    if (-not $OllamaRunning) {
+        Write-Host "  Continuing install without Ollama..." -ForegroundColor Yellow
+    }
 }
 
 # Confirm
