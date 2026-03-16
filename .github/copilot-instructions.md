@@ -25,7 +25,7 @@ FEDDA is a portable AI studio: ComfyUI + React frontend + FastAPI backend.
 
 ### Deployment
 - **Local (Windows)**: `scripts/install.ps1` sets up everything, `run.bat` starts services
-- **Docker (RunPod)**: `Dockerfile` + `config/supervisord.conf` + `nginx/nginx.conf`
+- **Docker (RunPod)**: `runpod/Dockerfile` + `runpod/supervisord.conf` + `runpod/nginx/nginx.conf`
 - nginx reverse proxy: port 3000 → `/api` (backend :8000), `/comfy` (ComfyUI :8199), `/jupyter` (JupyterLab)
 - `.dockerignore` excludes Windows files (*.bat, *.ps1, python_embeded/)
 

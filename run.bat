@@ -25,8 +25,89 @@ if "%1"==":svc_backend" (
 )
 
 :: ============================================================================
-:: DETECT MODE — portable (embedded) vs lite (venv + system tools)
+:: ENTRY POINT: Detect environment and launch
 :: ============================================================================
+call :detect_env
+
+echo.
+echo ============================================================================
+echo   FEDDA LAUNCHER  (%MODE% mode)
+echo ============================================================================
+echo.
+
+:: ============================================================================
+:: AUTO-UPDATE: Check for updates in background
+:: ============================================================================
+echo [1/5] Checking for updates...
+if not exist "%BASE_DIR%\logs" mkdir "%BASE_DIR%\logs"
+
+:: Launch update in separate window (non-blocking)
+start "FEDDA Update" /WAIT cmd /c "%BASE_DIR%\scripts\run_update.bat"
+set "UPDATE_EXIT=%errorlevel%"
+
+if %UPDATE_EXIT% equ 0 (
+    echo [✓] Update completed successfully.
+) else (
+    echo [⚠] Update check failed (error code %UPDATE_EXIT%) - launching anyway.
+)
+echo.
+
+:: ============================================================================
+:: MAIN LAUNCHER: Start services
+:: ============================================================================
+
+:: 2. Start Ollama
+if "%MODE%"=="portable" (
+    if exist "%BASE_DIR%\ollama_embeded\ollama.exe" (
+        echo [2/5] Starting Ollama...
+        start "" /B "%~f0" :svc_ollama
+        timeout /t 2 /nobreak >nul
+    ) else (
+        echo [2/5] Ollama not found — AI chat won't work
+    )
+) else (
+    where ollama >nul 2>nul
+    if %errorlevel% equ 0 (
+        echo [2/5] Starting Ollama...
+        start "" /B "%~f0" :svc_ollama
+        timeout /t 2 /nobreak >nul
+    ) else (
+        echo [2/5] Ollama not found — AI chat won't work
+    )
+)
+
+:: 3. Start ComfyUI
+echo [3/5] Starting ComfyUI (Port 8199)...
+start "" /B "%~f0" :svc_comfy
+timeout /t 3 /nobreak >nul
+
+:: 4. Start FastAPI Backend
+echo [4/5] Starting Backend (Port 8000)...
+start "" /B "%~f0" :svc_backend
+timeout /t 2 /nobreak >nul
+
+:: 5. Start Frontend (runs in this window)
+echo [5/5] Starting FEDDA UI (Port 5173)...
+echo.
+echo   Logs:  %BASE_DIR%\logs\
+echo   Close this window to stop all services.
+echo.
+cd /d "%BASE_DIR%\frontend"
+set "PATH=%CD%\node_modules\.bin;%PATH%"
+
+if not exist "node_modules" (
+    echo [INFO] node_modules missing, running npm install...
+    call npm install
+)
+
+call npm run dev
+pause
+exit /b
+
+:: ============================================================================
+:: SUBROUTINE: DETECT ENVIRONMENT (Portable vs Lite)
+:: ============================================================================
+:detect_env
 set "MODE="
 if exist "%BASE_DIR%\python_embeded\python.exe" (
     set "MODE=portable"
@@ -45,62 +126,6 @@ if exist "%BASE_DIR%\python_embeded\python.exe" (
     pause
     exit /b 1
 )
-
-:: ============================================================================
-:: MAIN LAUNCHER
-:: ============================================================================
-echo.
-echo ============================================================================
-echo   FEDDA LAUNCHER  (%MODE% mode)
-echo ============================================================================
-echo.
-
-:: 1. Start Ollama
-if "%MODE%"=="portable" (
-    if exist "%BASE_DIR%\ollama_embeded\ollama.exe" (
-        echo [1/4] Starting Ollama...
-        start "" /B "%~f0" :svc_ollama
-        timeout /t 2 /nobreak >nul
-    ) else (
-        echo [1/4] Ollama not found — AI chat won't work
-    )
-) else (
-    where ollama >nul 2>nul
-    if %errorlevel% equ 0 (
-        echo [1/4] Starting Ollama...
-        start "" /B "%~f0" :svc_ollama
-        timeout /t 2 /nobreak >nul
-    ) else (
-        echo [1/4] Ollama not found — AI chat won't work
-    )
-)
-
-:: 2. Start ComfyUI
-echo [2/4] Starting ComfyUI (Port 8199)...
-start "" /B "%~f0" :svc_comfy
-timeout /t 3 /nobreak >nul
-
-:: 3. Start FastAPI Backend
-echo [3/4] Starting Backend (Port 8000)...
-start "" /B "%~f0" :svc_backend
-timeout /t 2 /nobreak >nul
-
-:: 4. Start Frontend (runs in this window)
-echo [4/4] Starting FEDDA UI (Port 5173)...
-echo.
-echo   Logs:  %BASE_DIR%\logs\
-echo   Close this window to stop all services.
-echo.
-cd /d "%BASE_DIR%\frontend"
-set "PATH=%CD%\node_modules\.bin;%PATH%"
-
-if not exist "node_modules" (
-    echo [INFO] node_modules missing, running npm install...
-    call npm install
-)
-
-call npm run dev
-pause
 exit /b
 
 :: ============================================================================
@@ -131,15 +156,8 @@ set "BASE_DIR=%~dp0"
 if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
 set "COMFYUI_DIR=%BASE_DIR%\ComfyUI"
 
-:: Detect Python
-if exist "%BASE_DIR%\python_embeded\python.exe" (
-    set "PYTHON=%BASE_DIR%\python_embeded\python.exe"
-    set "PATH=%BASE_DIR%\python_embeded;%BASE_DIR%\python_embeded\Scripts;%BASE_DIR%\git\cmd;%BASE_DIR%\node_embeded;%PATH%"
-    set "COMFY_EXTRA_FLAGS=--windows-standalone-build"
-) else (
-    set "PYTHON=%BASE_DIR%\venv\Scripts\python.exe"
-    set "COMFY_EXTRA_FLAGS="
-)
+:: Detect Python (call detect_env subroutine)
+call :detect_env
 
 set COMFYUI_OFFLINE=1
 set TORIO_USE_FFMPEG=0
@@ -168,13 +186,8 @@ set "BASE_DIR=%~dp0"
 if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
 set "BACKEND_DIR=%BASE_DIR%\backend"
 
-:: Detect Python
-if exist "%BASE_DIR%\python_embeded\python.exe" (
-    set "PYTHON=%BASE_DIR%\python_embeded\python.exe"
-    set "PATH=%BASE_DIR%\python_embeded;%BASE_DIR%\python_embeded\Scripts;%PATH%"
-) else (
-    set "PYTHON=%BASE_DIR%\venv\Scripts\python.exe"
-)
+:: Detect Python (call detect_env subroutine)
+call :detect_env
 set "PYTHONPATH=%BACKEND_DIR%;%PYTHONPATH%"
 
 echo [%date% %time%] Clearing port 8000...

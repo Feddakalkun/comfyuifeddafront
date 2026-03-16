@@ -96,8 +96,8 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # --- Copy Docker-specific files from this repo ---
 COPY scripts/ /app/scripts/
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY runpod/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY runpod/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Make scripts executable
 RUN chmod +x /app/scripts/*.sh

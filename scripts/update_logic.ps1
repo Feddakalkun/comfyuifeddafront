@@ -2,14 +2,18 @@
 # FEDDA Update & Repair — auto-detects portable vs lite mode
 # ============================================================================
 
+param([switch]$SilentMode)
+
 $ErrorActionPreference = "Stop"
 $ScriptPath = $PSScriptRoot
 $RootPath = Split-Path -Parent $ScriptPath
 Set-Location $RootPath
 
-Write-Host "===================================================" -ForegroundColor Cyan
-Write-Host "      FEDDA UPDATE & REPAIR" -ForegroundColor Cyan
-Write-Host "===================================================" -ForegroundColor Cyan
+if (-not $SilentMode) {
+    Write-Host "===================================================" -ForegroundColor Cyan
+    Write-Host "      FEDDA UPDATE & REPAIR" -ForegroundColor Cyan
+    Write-Host "===================================================" -ForegroundColor Cyan
+}
 
 # ============================================================================
 # DETECT MODE
@@ -22,11 +26,11 @@ $CustomNodesDir = Join-Path $ComfyDir "custom_nodes"
 if (Test-Path $PortablePy) {
     $Mode = "portable"
     $PyExe = $PortablePy
-    Write-Host "`n  Mode: Full (portable)" -ForegroundColor Green
+    if (-not $SilentMode) { Write-Host "`n  Mode: Full (portable)" -ForegroundColor Green }
 } elseif (Test-Path $VenvPy) {
     $Mode = "lite"
     $PyExe = $VenvPy
-    Write-Host "`n  Mode: Lite (venv)" -ForegroundColor Green
+    if (-not $SilentMode) { Write-Host "`n  Mode: Lite (venv)" -ForegroundColor Green }
 } else {
     Write-Host "`n  [ERROR] No Python environment found!" -ForegroundColor Red
     Write-Host "  Run install.bat first." -ForegroundColor Yellow
@@ -302,7 +306,9 @@ if ($CleanedCount -eq 0) {
 # ============================================================================
 # DONE
 # ============================================================================
-Write-Host "`n===================================================" -ForegroundColor Green
-Write-Host "   UPDATE COMPLETE" -ForegroundColor Green
-Write-Host "===================================================" -ForegroundColor Green
-Write-Host "Run RUN.bat to start FEDDA."
+if (-not $SilentMode) {
+    Write-Host "`n===================================================" -ForegroundColor Green
+    Write-Host "   UPDATE COMPLETE" -ForegroundColor Green
+    Write-Host "===================================================" -ForegroundColor Green
+    Write-Host "Run RUN.bat to start FEDDA."
+}
