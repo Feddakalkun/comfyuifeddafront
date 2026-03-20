@@ -13,6 +13,7 @@ export const ExecutionStatusBar = () => {
         error,
         totalNodes,
         completedNodes,
+        overallProgress,
         cancelExecution,
     } = useComfyExecution();
 
@@ -78,22 +79,21 @@ export const ExecutionStatusBar = () => {
     }
 
     // Executing state
-    const nodeCounter = totalNodes > 0
-        ? `${completedNodes}/${totalNodes}`
-        : '';
+    const nodeCounter = totalNodes > 0 ? `${completedNodes}/${totalNodes}` : '';
+    const stepInfo = progress > 0 ? ` (${progress}%)` : '';
 
     return (
         <div className="h-10 bg-[#0d0d14] border-b border-white/5 flex items-center px-6 gap-3 animate-in slide-in-from-top-2 duration-300">
-            {/* Icon: spinner, download, or cpu */}
+            {/* Icon */}
             {isDownloaderNode ? (
                 <Download className="w-4 h-4 text-blue-400 animate-bounce shrink-0" />
             ) : (
                 <Loader2 className="w-4 h-4 text-white/60 animate-spin shrink-0" />
             )}
 
-            {/* Node name */}
+            {/* Node name + step progress */}
             <span className={`text-sm font-medium truncate ${isDownloaderNode ? 'text-blue-300' : 'text-slate-300'}`}>
-                {currentNodeName}
+                {currentNodeName}{stepInfo}
             </span>
 
             {/* Node counter badge */}
@@ -103,21 +103,21 @@ export const ExecutionStatusBar = () => {
                 </span>
             )}
 
-            {/* Progress bar */}
+            {/* Overall workflow progress bar */}
             <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden ml-2">
                 <div
-                    className={`h-full rounded-full transition-all duration-300 ease-out ${isDownloaderNode
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${isDownloaderNode
                         ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.4)]'
                         : 'bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.2)]'
                         }`}
-                    style={{ width: `${progress}%` }}
+                    style={{ width: `${overallProgress}%` }}
                 />
             </div>
 
-            {/* Percentage */}
-            {progress > 0 && (
+            {/* Overall percentage */}
+            {overallProgress > 0 && (
                 <span className="text-xs text-slate-400 font-mono w-8 text-right shrink-0">
-                    {progress}%
+                    {overallProgress}%
                 </span>
             )}
 

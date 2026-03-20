@@ -31,6 +31,8 @@ interface ComfyExecutionContextType {
     outputReadyCount: number; // increments on each 'executed' event (per output node)
     lastOutputImages: OutputFile[]; // images from latest executed event
     lastOutputVideos: OutputFile[]; // videos/gifs from latest executed event
+    previewUrl: string | null; // live preview image during sampling
+    overallProgress: number; // 0-100 workflow-level progress
     // Queue a workflow: builds node map, sends to ComfyUI, returns prompt_id
     queueWorkflow: (workflow: Record<string, any>) => Promise<string>;
     cancelExecution: () => Promise<void>;
@@ -83,8 +85,10 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
     const [outputReadyCount, setOutputReadyCount] = useState(0);
     const [lastOutputImages, setLastOutputImages] = useState<OutputFile[]>([]);
     const [lastOutputVideos, setLastOutputVideos] = useState<OutputFile[]>([]);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const nodeMapRef = useRef<Record<string, { name: string; classType: string }>>({});
+    const prevPreviewRef = useRef<string | null>(null);
     const executedNodesRef = useRef<Set<string>>(new Set());
     const doneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const activePromptIdRef = useRef<string | null>(null);
@@ -98,6 +102,8 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
         setCurrentNodeName('Complete');
         setProgress(100);
         setIsDownloaderNode(false);
+        if (prevPreviewRef.current) { URL.revokeObjectURL(prevPreviewRef.current); prevPreviewRef.current = null; }
+        setPreviewUrl(null);
 
         if (activePromptIdRef.current) {
             setLastCompletedPromptId(activePromptIdRef.current);
@@ -180,6 +186,14 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
                 setOutputReadyCount(prev => prev + 1);
             },
 
+            onPreview: (blobUrl) => {
+                if (cancelledRef.current) return;
+                // Revoke previous blob URL to prevent memory leaks
+                if (prevPreviewRef.current) URL.revokeObjectURL(prevPreviewRef.current);
+                prevPreviewRef.current = blobUrl;
+                setPreviewUrl(blobUrl);
+            },
+
             onStatus: (data) => {
                 // Check if queue empty while we were executing
                 if (data?.exec_info?.queue_remaining === 0 && stateRef.current === 'executing') {
@@ -211,6 +225,8 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
             setCompletedNodes(0);
             setTotalNodes(0);
             executedNodesRef.current.clear();
+            if (prevPreviewRef.current) { URL.revokeObjectURL(prevPreviewRef.current); prevPreviewRef.current = null; }
+            setPreviewUrl(null);
         } catch (err: any) {
             console.error('Cancel failed:', err);
         }
@@ -236,6 +252,8 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
         setOutputReadyCount(0);
         setLastOutputImages([]);
         setLastOutputVideos([]);
+        if (prevPreviewRef.current) { URL.revokeObjectURL(prevPreviewRef.current); prevPreviewRef.current = null; }
+        setPreviewUrl(null);
 
         // Reset state
         setState('executing');
@@ -277,6 +295,8 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
         }
     }, []);
 
+    const overallProgress = totalNodes > 0 ? Math.round((completedNodes / totalNodes) * 100) : 0;
+
     return (
         <ComfyExecutionContext.Provider value={{
             state,
@@ -291,6 +311,8 @@ export const ComfyExecutionProvider = ({ children }: { children: React.ReactNode
             outputReadyCount,
             lastOutputImages,
             lastOutputVideos,
+            previewUrl,
+            overallProgress,
             queueWorkflow,
             cancelExecution,
         }}>

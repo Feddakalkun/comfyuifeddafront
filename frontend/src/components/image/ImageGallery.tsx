@@ -15,7 +15,7 @@ interface ImageGalleryProps {
 }
 
 export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating, setIsGenerating, galleryKey, onSendToTab }: ImageGalleryProps) => {
-    const { state: execState, progress: execProgress, currentNodeName, lastOutputImages } = useComfyExecution();
+    const { state: execState, progress: execProgress, currentNodeName, lastOutputImages, previewUrl, overallProgress, completedNodes, totalNodes } = useComfyExecution();
     const { toast } = useToast();
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -125,23 +125,41 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
             <div className="lg:col-span-1 bg-[#121218] border border-white/5 rounded-2xl p-1 flex flex-col relative overflow-hidden group min-h-[400px] animate-in slide-in-from-right-4 duration-500">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
 
-                {/* Compact generating indicator — stays at top, doesn't replace gallery */}
+                {/* Generating indicator with live preview */}
                 {(isGenerating || execState === 'executing') && (
-                    <div className="z-10 w-full px-4 py-3 bg-white/5 border-b border-white/10 flex items-center gap-3 shrink-0">
-                        <div className="relative w-8 h-8 shrink-0">
-                            <div className="absolute inset-0 border-2 border-white/20 rounded-full"></div>
-                            <div className="absolute inset-0 border-t-2 border-white rounded-full animate-spin"></div>
-                            <Sparkles className="absolute inset-0 m-auto w-3.5 h-3.5 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-white text-xs font-medium truncate">{currentNodeName || 'Initializing...'}</p>
-                            {execProgress > 0 && (
-                                <div className="w-full h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
-                                    <div className="h-full bg-white transition-all duration-300" style={{ width: `${execProgress}%` }}></div>
+                    <div className="z-10 w-full shrink-0">
+                        {/* Live preview image */}
+                        {previewUrl && (
+                            <div className="relative w-full aspect-square bg-black/40 overflow-hidden">
+                                <img src={previewUrl} alt="Preview" className="w-full h-full object-contain animate-pulse" />
+                                <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-[#121218] to-transparent" />
+                            </div>
+                        )}
+                        {/* Progress info bar */}
+                        <div className="px-4 py-2.5 bg-white/5 border-b border-white/10 flex items-center gap-3">
+                            <div className="relative w-7 h-7 shrink-0">
+                                <div className="absolute inset-0 border-2 border-white/20 rounded-full"></div>
+                                <div className="absolute inset-0 border-t-2 border-white rounded-full animate-spin"></div>
+                                <Sparkles className="absolute inset-0 m-auto w-3 h-3 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-white text-xs font-medium truncate">{currentNodeName || 'Initializing...'}</p>
+                                    {totalNodes > 0 && (
+                                        <span className="text-[10px] text-slate-500 bg-white/5 px-1.5 py-0.5 rounded font-mono shrink-0">
+                                            {completedNodes}/{totalNodes}
+                                        </span>
+                                    )}
                                 </div>
-                            )}
+                                {/* Overall workflow progress bar */}
+                                <div className="w-full h-1 bg-white/10 rounded-full mt-1.5 overflow-hidden">
+                                    <div className="h-full bg-white/40 rounded-full transition-all duration-500" style={{ width: `${overallProgress}%` }}>
+                                        {/* Per-node progress overlay */}
+                                    </div>
+                                </div>
+                            </div>
+                            {overallProgress > 0 && <span className="text-white/60 text-[10px] font-mono shrink-0">{overallProgress}%</span>}
                         </div>
-                        {execProgress > 0 && <span className="text-white text-xs font-bold shrink-0">{execProgress}%</span>}
                     </div>
                 )}
 

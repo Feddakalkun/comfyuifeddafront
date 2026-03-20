@@ -313,6 +313,7 @@ class ComfyUIService {
         onProgress?: (node: string, value: number, max: number) => void;
         onExecuting?: (nodeId: string | null) => void;
         onCompleted?: (promptId: string, output?: any) => void;
+        onPreview?: (blobUrl: string) => void;
     }): () => void {
         // If we already have a working connection, just update callbacks
         if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
@@ -331,6 +332,14 @@ class ComfyUIService {
         };
 
         this.ws.onmessage = (event) => {
+            // Binary message = preview image from ComfyUI (JPEG/PNG)
+            if (event.data instanceof Blob) {
+                const blob = event.data.slice(8); // skip 8-byte header (type + format)
+                const url = URL.createObjectURL(blob);
+                this._callbacks?.onPreview?.(url);
+                return;
+            }
+
             try {
                 const data = JSON.parse(event.data);
 
@@ -381,6 +390,7 @@ class ComfyUIService {
         onProgress?: (node: string, value: number, max: number) => void;
         onExecuting?: (nodeId: string | null) => void;
         onCompleted?: (promptId: string, output?: any) => void;
+        onPreview?: (blobUrl: string) => void;
     } | null = null;
 
     private updateCallbacks(callbacks: typeof this._callbacks) {
