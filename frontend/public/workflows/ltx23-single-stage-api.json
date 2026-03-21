@@ -450,7 +450,7 @@
         "4964",
         0
       ],
-      "num_steps": "28"
+      "skip_blocks": ""
     },
     "class_type": "MultimodalGuider",
     "_meta": {
@@ -483,11 +483,10 @@
   },
   "4967": {
     "inputs": {
-      "noise_stdev": 0.25,
-      "noise_type": "exponential/res_2s",
-      "noise_seed": 94,
-      "seed_mode": "fixed",
-      "denoise": true
+      "eta": 0.5,
+      "sampler_name": "res_2m",
+      "seed": 94,
+      "bongmath": true
     },
     "class_type": "ClownSampler_Beta",
     "_meta": {
