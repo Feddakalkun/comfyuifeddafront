@@ -48,6 +48,9 @@ export const BACKEND_API = {
     },
 };
 
+/** True when running on RunPod (detected via proxy hostname) */
+export const IS_RUNPOD = /\.proxy\.runpod\.net$/i.test(window.location.host);
+
 export const APP_CONFIG = {
     NAME: 'FEDDA',
     VERSION: '0.1.0',
