@@ -56,7 +56,7 @@ function Install-EmbeddedOllama {
     try {
         # Download Ollama
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri "https://github.com/ollama/ollama/releases/download/v0.5.4/ollama-windows-amd64.zip" -OutFile $OllamaZip
+        Invoke-WebRequest -Uri "https://github.com/ollama/ollama/releases/download/v0.5.4/ollama-windows-amd64.zip" -OutFile $OllamaZip -UseBasicParsing
         
         Write-Step "Extracting Ollama..." "Yellow"
         Expand-Archive -Path $OllamaZip -DestinationPath $OllamaDir -Force
@@ -133,7 +133,7 @@ if (Test-Command "ollama") {
     $OllamaInstalled = $true
     # Try to connect to Ollama service (port 11434)
     try {
-        $null = Invoke-WebRequest -Uri "http://localhost:11434/api/tags" -TimeoutSec 1 -ErrorAction SilentlyContinue
+        $null = Invoke-WebRequest -Uri "http://localhost:11434/api/tags" -TimeoutSec 1 -UseBasicParsing -ErrorAction SilentlyContinue
         if ($?) {
             $OllamaVersion = & ollama --version 2>&1
             Write-Step "Ollama:  $OllamaVersion (running)" "Green"
