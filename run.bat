@@ -41,21 +41,7 @@ echo   FEDDA LAUNCHER  (%MODE% mode)
 echo ============================================================================
 echo.
 
-:: ============================================================================
-:: AUTO-UPDATE: Check for updates in background
-:: ============================================================================
-echo [1/5] Checking for updates...
-if not exist "%BASE_DIR%\logs" mkdir "%BASE_DIR%\logs"
-
-:: Launch update in separate window (non-blocking)
-start "FEDDA Update" /WAIT cmd /c "%BASE_DIR%\scripts\run_update.bat"
-set "UPDATE_EXIT=%errorlevel%"
-
-if %UPDATE_EXIT% equ 0 (
-    echo [OK] Update completed successfully.
-) else (
-    echo [WARN] Update check failed ^(error code %UPDATE_EXIT%^) - launching anyway.
-)
+echo [1/5] Skipping auto-update (run update.bat manually)
 echo.
 
 :: ============================================================================
