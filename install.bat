@@ -6,6 +6,10 @@ title FEDDA Installer
 set "BASE_DIR=%~dp0"
 if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
 
+:: Skip menu if re-launched as admin with install type argument
+if "%1"=="FULL" goto :run_full
+if "%1"=="LITE" goto :run_lite
+
 echo.
 echo ============================================================================
 echo   FEDDA INSTALLER
@@ -189,12 +193,14 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-:: Handle re-entry after admin elevation
-if "%1"=="FULL" (
-    cd /d "%~dp0"
-    set "BASE_DIR=%~dp0"
-    if "!BASE_DIR:~-1!"=="\" set "BASE_DIR=!BASE_DIR:~0,-1!"
-)
+:run_full
+cd /d "%~dp0"
+set "BASE_DIR=%~dp0"
+if "!BASE_DIR:~-1!"=="\" set "BASE_DIR=!BASE_DIR:~0,-1!"
+
+echo.
+echo   Starting Full Install...
+echo.
 
 powershell -ExecutionPolicy Bypass -File "%BASE_DIR%\scripts\install.ps1"
 
@@ -219,6 +225,11 @@ if "%LITE_AVAILABLE%"=="0" (
     echo.
     goto :ask_choice
 )
+
+:run_lite
+cd /d "%~dp0"
+set "BASE_DIR=%~dp0"
+if "!BASE_DIR:~-1!"=="\" set "BASE_DIR=!BASE_DIR:~0,-1!"
 
 echo.
 echo   Starting Lite Install...
