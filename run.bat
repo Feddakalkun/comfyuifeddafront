@@ -8,6 +8,8 @@ if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
 :: Keep all ML caches inside install folder (never write to %USERPROFILE%\.cache)
 set "HF_HOME=%BASE_DIR%\cache\huggingface"
 set "TORCH_HOME=%BASE_DIR%\cache\torch"
+set "INSIGHTFACE_ROOT=%BASE_DIR%\cache\insightface"
+set "PIP_CACHE_DIR=%BASE_DIR%\cache\pip"
 
 :: ============================================================================
 :: SERVICE DISPATCH — background services, output goes to logs/
