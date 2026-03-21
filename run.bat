@@ -5,6 +5,10 @@ title FEDDA Launcher
 set "BASE_DIR=%~dp0"
 if "%BASE_DIR:~-1%"=="\" set "BASE_DIR=%BASE_DIR:~0,-1%"
 
+:: Keep all ML caches inside install folder (never write to %USERPROFILE%\.cache)
+set "HF_HOME=%BASE_DIR%\cache\huggingface"
+set "TORCH_HOME=%BASE_DIR%\cache\torch"
+
 :: ============================================================================
 :: SERVICE DISPATCH — background services, output goes to logs/
 :: ============================================================================
