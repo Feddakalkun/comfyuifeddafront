@@ -69,6 +69,7 @@ def graphql(api_key: str, query: str, variables: dict = None) -> dict:
         headers={
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}",
+            "User-Agent": "FEDDA-Deploy/1.0",
         },
     )
 
