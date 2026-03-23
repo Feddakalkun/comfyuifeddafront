@@ -84,7 +84,7 @@ export const AudioPage = () => {
     const [useAudioCodes, setUseAudioCodes] = usePersistentState('audio_ace_use_audio_codes', false);
     const [selectedPresetId, setSelectedPresetId] = usePersistentState('audio_ace_selected_preset', ACE_PRESETS[0].id);
     const [generationSourceMode, setGenerationSourceMode] = usePersistentState<GenerationSourceMode>('audio_ace_source_mode', 'preset');
-    const [activeReferenceSummary, setActiveReferenceSummary] = usePersistentState('audio_ace_active_reference', '');
+    const [, setActiveReferenceSummary] = usePersistentState('audio_ace_active_reference', '');
 
     const [unetModels, setUnetModels] = useState<string[]>([]);
     const [textEncoderModels, setTextEncoderModels] = useState<string[]>([]);
@@ -367,29 +367,6 @@ export const AudioPage = () => {
         });
 
         return suggestions;
-    };
-
-    const handleAnalyzeReference = async () => {
-        const url = referenceUrl.trim();
-        if (!url) {
-            setPlannerError('Paste a YouTube link before analyzing reference.');
-            return;
-        }
-
-        setIsAnalyzingReference(true);
-        setPlannerError(null);
-
-        try {
-            const info = await fetchReferenceInfo(url);
-            setReferenceInfo(info);
-            toast('Reference analyzed.', 'success');
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            setPlannerError(msg);
-            toast(`Reference analyze failed: ${msg}`, 'error');
-        } finally {
-            setIsAnalyzingReference(false);
-        }
     };
 
     const handleAnalyzeAndApplyReference = async () => {
@@ -680,7 +657,6 @@ export const AudioPage = () => {
 
     const aceReady = unetModels.length > 0 && textEncoderModels.length > 0 && vaeModels.length > 0;
     const referenceSuggestions = referenceInfo ? buildReferenceSuggestions(referenceInfo, favoriteArtist, seconds) : null;
-    const sourceModeLabel = generationSourceMode === 'reference' ? 'Reference mode' : generationSourceMode === 'preset' ? 'Preset mode' : 'Manual mode';
     const handleDownloadAudio = async () => {
         if (!audioUrl) return;
         const filename = detectedOutputs[detectedOutputs.length - 1] || `ace-step-${Date.now()}.flac`;
