@@ -1,5 +1,6 @@
 ﻿// Advanced Gallery Manager with RunPod Job Tracker
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Images, Trash2, Search, CheckSquare, Square, Download, Cloud, Loader2, CheckCircle2, AlertCircle, X, Film } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../components/ui/Toast';
@@ -406,10 +407,10 @@ export const GalleryPage = () => {
                 </div>
             )}
 
-            {/* Lightbox */}
-            {lightboxImage && (
+            {/* Lightbox — portal to body to escape stacking contexts */}
+            {lightboxImage && createPortal(
                 <div
-                    className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200"
+                    className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200"
                     onClick={() => setLightboxImage(null)}
                 >
                     <button
@@ -424,7 +425,8 @@ export const GalleryPage = () => {
                         className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
                         onClick={(e) => e.stopPropagation()}
                     />
-                </div>
+                </div>,
+                document.body
             )}
         </CatalogShell>
     );

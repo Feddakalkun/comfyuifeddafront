@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Send, Bot, User, Sparkles, Image as ImageIcon, Loader2, Mic, Square, Volume2, VolumeX, X } from 'lucide-react';
 import { assistantService } from '../services/assistantService';
 import { comfyService } from '../services/comfyService';
@@ -748,10 +749,10 @@ export const ChatPage = () => {
                 </div>
             </div>
 
-            {/* Lightbox */}
-            {lightboxImage && (
+            {/* Lightbox — portal to body to escape stacking contexts */}
+            {lightboxImage && createPortal(
                 <div
-                    className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200"
+                    className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200"
                     onClick={() => setLightboxImage(null)}
                 >
                     <button
@@ -766,7 +767,8 @@ export const ChatPage = () => {
                         className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
                         onClick={(e) => e.stopPropagation()}
                     />
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

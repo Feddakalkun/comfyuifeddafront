@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Sparkles, Maximize2, X, Trash2, Video, FileText, Image, Paintbrush, Download } from 'lucide-react';
 import { comfyService } from '../../services/comfyService';
 import { useComfyExecution } from '../../contexts/ComfyExecutionContext';
@@ -213,14 +214,15 @@ export const ImageGallery = ({ generatedImages, setGeneratedImages, isGenerating
                 )}
             </div>
 
-            {/* Lightbox */}
-            {selectedImage && (
-                <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
+            {/* Lightbox — portal to body to escape stacking contexts */}
+            {selectedImage && createPortal(
+                <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
                     <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
                         <X className="w-6 h-6" />
                     </button>
                     <img src={selectedImage} alt="Full size" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()} />
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );
