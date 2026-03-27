@@ -8,26 +8,43 @@ interface LandingPageProps {
 
 export const LandingPage = ({ onEnter }: LandingPageProps) => {
     const [activeVideo, setActiveVideo] = useState<'bg' | 'grok'>('bg');
-    const [showDoneVideo, setShowDoneVideo] = useState(false);
+    const [comfyOnline, setComfyOnline] = useState(false);
+    const [checks, setChecks] = useState(0);
+    const [lastCheckedAt, setLastCheckedAt] = useState<number>(Date.now());
+
+    const showDoneVideo = comfyOnline;
+    const readyPercent = comfyOnline ? 100 : 0;
+    const statusLabel = showDoneVideo
+        ? 'System Ready'
+        : 'Waiting for ComfyUI';
 
     // 1. Poll for ComfyUI status
     useEffect(() => {
         let isMounted = true;
         const checkStatus = async () => {
-            const alive = await comfyService.isAlive();
-            if (alive && isMounted && !showDoneVideo) {
-                setShowDoneVideo(true);
+            try {
+                const comfyAlive = await comfyService.isAlive();
+
+                if (!isMounted) return;
+                setComfyOnline(comfyAlive);
+                setChecks((prev) => prev + 1);
+                setLastCheckedAt(Date.now());
+            } catch {
+                if (!isMounted) return;
+                setComfyOnline(false);
+                setChecks((prev) => prev + 1);
+                setLastCheckedAt(Date.now());
             }
         };
 
-        const interval = setInterval(checkStatus, 3000);
+        const interval = setInterval(checkStatus, 2000);
         checkStatus();
 
         return () => {
             isMounted = false;
             clearInterval(interval);
         };
-    }, [showDoneVideo]);
+    }, []);
 
     // 2. Cross-fade logic for loading videos (Using high-quality ping-pong loops)
     useEffect(() => {
@@ -106,14 +123,43 @@ export const LandingPage = ({ onEnter }: LandingPageProps) => {
                             <Loader2 className="w-4 h-4 animate-spin" />
                         )}
                         <span className="text-xs font-bold tracking-widest uppercase">
-                            {showDoneVideo ? 'ComfyUI Online' : 'Connecting to Backend...'}
+                            {statusLabel}
                         </span>
+                    </div>
+
+                    <div className="w-[320px] bg-black/40 border border-white/10 rounded-xl p-3 text-left space-y-2">
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-500">
+                            <span>Startup Readiness</span>
+                            <span>{readyPercent}%</span>
+                        </div>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-white transition-all duration-500"
+                                style={{ width: `${readyPercent}%` }}
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 text-[11px]">
+                            <div className={`rounded-md px-2 py-1.5 border ${comfyOnline ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-white/10 bg-white/5 text-slate-400'}`}>
+                                ComfyUI: {comfyOnline ? 'Online' : 'Offline'}
+                            </div>
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                            Checks: {checks}  ·  Last ping: {new Date(lastCheckedAt).toLocaleTimeString()}
+                        </div>
                     </div>
 
                     {/* Action Button */}
                     <button
-                        onClick={onEnter}
-                        className="group relative px-12 py-5 bg-white text-black font-black text-xl uppercase tracking-widest rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-lg"
+                        onClick={() => {
+                            if (!showDoneVideo) return;
+                            onEnter();
+                        }}
+                        disabled={!showDoneVideo}
+                        className={`group relative px-12 py-5 font-black text-xl uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-lg ${
+                            showDoneVideo
+                                ? 'bg-white text-black hover:scale-[1.02] active:scale-95'
+                                : 'bg-white/25 text-white/70 cursor-not-allowed'
+                        }`}
                     >
                         <span className="relative z-10 flex items-center gap-3">
                             Enter System <Play className="w-5 h-5 fill-current" />
