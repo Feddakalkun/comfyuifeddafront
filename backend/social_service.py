@@ -61,6 +61,32 @@ def _dump_debug(job_id: str, name: str, content: str) -> None:
         pass
 
 
+def _load_vsco_browser_cookies() -> dict:
+    """
+    Read VSCO cookies from local browser profile (Chrome/Edge) so requests
+    can reuse a real, user-approved browser session.
+    """
+    cookies = {}
+    try:
+        import browser_cookie3  # type: ignore
+        # Try Chrome first
+        for c in browser_cookie3.chrome(domain_name="vsco.co"):
+            cookies[c.name] = c.value
+    except Exception:
+        pass
+    if cookies:
+        return cookies
+
+    try:
+        import browser_cookie3  # type: ignore
+        # Fallback to Edge
+        for c in browser_cookie3.edge(domain_name="vsco.co"):
+            cookies[c.name] = c.value
+    except Exception:
+        pass
+    return cookies
+
+
 def _get_ytdlp_cmd() -> str:
     base = Path(__file__).parent.parent
     embedded = base / "python_embeded" / "Scripts" / "yt-dlp.exe"
@@ -266,8 +292,16 @@ def _vsco_download_thread(
         html = ""
         driver = None
         browser_mode = False
+        session = requests.Session()
+        browser_cookies = _load_vsco_browser_cookies()
+        if browser_cookies:
+            session.cookies.update(browser_cookies)
+            _append_log(job_id, f"Loaded {len(browser_cookies)} VSCO cookies from local browser.")
+        else:
+            _append_log(job_id, "No local VSCO browser cookies found.")
+
         try:
-            resp = requests.get(url, headers=headers, timeout=20)
+            resp = session.get(url, headers=headers, timeout=20)
             if resp.status_code == 403:
                 raise requests.HTTPError("403")
             resp.raise_for_status()
@@ -305,58 +339,56 @@ def _vsco_download_thread(
                 if not cursor:
                     break
         else:
-            with requests.Session() as s:
-                while True:
-                    api = f"https://vsco.co/api/2.0/sites/{site_id}/medias?size=100&page=1&cursor={cursor}"
-                    api_headers = dict(headers)
-                    api_headers["Accept"] = "application/json, text/plain, */*"
-                    api_headers["x-requested-with"] = "XMLHttpRequest"
-                    r = s.get(api, headers=api_headers, timeout=20)
-                    r.raise_for_status()
-                    data = r.json()
-                    chunk = data.get("medias") or []
-                    medias.extend(chunk)
-                    cursor = data.get("next_cursor") or ""
-                    if not cursor:
-                        break
+            while True:
+                api = f"https://vsco.co/api/2.0/sites/{site_id}/medias?size=100&page=1&cursor={cursor}"
+                api_headers = dict(headers)
+                api_headers["Accept"] = "application/json, text/plain, */*"
+                api_headers["x-requested-with"] = "XMLHttpRequest"
+                r = session.get(api, headers=api_headers, timeout=20)
+                r.raise_for_status()
+                data = r.json()
+                chunk = data.get("medias") or []
+                medias.extend(chunk)
+                cursor = data.get("next_cursor") or ""
+                if not cursor:
+                    break
 
         total = len(medias)
         if total == 0:
             raise ValueError("No VSCO media found")
 
-        with requests.Session() as s:
-            for idx, media in enumerate(medias, start=1):
-                media_url = (
-                    media.get("image_url")
-                    or media.get("video_url")
-                    or media.get("responsive_url")
-                    or ""
-                )
-                if not media_url:
-                    continue
-                if media_url.startswith("//"):
-                    media_url = "https:" + media_url
-                elif media_url.startswith("/"):
-                    media_url = "https://vsco.co" + media_url
+        for idx, media in enumerate(medias, start=1):
+            media_url = (
+                media.get("image_url")
+                or media.get("video_url")
+                or media.get("responsive_url")
+                or ""
+            )
+            if not media_url:
+                continue
+            if media_url.startswith("//"):
+                media_url = "https:" + media_url
+            elif media_url.startswith("/"):
+                media_url = "https://vsco.co" + media_url
 
-                filename = media_url.split("?")[0].split("/")[-1] or f"media_{idx}.jpg"
-                dest = out_dir / filename
-                if dest.exists() and dest.stat().st_size > 0:
-                    jobs[job_id]["files"].append(str(dest))
-                    jobs[job_id]["progress"] = int((idx / total) * 100)
-                    continue
-
-                rr = s.get(media_url, headers=headers, timeout=30, stream=True)
-                rr.raise_for_status()
-                with open(dest, "wb") as f:
-                    for chunk in rr.iter_content(chunk_size=1024 * 128):
-                        if chunk:
-                            f.write(chunk)
+            filename = media_url.split("?")[0].split("/")[-1] or f"media_{idx}.jpg"
+            dest = out_dir / filename
+            if dest.exists() and dest.stat().st_size > 0:
                 jobs[job_id]["files"].append(str(dest))
                 jobs[job_id]["progress"] = int((idx / total) * 100)
-                _append_log(job_id, f"Downloaded {idx}/{total}: {filename}")
-                if pause_seconds > 0:
-                    time.sleep(min(max(pause_seconds, 0.0), 10.0))
+                continue
+
+            rr = session.get(media_url, headers=headers, timeout=30, stream=True)
+            rr.raise_for_status()
+            with open(dest, "wb") as f:
+                for chunk in rr.iter_content(chunk_size=1024 * 128):
+                    if chunk:
+                        f.write(chunk)
+            jobs[job_id]["files"].append(str(dest))
+            jobs[job_id]["progress"] = int((idx / total) * 100)
+            _append_log(job_id, f"Downloaded {idx}/{total}: {filename}")
+            if pause_seconds > 0:
+                time.sleep(min(max(pause_seconds, 0.0), 10.0))
 
         jobs[job_id]["status"] = "completed"
         jobs[job_id]["progress"] = 100

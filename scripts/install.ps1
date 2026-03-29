@@ -656,7 +656,8 @@ $Deps = @(
     "selenium", "webdriver-manager", "beautifulsoup4", "lxml", "shapely",
     "deepdiff", "fal_client", "matplotlib", "scipy", "scikit-image", "scikit-learn",
     "timm", "colour-science", "blend-modes", "loguru",
-    "fastapi", "uvicorn[standard]", "python-multipart"
+    "fastapi", "uvicorn[standard]", "python-multipart",
+    "browser-cookie3"
 )
 Run-Pip "install $($Deps -join ' ')"
 

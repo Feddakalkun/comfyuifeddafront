@@ -427,7 +427,8 @@ $Deps = @(
     "deepdiff", "matplotlib", "scipy", "scikit-image", "scikit-learn",
     "timm", "colour-science", "blend-modes", "loguru",
     "ultralytics", "opencv-python-headless", "dill",
-    "fastapi", "uvicorn[standard]", "python-multipart"
+    "fastapi", "uvicorn[standard]", "python-multipart",
+    "browser-cookie3"
 )
 Venv-Pip "install $($Deps -join ' ')"
 
