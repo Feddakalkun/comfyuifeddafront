@@ -118,7 +118,6 @@
   "79": {
     "inputs": {
       "filename_prefix": "audio/ComfyUI",
-      "audioUI": "",
       "audio": [
         "72",
         0
@@ -152,6 +151,3 @@
     }
   }
 }
-
-
-

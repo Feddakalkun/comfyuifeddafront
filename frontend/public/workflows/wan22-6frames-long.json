@@ -30,10 +30,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/longvid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -52,10 +48,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/longvid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -74,10 +66,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/longvid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -96,10 +84,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/longvid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -114,80 +98,6 @@
   },
   "170": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-High.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-High.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-High.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_HighNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKHIGH.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSHIGH.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_HighNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "302:299",
         0
@@ -204,80 +114,6 @@
   },
   "171": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-Low.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-Low.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-Low.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_LowNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKLOW.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSLOW.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_LowNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "302:298",
         0
@@ -294,80 +130,6 @@
   },
   "187": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-High.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-High.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-High.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_HighNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKHIGH.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSHIGH.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_HighNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "287:284",
         0
@@ -384,80 +146,6 @@
   },
   "188": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-Low.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-Low.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-Low.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_LowNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKLOW.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSLOW.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_LowNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "287:283",
         0
@@ -483,80 +171,6 @@
   },
   "191": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-High.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-High.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-High.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_HighNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKHIGH.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSHIGH.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_HighNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "272:269",
         0
@@ -573,80 +187,6 @@
   },
   "192": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-Low.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-Low.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-Low.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_LowNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKLOW.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSLOW.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_LowNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "272:268",
         0
@@ -672,80 +212,6 @@
   },
   "195": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-High.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-High.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-High.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_HighNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKHIGH.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSHIGH.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_HighNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "257:254",
         0
@@ -762,80 +228,6 @@
   },
   "196": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-Low.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-Low.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-Low.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_LowNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKLOW.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSLOW.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_LowNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "257:253",
         0
@@ -861,80 +253,6 @@
   },
   "199": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-High.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-High.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-High.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_HighNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKHIGH.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSHIGH.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_HighNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "242:239",
         0
@@ -951,80 +269,6 @@
   },
   "200": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-Low.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-Low.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-Low.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_LowNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKLOW.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSLOW.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_LowNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "242:238",
         0
@@ -1050,80 +294,6 @@
   },
   "203": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-High.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-High.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-High.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_HighNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKHIGH.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSHIGH.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_high_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_HighNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "227:222",
         0
@@ -1140,80 +310,6 @@
   },
   "204": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": false,
-        "lora": "Oral-Ins-Low.safetensors",
-        "strength": 1
-      },
-      "lora_2": {
-        "on": false,
-        "lora": "CumShot-Low.safetensors",
-        "strength": 1
-      },
-      "lora_3": {
-        "on": false,
-        "lora": "wan-nsfw-e14-fixed.safetensors",
-        "strength": 1
-      },
-      "lora_4": {
-        "on": false,
-        "lora": "Wan2.2_Double-Penetration-Low.safetensors",
-        "strength": 1
-      },
-      "lora_5": {
-        "on": false,
-        "lora": "PussyLoRA_LowNoise_Wan2.2_HearmemanAI.safetensors",
-        "strength": 1
-      },
-      "lora_6": {
-        "on": false,
-        "lora": "V3TWERKLOW.safetensors",
-        "strength": 0.6
-      },
-      "lora_7": {
-        "on": false,
-        "lora": "mql_casting_sex_reverse_cowgirl_lie_front_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.7
-      },
-      "lora_8": {
-        "on": false,
-        "lora": "mql_casting_sex_doggy_kneel_diagonally_behind_vagina_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 0.5
-      },
-      "lora_9": {
-        "on": false,
-        "lora": "Fingering-I2V.safetensors",
-        "strength": 1
-      },
-      "lora_10": {
-        "on": false,
-        "lora": "Wan2.1_I2V_14B_FusionX_LoRA.safetensors",
-        "strength": 1
-      },
-      "lora_11": {
-        "on": false,
-        "lora": "SECRET_SAUCE_WAN2.1_14B_fp8.safetensors",
-        "strength": 1
-      },
-      "lora_12": {
-        "on": false,
-        "lora": "KISSLOW.safetensors",
-        "strength": 1
-      },
-      "lora_13": {
-        "on": false,
-        "lora": "mql_wink_wan22_i2v_v1_low_noise.safetensors",
-        "strength": 1
-      },
-      "lora_14": {
-        "on": false,
-        "lora": "WAN2.2-BreastRubv2_LowNoise.safetensors",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "227:221",
         0
@@ -1307,10 +403,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/longvid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -1329,10 +421,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/longvid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -1351,10 +439,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/longvid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -1610,12 +694,6 @@
   "303:289": {
     "inputs": {
       "text": "woman running",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "302:290",
         0
@@ -1629,12 +707,6 @@
   "303:291": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "302:290",
         0
@@ -1788,12 +860,6 @@
   "288:274": {
     "inputs": {
       "text": "woman running",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "287:275",
         0
@@ -1807,12 +873,6 @@
   "288:276": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "287:275",
         0
@@ -1966,12 +1026,6 @@
   "273:259": {
     "inputs": {
       "text": "woman running",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "272:260",
         0
@@ -1985,12 +1039,6 @@
   "273:261": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "272:260",
         0
@@ -2144,12 +1192,6 @@
   "258:244": {
     "inputs": {
       "text": "woman running",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "257:245",
         0
@@ -2163,12 +1205,6 @@
   "258:246": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "257:245",
         0
@@ -2322,12 +1358,6 @@
   "243:229": {
     "inputs": {
       "text": "woman running",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "242:230",
         0
@@ -2341,12 +1371,6 @@
   "243:231": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "242:230",
         0
@@ -2549,12 +1573,6 @@
   "333:325": {
     "inputs": {
       "text": "woman running",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "227:226",
         0
@@ -2568,12 +1586,6 @@
   "333:326": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "227:226",
         0

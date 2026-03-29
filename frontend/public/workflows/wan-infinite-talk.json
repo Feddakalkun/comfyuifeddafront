@@ -36,8 +36,7 @@
   },
   "125": {
     "inputs": {
-      "audio": "AUDIO WOMAN.MP3",
-      "audioUI": ""
+      "audio": "AUDIO WOMAN.MP3"
     },
     "class_type": "LoadAudio",
     "_meta": {
@@ -84,9 +83,7 @@
   "129": {
     "inputs": {
       "model_name": "wan_2.1_vae.safetensors",
-      "precision": "bf16",
-      "use_cpu_cache": false,
-      "verbose": false
+      "precision": "bf16"
     },
     "class_type": "WanVideoVAELoader",
     "_meta": {
@@ -121,10 +118,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/lipsync",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -236,8 +229,6 @@
       "audio_scale": 1,
       "audio_cfg_scale": 1,
       "multi_audio_type": "add",
-      "add_noise_floor": false,
-      "smooth_transients": false,
       "wav2vec_model": [
         "137",
         0
@@ -292,13 +283,7 @@
       "negative_prompt": "bright tones, overexposed, static, blurred details, subtitles, style, works, paintings, images, static, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen limbs, fused fingers, still picture, messy background, three legs, many people in the background, walking backwards",
       "quantization": "disabled",
       "use_disk_cache": false,
-      "device": "gpu",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
+      "device": "gpu"
     },
     "class_type": "WanVideoTextEncodeCached",
     "_meta": {

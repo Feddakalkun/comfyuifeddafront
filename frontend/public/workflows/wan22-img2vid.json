@@ -81,15 +81,6 @@
   },
   "9": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "11",
         0
@@ -106,15 +97,6 @@
   },
   "10": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "4",
         0
@@ -227,12 +209,6 @@
   "15": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "2",
         0
@@ -263,10 +239,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -285,10 +257,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -358,12 +326,6 @@
         "70",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "2",
         0
@@ -385,7 +347,10 @@
       "frames": [
         "24",
         0
-      ]
+      ],
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1
     },
     "class_type": "RIFE VFI",
     "_meta": {
@@ -483,15 +448,6 @@
   },
   "38": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "40",
         0
@@ -508,15 +464,6 @@
   },
   "39": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "33",
         0
@@ -629,12 +576,6 @@
   "44": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "31",
         0
@@ -665,10 +606,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -687,10 +624,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -751,12 +684,6 @@
         "71",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "31",
         0
@@ -778,7 +705,10 @@
       "frames": [
         "53",
         0
-      ]
+      ],
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1
     },
     "class_type": "RIFE VFI",
     "_meta": {
@@ -794,13 +724,7 @@
       "clothes": "👚Select the clothes add to the text",
       "environment": "☀️Select the illumination environment add to the text",
       "background": "🎞️Select the background add to the text",
-      "nsfw": "🔞Select the nsfw add to the text",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
+      "nsfw": "🔞Select the nsfw add to the text"
     },
     "class_type": "easy prompt",
     "_meta": {
@@ -816,13 +740,7 @@
       "clothes": "👚Select the clothes add to the text",
       "environment": "☀️Select the illumination environment add to the text",
       "background": "🎞️Select the background add to the text",
-      "nsfw": "🔞Select the nsfw add to the text",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
+      "nsfw": "🔞Select the nsfw add to the text"
     },
     "class_type": "easy prompt",
     "_meta": {
@@ -958,12 +876,6 @@
   "79": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "73",
         0
@@ -994,10 +906,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -1016,10 +924,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -1072,7 +976,10 @@
       "frames": [
         "87",
         0
-      ]
+      ],
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1
     },
     "class_type": "RIFE VFI",
     "_meta": {
@@ -1098,12 +1005,6 @@
         "98",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "73",
         0
@@ -1129,15 +1030,6 @@
   },
   "97": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "89",
         0
@@ -1161,13 +1053,7 @@
       "clothes": "👚Select the clothes add to the text",
       "environment": "☀️Select the illumination environment add to the text",
       "background": "🎞️Select the background add to the text",
-      "nsfw": "🔞Select the nsfw add to the text",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
+      "nsfw": "🔞Select the nsfw add to the text"
     },
     "class_type": "easy prompt",
     "_meta": {
@@ -1212,15 +1098,6 @@
   },
   "100": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "75",
         0
@@ -1364,12 +1241,6 @@
   "108": {
     "inputs": {
       "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "102",
         0
@@ -1400,10 +1271,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -1422,10 +1289,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [
@@ -1478,7 +1341,10 @@
       "frames": [
         "116",
         0
-      ]
+      ],
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1
     },
     "class_type": "RIFE VFI",
     "_meta": {
@@ -1491,12 +1357,6 @@
         "124",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "102",
         0
@@ -1565,13 +1425,7 @@
       "clothes": "👚Select the clothes add to the text",
       "environment": "☀️Select the illumination environment add to the text",
       "background": "🎞️Select the background add to the text",
-      "nsfw": "🔞Select the nsfw add to the text",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      }
+      "nsfw": "🔞Select the nsfw add to the text"
     },
     "class_type": "easy prompt",
     "_meta": {
@@ -1580,15 +1434,6 @@
   },
   "125": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "129",
         0
@@ -1605,15 +1450,6 @@
   },
   "126": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "lora_1": {
-        "on": true,
-        "lora": "None",
-        "strength": 1
-      },
-      "➕ Add Lora": "",
       "model": [
         "104",
         0
@@ -1679,10 +1515,6 @@
       "loop_count": 0,
       "filename_prefix": "FEDDA/Video/Img2Vid",
       "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
       "pingpong": false,
       "save_output": true,
       "images": [

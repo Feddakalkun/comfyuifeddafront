@@ -435,12 +435,6 @@
   "197:109": {
     "inputs": {
       "prompt": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -465,12 +459,6 @@
         "93",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -606,12 +594,6 @@
   "213:109": {
     "inputs": {
       "prompt": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -636,12 +618,6 @@
         "218",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -777,12 +753,6 @@
   "221:109": {
     "inputs": {
       "prompt": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -807,12 +777,6 @@
         "226",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -948,12 +912,6 @@
   "229:109": {
     "inputs": {
       "prompt": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -978,12 +936,6 @@
         "234",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -1119,12 +1071,6 @@
   "237:109": {
     "inputs": {
       "prompt": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -1149,12 +1095,6 @@
         "242",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -1290,12 +1230,6 @@
   "245:109": {
     "inputs": {
       "prompt": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0
@@ -1320,12 +1254,6 @@
         "250",
         0
       ],
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
-      },
       "clip": [
         "94",
         0

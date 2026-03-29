@@ -154,20 +154,6 @@
   },
   "54": {
     "inputs": {
-      "rgthree_comparer": {
-        "images": [
-          {
-            "name": "A",
-            "selected": true,
-            "url": "/api/view?filename=rgthree.compare._temp_lbosd_00005_.png&type=temp&subfolder=&rand=0.9495199049544368"
-          },
-          {
-            "name": "B",
-            "selected": true,
-            "url": "/api/view?filename=rgthree.compare._temp_lbosd_00006_.png&type=temp&subfolder=&rand=0.34744219764105266"
-          }
-        ]
-      },
       "image_a": [
         "43",
         0
@@ -184,10 +170,6 @@
   },
   "127": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "âž• Add Lora": "",
       "model": [
         "48",
         0

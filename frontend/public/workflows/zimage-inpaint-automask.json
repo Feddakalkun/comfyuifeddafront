@@ -114,7 +114,10 @@
       "frames": [
         "154",
         0
-      ]
+      ],
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1
     },
     "class_type": "RIFE VFI",
     "_meta": {
@@ -149,20 +152,6 @@
   },
   "163": {
     "inputs": {
-      "rgthree_comparer": {
-        "images": [
-          {
-            "name": "A",
-            "selected": true,
-            "url": "/api/view?filename=rgthree.compare._temp_ipmnc_00003_.png&type=temp&subfolder=&rand=0.5557932033158333"
-          },
-          {
-            "name": "B",
-            "selected": true,
-            "url": "/api/view?filename=rgthree.compare._temp_ipmnc_00004_.png&type=temp&subfolder=&rand=0.06989327310166171"
-          }
-        ]
-      },
       "image_a": [
         "158",
         0
@@ -248,10 +237,6 @@
   },
   "170": {
     "inputs": {
-      "PowerLoraLoaderHeaderWidget": {
-        "type": "PowerLoraLoaderHeaderWidget"
-      },
-      "➕ Add Lora": "",
       "model": [
         "166",
         0
@@ -297,23 +282,16 @@
   },
   "173": {
     "inputs": {
-      "face": true,
-      "hair": true,
-      "body": false,
-      "clothes": false,
-      "accessories": false,
-      "background": false,
-      "confidence": 0.4,
+      "image": [
+        "164",
+        0
+      ],
       "detail_range": 16,
       "black_point": 0.01,
       "white_point": 0.99,
-      "process_detail": false,
-      "images": [
-        "164",
-        0
-      ]
+      "process_detail": false
     },
-    "class_type": "LayerMask: PersonMaskUltra",
+    "class_type": "LayerMask: RemBgUltra",
     "_meta": {
       "title": "LayerMask: PersonMaskUltra(Advance)"
     }
