@@ -16,7 +16,7 @@ type ImageMode = 'generate' | 'hq' | 'img2img' | 'mood-edit' | 'inpaint' | 'meta
 
 const TABS: { id: ImageMode; label: string; icon: React.ElementType }[] = [
     { id: 'generate', label: 'GENERATE', icon: Sparkles },
-    { id: 'hq', label: 'HQ PORTRAIT', icon: Layers },
+    { id: 'hq', label: 'HQ IMAGE', icon: Layers },
     { id: 'img2img', label: 'IMG2IMG', icon: Image },
     { id: 'mood-edit', label: 'MOOD EDIT', icon: Sun },
     { id: 'inpaint', label: 'INPAINT', icon: Paintbrush },
