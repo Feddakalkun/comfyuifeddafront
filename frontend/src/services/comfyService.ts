@@ -12,6 +12,33 @@ class ComfyUIService {
     private objectInfoCache: Record<string, any> | null = null;
     private objectInfoCacheAt = 0;
 
+    private detectWorkflowContext(workflow: any): {
+        ltx: boolean;
+        wan: boolean;
+        flux2klein: boolean;
+        qwen: boolean;
+        zimage: boolean;
+    } {
+        const acc = {
+            ltx: false,
+            wan: false,
+            flux2klein: false,
+            qwen: false,
+            zimage: false,
+        };
+        try {
+            const blob = JSON.stringify(workflow).toLowerCase();
+            acc.ltx = blob.includes('ltx');
+            acc.wan = blob.includes('wan');
+            acc.flux2klein = blob.includes('flux-2-klein') || blob.includes('flux2klein');
+            acc.qwen = blob.includes('qwen');
+            acc.zimage = blob.includes('z-image') || blob.includes('z_image') || blob.includes('zimage');
+        } catch {
+            // best effort only
+        }
+        return acc;
+    }
+
     constructor() {
         this.clientId = this.generateClientId();
     }
@@ -165,22 +192,70 @@ class ComfyUIService {
     }
 
     private pickBestComboValue(
+        classType: string,
         inputName: string,
         currentValue: any,
-        options: any[]
+        options: any[],
+        ctx: { ltx: boolean; wan: boolean; flux2klein: boolean; qwen: boolean; zimage: boolean; }
     ): any {
         if (!options.length) return currentValue;
         const current = String(currentValue ?? '').toLowerCase();
         const wants = (needle: string) => current.includes(needle);
         const find = (needle: string) => options.find((o) => String(o).toLowerCase().includes(needle));
+        const findAny = (needles: string[]) => {
+            for (const n of needles) {
+                const v = find(n);
+                if (v !== undefined) return v;
+            }
+            return undefined;
+        };
 
         // Prefer consistent "off" style when style preset is invalid
         if (inputName === 'styles') {
-            const noStyle = find('no style');
+            const noStyle = findAny(['no style', 'none']);
             if (noStyle !== undefined) return noStyle;
         }
 
-        // LTX/Gemma/Qwen name normalization
+        // Prefer explicit "none/off" for optional-ish selectors.
+        if (inputName.toLowerCase().includes('lora')) {
+            const none = findAny(['none', 'off', 'disable']);
+            if (none !== undefined && (current === '' || current === 'none')) return none;
+        }
+
+        // Context-aware family preferences for model-ish inputs.
+        const lowerInput = inputName.toLowerCase();
+        const isModelish = ['unet_name', 'model', 'model_name', 'ckpt_name', 'clip_name', 'clip_name1', 'clip_name2', 'vae_name'].includes(lowerInput);
+        if (isModelish) {
+            const familyNeedles: string[] = [];
+            if (ctx.flux2klein) familyNeedles.push('flux-2-klein', 'flux2');
+            if (ctx.ltx) familyNeedles.push('ltx', 'gemma');
+            if (ctx.wan) familyNeedles.push('wan');
+            if (ctx.qwen) familyNeedles.push('qwen');
+            if (ctx.zimage) familyNeedles.push('z-image', 'z_image', 'zimage');
+
+            // For CLIP fields in LTX, comfy_gemma tends to be safest in this install.
+            if (ctx.ltx && (lowerInput === 'clip_name1' || lowerInput === 'clip_name2')) {
+                const ltxClip = findAny(['comfy_gemma_3_12b', 'gemma', 'qwen_3_4b']);
+                if (ltxClip !== undefined) return ltxClip;
+            }
+
+            // For FLUX2KLEIN UNET fallback when 9b is missing, prefer 4b.
+            if (ctx.flux2klein && lowerInput === 'unet_name') {
+                const klein4b = findAny(['flux-2-klein-4b', 'flux-2-klein']);
+                if (klein4b !== undefined) return klein4b;
+            }
+
+            // For WAN vae/model pick WAN first, then generic vae.
+            if (ctx.wan && (lowerInput === 'vae_name' || lowerInput === 'model_name' || lowerInput === 'model')) {
+                const wanPreferred = findAny(['wan', 'vae-ft-mse', 'flux2-vae', 'z-image-vae']);
+                if (wanPreferred !== undefined) return wanPreferred;
+            }
+
+            const familyPick = findAny(familyNeedles);
+            if (familyPick !== undefined) return familyPick;
+        }
+
+        // LTX/Gemma/Qwen name normalization (value-driven)
         if (wants('gemma')) {
             const gemma = find('gemma');
             if (gemma !== undefined) return gemma;
@@ -208,7 +283,14 @@ class ComfyUIService {
 
         // Empty lora values are common in templates; pick first to avoid hard failure.
         if (current === '' && inputName.toLowerCase().includes('lora')) {
-            return options[0];
+            const none = findAny(['none', 'off', 'disable']);
+            return none !== undefined ? none : options[0];
+        }
+
+        // Node-specific safer fallback for style-loader nodes.
+        if (classType.toLowerCase().includes('styles csv')) {
+            const noStyle = findAny(['no style', 'none']);
+            if (noStyle !== undefined) return noStyle;
         }
 
         // Generic fallback
@@ -228,6 +310,7 @@ class ComfyUIService {
         if (!workflow || typeof workflow !== 'object') return;
         const objectInfo = await this.getObjectInfoCached();
         if (!objectInfo) return;
+        const ctx = this.detectWorkflowContext(workflow);
 
         let replacements = 0;
 
@@ -255,7 +338,7 @@ class ComfyUIService {
                 if (!options.length) continue;
                 if (options.includes(currentValue)) continue;
 
-                const nextValue = this.pickBestComboValue(inputName, currentValue, options);
+                const nextValue = this.pickBestComboValue(classType, inputName, currentValue, options, ctx);
                 if (nextValue !== currentValue) {
                     node.inputs[inputName] = nextValue;
                     replacements++;
