@@ -35,6 +35,11 @@ try:
 except ImportError as e:
     print(f"[WARNING] TikTok service not available: {e}")
     tiktok_service = None
+try:
+    import social_service
+except ImportError as e:
+    print(f"[WARNING] Social service not available: {e}")
+    social_service = None
 from typing import Optional
 from pydantic import BaseModel
 import json
@@ -1606,9 +1611,19 @@ class TikTokExtractRequest(BaseModel):
     video_path: str
     count: int = 6
 
+class SocialDownloadRequest(BaseModel):
+    url: str
+    cookie_source: str = "none"
+    limit: Optional[int] = None
+
 def _check_tiktok():
     if tiktok_service is None:
         raise HTTPException(status_code=503, detail="TikTok service not available")
+
+
+def _check_social():
+    if social_service is None:
+        raise HTTPException(status_code=503, detail="Social service not available")
 
 @app.post("/api/tiktok/download-profile")
 async def tiktok_download_profile(req: TikTokDownloadRequest):
@@ -1698,6 +1713,46 @@ async def tiktok_serve_file(path: str):
     if file_path is None:
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(str(file_path))
+
+
+@app.post("/api/social/instagram/download-profile")
+async def social_instagram_download_profile(req: SocialDownloadRequest):
+    _check_social()
+    job_id = social_service.start_instagram_download(req.url, req.cookie_source, req.limit)
+    return {"job_id": job_id, "status": "started"}
+
+
+@app.post("/api/social/instagram/download-post")
+async def social_instagram_download_post(req: SocialDownloadRequest):
+    _check_social()
+    job_id = social_service.start_instagram_download(req.url, req.cookie_source, None)
+    return {"job_id": job_id, "status": "started"}
+
+
+@app.post("/api/social/vsco/download-profile")
+async def social_vsco_download_profile(req: SocialDownloadRequest):
+    _check_social()
+    job_id = social_service.start_vsco_download(req.url)
+    return {"job_id": job_id, "status": "started"}
+
+
+@app.get("/api/social/download-status/{job_id}")
+async def social_download_status(job_id: str):
+    _check_social()
+    raw = social_service.get_download_status(job_id)
+    status = raw.get("status", "not_found")
+    if status == "completed":
+        status = "done"
+    log = raw.get("log", [])
+    return {
+        "status": status,
+        "message": (log[-1] if log else ""),
+        "progress": raw.get("progress", 0),
+        "log": log,
+        "files": raw.get("files", []),
+        "downloaded": len(raw.get("files", [])),
+        "platform": raw.get("platform", "social"),
+    }
 
 # ============================================================================
 # Chat with IF_AI_tools (via ComfyUI workflow)

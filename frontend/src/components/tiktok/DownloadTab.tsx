@@ -13,7 +13,7 @@ const COOKIE_OPTIONS = [
 
 interface DownloadJob {
     jobId: string;
-    type: 'profile' | 'video';
+    type: 'profile' | 'video' | 'instagram-profile' | 'instagram-post' | 'vsco-profile';
     url: string;
     status: 'downloading' | 'done' | 'error';
     message?: string;
@@ -21,23 +21,27 @@ interface DownloadJob {
     downloaded?: number;
     log?: string[];
     showLog?: boolean;
+    statusEndpoint: string;
 }
 
 export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () => void }) => {
     const { toast } = useToast();
     const [profileUrl, setProfileUrl] = usePersistentState('tiktok_download_profile_url', '');
     const [videoUrl, setVideoUrl] = usePersistentState('tiktok_download_video_url', '');
+    const [instagramProfileUrl, setInstagramProfileUrl] = usePersistentState('social_download_instagram_profile_url', '');
+    const [instagramPostUrl, setInstagramPostUrl] = usePersistentState('social_download_instagram_post_url', '');
+    const [vscoProfileUrl, setVscoProfileUrl] = usePersistentState('social_download_vsco_profile_url', '');
     const [cookieSource, setCookieSource] = usePersistentState('tiktok_download_cookie_source', 'none');
     const [limit, setLimit] = usePersistentState('tiktok_download_limit', '');
     const [jobs, setJobs] = useState<DownloadJob[]>([]);
     const pollRef = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
     // Poll job status
-    const pollJob = (jobId: string) => {
+    const pollJob = (jobId: string, statusEndpoint: string) => {
         if (pollRef.current[jobId]) return;
         pollRef.current[jobId] = setInterval(async () => {
             try {
-                const res = await fetch(`${BACKEND_API.BASE_URL}/api/tiktok/download-status/${jobId}`);
+                const res = await fetch(`${BACKEND_API.BASE_URL}${statusEndpoint}${jobId}`);
                 if (!res.ok) throw new Error(`Status check failed: ${res.status}`);
                 const data = await res.json();
                 setJobs(prev => prev.map(j => {
@@ -100,11 +104,12 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                     jobId: data.job_id,
                     type: 'profile',
                     url: profileUrl,
-                    status: 'downloading',
-                    log: [],
-                };
+                                status: 'downloading',
+                                log: [],
+                                statusEndpoint: '/api/tiktok/download-status/',
+                            };
                 setJobs(prev => [job, ...prev]);
-                pollJob(data.job_id);
+                pollJob(data.job_id, job.statusEndpoint);
                 setProfileUrl('');
                 toast('Profile download started', 'info');
             }
@@ -135,14 +140,115 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                     jobId: data.job_id,
                     type: 'video',
                     url: videoUrl,
-                    status: 'downloading',
-                    log: [],
-                };
+                                status: 'downloading',
+                                log: [],
+                                statusEndpoint: '/api/tiktok/download-status/',
+                            };
                 setJobs(prev => [job, ...prev]);
-                pollJob(data.job_id);
+                pollJob(data.job_id, job.statusEndpoint);
                 setVideoUrl('');
                 toast('Video download started', 'info');
             }
+        } catch (err) {
+            toast(`Could not reach backend: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        }
+    };
+
+    const handleDownloadInstagramProfile = async () => {
+        if (!instagramProfileUrl.trim()) return;
+        try {
+            const res = await fetch(`${BACKEND_API.BASE_URL}/api/social/instagram/download-profile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: instagramProfileUrl.trim(),
+                    cookie_source: cookieSource === 'none' ? 'none' : cookieSource,
+                    limit: limit ? parseInt(limit) : null,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: res.statusText }));
+                toast(`Failed to start Instagram download: ${err.detail || res.statusText}`, 'error');
+                return;
+            }
+            const data = await res.json();
+            const job: DownloadJob = {
+                jobId: data.job_id,
+                type: 'instagram-profile',
+                url: instagramProfileUrl,
+                status: 'downloading',
+                log: [],
+                statusEndpoint: '/api/social/download-status/',
+            };
+            setJobs(prev => [job, ...prev]);
+            pollJob(data.job_id, job.statusEndpoint);
+            setInstagramProfileUrl('');
+            toast('Instagram profile download started', 'info');
+        } catch (err) {
+            toast(`Could not reach backend: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        }
+    };
+
+    const handleDownloadInstagramPost = async () => {
+        if (!instagramPostUrl.trim()) return;
+        try {
+            const res = await fetch(`${BACKEND_API.BASE_URL}/api/social/instagram/download-post`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: instagramPostUrl.trim(),
+                    cookie_source: cookieSource === 'none' ? 'none' : cookieSource,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: res.statusText }));
+                toast(`Failed to start Instagram post download: ${err.detail || res.statusText}`, 'error');
+                return;
+            }
+            const data = await res.json();
+            const job: DownloadJob = {
+                jobId: data.job_id,
+                type: 'instagram-post',
+                url: instagramPostUrl,
+                status: 'downloading',
+                log: [],
+                statusEndpoint: '/api/social/download-status/',
+            };
+            setJobs(prev => [job, ...prev]);
+            pollJob(data.job_id, job.statusEndpoint);
+            setInstagramPostUrl('');
+            toast('Instagram post download started', 'info');
+        } catch (err) {
+            toast(`Could not reach backend: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        }
+    };
+
+    const handleDownloadVscoProfile = async () => {
+        if (!vscoProfileUrl.trim()) return;
+        try {
+            const res = await fetch(`${BACKEND_API.BASE_URL}/api/social/vsco/download-profile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: vscoProfileUrl.trim() }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: res.statusText }));
+                toast(`Failed to start VSCO download: ${err.detail || res.statusText}`, 'error');
+                return;
+            }
+            const data = await res.json();
+            const job: DownloadJob = {
+                jobId: data.job_id,
+                type: 'vsco-profile',
+                url: vscoProfileUrl,
+                status: 'downloading',
+                log: [],
+                statusEndpoint: '/api/social/download-status/',
+            };
+            setJobs(prev => [job, ...prev]);
+            pollJob(data.job_id, job.statusEndpoint);
+            setVscoProfileUrl('');
+            toast('VSCO profile download started', 'info');
         } catch (err) {
             toast(`Could not reach backend: ${err instanceof Error ? err.message : String(err)}`, 'error');
         }
@@ -214,6 +320,67 @@ export const DownloadTab = ({ onDownloadComplete }: { onDownloadComplete?: () =>
                 >
                     <Download className="w-4 h-4 inline mr-2" />
                     Download Video
+                </button>
+            </div>
+
+            {/* Instagram Download */}
+            <div className="bg-[#121218] border border-white/5 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-2 text-white font-semibold text-sm">
+                    <User className="w-4 h-4 text-slate-400" />
+                    Instagram Downloader
+                </div>
+                <input
+                    value={instagramProfileUrl}
+                    onChange={e => setInstagramProfileUrl(e.target.value)}
+                    placeholder="https://www.instagram.com/username/"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-white/20 transition-colors"
+                    onKeyDown={e => e.key === 'Enter' && handleDownloadInstagramProfile()}
+                />
+                <button
+                    onClick={handleDownloadInstagramProfile}
+                    disabled={!instagramProfileUrl.trim()}
+                    className="w-full py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                    <Download className="w-4 h-4 inline mr-2" />
+                    Download Instagram Profile
+                </button>
+                <input
+                    value={instagramPostUrl}
+                    onChange={e => setInstagramPostUrl(e.target.value)}
+                    placeholder="https://www.instagram.com/p/... or /reel/..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-white/20 transition-colors"
+                    onKeyDown={e => e.key === 'Enter' && handleDownloadInstagramPost()}
+                />
+                <button
+                    onClick={handleDownloadInstagramPost}
+                    disabled={!instagramPostUrl.trim()}
+                    className="w-full py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                    <Download className="w-4 h-4 inline mr-2" />
+                    Download Instagram Post
+                </button>
+            </div>
+
+            {/* VSCO Download */}
+            <div className="bg-[#121218] border border-white/5 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-2 text-white font-semibold text-sm">
+                    <User className="w-4 h-4 text-slate-400" />
+                    VSCO Downloader
+                </div>
+                <input
+                    value={vscoProfileUrl}
+                    onChange={e => setVscoProfileUrl(e.target.value)}
+                    placeholder="https://vsco.co/username"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-white/20 transition-colors"
+                    onKeyDown={e => e.key === 'Enter' && handleDownloadVscoProfile()}
+                />
+                <button
+                    onClick={handleDownloadVscoProfile}
+                    disabled={!vscoProfileUrl.trim()}
+                    className="w-full py-3 rounded-xl font-bold text-sm tracking-wider uppercase transition-all bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                    <Download className="w-4 h-4 inline mr-2" />
+                    Download VSCO Profile
                 </button>
             </div>
 
