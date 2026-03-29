@@ -456,6 +456,13 @@ export const SettingsPage = () => {
                     <div className="space-y-4">
                         <div className="rounded-xl border border-sky-500/20 bg-sky-500/10 p-4 space-y-2">
                             <div className="text-xs uppercase tracking-wider text-sky-200 font-semibold">Quick Setup (Local UI + RunPod GPU)</div>
+                            <div className="text-[11px] text-slate-200 leading-relaxed">
+                                <strong>Recommended RunPod deploy values (RTX 5090):</strong><br />
+                                Template: <code className="text-sky-200">Runpod Pytorch 2.4.0</code> (or newer)<br />
+                                Network Volume: <code className="text-sky-200">ON (75GB)</code><br />
+                                Container Disk: <code className="text-sky-200">30GB</code><br />
+                                Pricing: <code className="text-sky-200">On-Demand</code>
+                            </div>
                             <ol className="text-xs text-slate-200 space-y-1 list-decimal ml-4">
                                 <li>Start a RunPod pod and wait for status: <strong>Running</strong>.</li>
                                 <li>Set endpoint to: <code className="text-sky-200">https://&lt;POD_ID&gt;-8199.proxy.runpod.net/prompt</code>.</li>
