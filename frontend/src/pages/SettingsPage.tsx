@@ -454,6 +454,18 @@ export const SettingsPage = () => {
                     </p>
 
                     <div className="space-y-4">
+                        <div className="rounded-xl border border-sky-500/20 bg-sky-500/10 p-4 space-y-2">
+                            <div className="text-xs uppercase tracking-wider text-sky-200 font-semibold">Quick Setup (Local UI + RunPod GPU)</div>
+                            <ol className="text-xs text-slate-200 space-y-1 list-decimal ml-4">
+                                <li>Start a RunPod pod and wait for status: <strong>Running</strong>.</li>
+                                <li>Set endpoint to: <code className="text-sky-200">https://&lt;POD_ID&gt;-8199.proxy.runpod.net/prompt</code>.</li>
+                                <li>Set compute mode to <strong>RunPod Pod (Remote ComfyUI)</strong>.</li>
+                                <li>Save, then click <strong>Open ComfyUI</strong> to verify connection.</li>
+                            </ol>
+                            <p className="text-[11px] text-slate-400">
+                                Optional explorer URL: <code className="text-sky-200">https://&lt;POD_ID&gt;-8888.proxy.runpod.net/lab/tree</code>
+                            </p>
+                        </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
                                 Compute Mode
