@@ -653,7 +653,7 @@ $Deps = @(
     "piexif", "rembg",
     "pillow-heif",
     "librosa", "soundfile",
-    "webdriver-manager", "beautifulsoup4", "lxml", "shapely",
+    "selenium", "webdriver-manager", "beautifulsoup4", "lxml", "shapely",
     "deepdiff", "fal_client", "matplotlib", "scipy", "scikit-image", "scikit-learn",
     "timm", "colour-science", "blend-modes", "loguru",
     "fastapi", "uvicorn[standard]", "python-multipart"

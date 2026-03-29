@@ -15,6 +15,15 @@ import requests
 DOWNLOADS_DIR = Path(__file__).parent.parent / "social_downloads"
 jobs = {}
 
+try:
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options as ChromeOptions
+    from selenium.webdriver.chrome.service import Service as ChromeService
+    from webdriver_manager.chrome import ChromeDriverManager
+    HAS_SELENIUM = True
+except Exception:
+    HAS_SELENIUM = False
+
 
 def _new_job(platform: str, url: str) -> str:
     job_id = str(uuid.uuid4())[:8]
@@ -137,6 +146,54 @@ def _extract_vsco_state(html: str) -> dict:
     return json.loads(m.group(1))
 
 
+def _extract_vsco_site_id(html: str) -> Optional[str]:
+    patterns = [
+        r'"siteCollectionId":"([^"]+)"',
+        r'"siteId":"([^"]+)"',
+    ]
+    for pat in patterns:
+        m = re.search(pat, html)
+        if m:
+            return m.group(1)
+    return None
+
+
+def _open_browser(url: str):
+    opts = ChromeOptions()
+    opts.add_argument("--headless=new")
+    opts.add_argument("--disable-gpu")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+    opts.add_argument("--window-size=1280,2200")
+    opts.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    )
+    driver = webdriver.Chrome(
+        service=ChromeService(ChromeDriverManager().install()),
+        options=opts,
+    )
+    driver.get(url)
+    import time
+    time.sleep(6)
+    return driver
+
+
+def _browser_fetch_json(driver, path: str) -> dict:
+    script = """
+const done = arguments[0];
+const path = arguments[1];
+fetch(path, { credentials: 'include' })
+  .then(r => r.text().then(t => ({ ok: r.ok, status: r.status, text: t })))
+  .then(x => done(x))
+  .catch(e => done({ ok: false, status: 0, text: String(e) }));
+"""
+    result = driver.execute_async_script(script, path)
+    if not result.get("ok"):
+        raise ValueError(f"VSCO browser fetch failed ({result.get('status')}): {result.get('text','')[:200]}")
+    return json.loads(result.get("text") or "{}")
+
+
 def _guess_vsco_profile(url: str) -> str:
     parsed = urlparse(url)
     host = parsed.netloc.lower()
@@ -151,20 +208,36 @@ def _guess_vsco_profile(url: str) -> str:
 def _vsco_download_thread(job_id: str, url: str) -> None:
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,no;q=0.8",
+            "Referer": "https://vsco.co/",
         }
-        resp = requests.get(url, headers=headers, timeout=20)
-        resp.raise_for_status()
+        html = ""
+        driver = None
+        browser_mode = False
+        try:
+            resp = requests.get(url, headers=headers, timeout=20)
+            if resp.status_code == 403:
+                raise requests.HTTPError("403")
+            resp.raise_for_status()
+            html = resp.text
+        except Exception:
+            if not HAS_SELENIUM:
+                raise ValueError(
+                    "VSCO blocked direct access (403). Install selenium + webdriver-manager for browser fallback."
+                )
+            _append_log(job_id, "VSCO returned 403. Trying browser fallback (selenium)...")
+            driver = _open_browser(url)
+            browser_mode = True
+            html = driver.page_source
 
-        state = _extract_vsco_state(resp.text)
         profile_name = _guess_vsco_profile(url)
-
-        site_id = None
-        sites = (state.get("sites") or {}).get("bySubdomain") or {}
-        if isinstance(sites, dict) and sites:
-            key = next(iter(sites.keys()))
-            site_id = sites[key].get("id")
-            profile_name = key or profile_name
+        site_id = _extract_vsco_site_id(html)
         if not site_id:
             raise ValueError("Could not resolve VSCO site id")
 
@@ -173,22 +246,36 @@ def _vsco_download_thread(job_id: str, url: str) -> None:
 
         medias = []
         cursor = ""
-        with requests.Session() as s:
+        if browser_mode and driver is not None:
             while True:
-                api = f"https://vsco.co/api/2.0/sites/{site_id}/medias?size=100&page=1&cursor={cursor}"
-                r = s.get(api, headers=headers, timeout=20)
-                r.raise_for_status()
-                data = r.json()
+                api_path = f"/api/2.0/sites/{site_id}/medias?size=100&page=1&cursor={cursor}"
+                data = _browser_fetch_json(driver, api_path)
                 chunk = data.get("medias") or []
                 medias.extend(chunk)
                 cursor = data.get("next_cursor") or ""
                 if not cursor:
                     break
+        else:
+            with requests.Session() as s:
+                while True:
+                    api = f"https://vsco.co/api/2.0/sites/{site_id}/medias?size=100&page=1&cursor={cursor}"
+                    api_headers = dict(headers)
+                    api_headers["Accept"] = "application/json, text/plain, */*"
+                    api_headers["x-requested-with"] = "XMLHttpRequest"
+                    r = s.get(api, headers=api_headers, timeout=20)
+                    r.raise_for_status()
+                    data = r.json()
+                    chunk = data.get("medias") or []
+                    medias.extend(chunk)
+                    cursor = data.get("next_cursor") or ""
+                    if not cursor:
+                        break
 
             total = len(medias)
             if total == 0:
                 raise ValueError("No VSCO media found")
 
+        with requests.Session() as s:
             for idx, media in enumerate(medias, start=1):
                 media_url = (
                     media.get("image_url")
@@ -226,6 +313,12 @@ def _vsco_download_thread(job_id: str, url: str) -> None:
     except Exception as e:
         jobs[job_id]["status"] = "error"
         _append_log(job_id, f"Error: {e}")
+    finally:
+        try:
+            if "driver" in locals() and driver is not None:
+                driver.quit()
+        except Exception:
+            pass
 
 
 def get_download_status(job_id: str) -> dict:
