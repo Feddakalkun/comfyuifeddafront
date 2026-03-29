@@ -24,7 +24,7 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating, initialImageUrl, onC
     const [prompt, setPrompt] = usePersistentState('image_img2img_prompt', '');
     const [negativePrompt, setNegativePrompt] = usePersistentState('image_img2img_negative', 'blurry, low quality, distorted, bad anatomy, flat lighting');
     const [showAdvanced, setShowAdvanced] = usePersistentState('image_img2img_show_advanced', false);
-    const [steps, setSteps] = usePersistentState('image_img2img_steps', 9);
+    const [steps, setSteps] = usePersistentState('image_img2img_steps', 20);
     const [cfg, setCfg] = usePersistentState('image_img2img_cfg', 1);
     const [denoise, setDenoise] = usePersistentState('image_img2img_denoise', 0.5);
     const [selectedLoras, setSelectedLoras] = usePersistentState<SelectedLora[]>('image_img2img_selected_loras', []);
@@ -43,12 +43,19 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating, initialImageUrl, onC
         load();
     }, []);
 
-    // Consume gallery image when sent from another tab
+    // Load gallery image when sent from another tab
     useEffect(() => {
-        if (initialImageUrl) {
-            onConsumeImage?.();
-        }
-    }, [initialImageUrl, onConsumeImage]);
+        if (!initialImageUrl) return;
+        fetch(initialImageUrl)
+            .then(r => r.blob())
+            .then(blob => {
+                const file = new File([blob], 'from-gallery.png', { type: blob.type || 'image/png' });
+                setInputImage(file);
+                setPreviewUrl(URL.createObjectURL(blob));
+            })
+            .catch(() => { /* ignore */ })
+            .finally(() => onConsumeImage?.());
+    }, [initialImageUrl]);
 
     const handleImageSelected = (file: File) => {
         setInputImage(file);
@@ -173,7 +180,8 @@ export const Img2ImgTab = ({ isGenerating, setIsGenerating, initialImageUrl, onC
 
                         <div>
                             <label className="block text-xs text-slate-400 mb-2">CFG Scale: {cfg}</label>
-                            <input type="range" min="1" max="20" step="0.5" value={cfg} onChange={(e) => setCfg(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
+                            <input type="range" min="1" max="4" step="0.1" value={cfg} onChange={(e) => setCfg(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
+                            <p className="text-[10px] text-slate-600 mt-1">FLUX models work best at 1.0–2.0</p>
                         </div>
 
                     </div>
