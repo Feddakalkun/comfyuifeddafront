@@ -458,9 +458,9 @@ export const SettingsPage = () => {
                             <div className="text-xs uppercase tracking-wider text-sky-200 font-semibold">Quick Setup (Local UI + RunPod GPU)</div>
                             <div className="text-[11px] text-slate-200 leading-relaxed">
                                 <strong>Recommended RunPod deploy values (RTX 5090):</strong><br />
-                                Template: <code className="text-sky-200">Runpod Pytorch 2.4.0</code> (or newer)<br />
-                                Network Volume: <code className="text-sky-200">ON (75GB)</code><br />
-                                Container Disk: <code className="text-sky-200">30GB</code><br />
+                                Template: <code className="text-sky-200">PyTorch 2.8+</code> (5090 requirement)<br />
+                                Network Volume: <code className="text-sky-200">ON (120GB+)</code> for models/outputs<br />
+                                Container Disk: <code className="text-sky-200">60GB+</code> for runtime/packages<br />
                                 Pricing: <code className="text-sky-200">On-Demand</code>
                             </div>
                             <ol className="text-xs text-slate-200 space-y-1 list-decimal ml-4">

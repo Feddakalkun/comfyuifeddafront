@@ -12,10 +12,10 @@ Denne guiden er for deg som vil kjore FEDDA lokalt, men bruke RunPod GPU (f.eks.
 1. Gaa til RunPod Console -> `Pods`.
 2. Velg GPU (f.eks. RTX 5090).
 3. Velg **Pod template**:
-   - `Runpod Pytorch 2.4.0` (eller nyere 2.8+ hvis tilgjengelig)
-   - Krav for RTX 5090 er PyTorch 2.8+, men FEDDA kjorer ComfyUI i egen container etter oppstart.
+   - `PyTorch 2.8+` (RTX 5090 krever dette)
+   - Hvis RunPod viser warning om 2.8+, folg warningen.
 4. Sett `Network Volume` ON.
-5. Sett `Container Disk` minst 30GB.
+5. Sett `Container Disk` minst 60GB.
 6. Opprett pod.
 7. Vent til pod er `Running`.
 
@@ -26,11 +26,11 @@ Tips:
 ### Konkret anbefalt deploy-oppsett (RTX 5090)
 
 - GPU: `RTX 5090`
-- Pod template: `Runpod Pytorch 2.4.0` (default er ok)
+- Pod template: `PyTorch 2.8+`
 - GPU count: `1`
 - Network Volume: `ON`
-- Volume size: `75 GB` (minimum anbefalt for FEDDA)
-- Container disk: `30 GB`
+- Volume size: `120 GB+` (modeller + output vokser fort)
+- Container disk: `60 GB+`
 - Pricing: `On-Demand` for stabilitet (Spot kan avbrytes)
 
 ## 3) Finn URLene FEDDA trenger
@@ -60,7 +60,14 @@ Naar poden er oppe, bruk pod-id i disse formatene:
 2. Kjor en liten test-jobb.
 3. Hvis output kommer i FEDDA-preview, er alt riktig satt opp.
 
-## 6) Hvis du vil bruke FEDDA sin ferdige Docker direkte (beste praksis)
+## 6) Disk vs Volume (viktig)
+
+- **Container Disk**: brukes av OS/runtime/packages midlertidig i pod.
+- **Network Volume**: persistent lagring for modeller og outputs.
+
+Hvis du skal laste mange modeller, er det **Network Volume** du maa gi god plass.
+
+## 7) Hvis du vil bruke FEDDA sin ferdige Docker direkte (beste praksis)
 
 Hvis du bruker deploy-scriptet i repoet, bruk image:
 
