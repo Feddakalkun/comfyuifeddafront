@@ -518,6 +518,21 @@ class ComfyUIService {
      * Tries /api/models/loras first, then falls back to object_info
      */
     async getLoras(): Promise<string[]> {
+        const normalize = (raw: any): string[] => {
+            if (!Array.isArray(raw)) return [];
+            return raw
+                .map((item) => {
+                    if (typeof item === 'string') return item;
+                    if (item && typeof item === 'object') {
+                        if (typeof item.name === 'string') return item.name;
+                        if (typeof item.filename === 'string') return item.filename;
+                        if (typeof item.path === 'string') return item.path;
+                    }
+                    return '';
+                })
+                .filter((s) => typeof s === 'string' && s.length > 0);
+        };
+
         // Try the modern models API first (ComfyUI 0.3+)
         try {
             const response = await fetch(`${this.getComfyBaseUrl()}/api/models/loras`, {
@@ -525,9 +540,25 @@ class ComfyUIService {
             });
             if (response.ok) {
                 const data = await response.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    console.log(`Loaded ${data.length} LoRAs from /api/models/loras`);
-                    return data;
+                const normalized = normalize(data);
+                if (normalized.length > 0) {
+                    console.log(`Loaded ${normalized.length} LoRAs from /api/models/loras`);
+                    return normalized;
+                }
+            }
+        } catch { /* fall through */ }
+
+        // Fallback via local Vite proxy (/comfy), useful when RunPod mode is set but local Comfy is running.
+        try {
+            const response = await fetch('/comfy/api/models/loras', {
+                cache: 'no-store',
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const normalized = normalize(data);
+                if (normalized.length > 0) {
+                    console.log(`Loaded ${normalized.length} LoRAs from /comfy/api/models/loras`);
+                    return normalized;
                 }
             }
         } catch { /* fall through */ }
