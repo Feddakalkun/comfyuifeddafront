@@ -38,3 +38,37 @@ Fix LTX T2V "no output, no error" bug. Establish protocol compliance and log str
 
 ### Next step for next agent
 Commit Codex's unstaged changes, then sync install's LtxT2vTab/VideoPage improvements into clean repo.
+
+---
+
+## [2026-04-01 19:35 Europe/Oslo] Claude — Repo sync + verification
+
+### Goal
+Bring clean repo to parity with install. Commit Codex's unstaged changes.
+
+### What happened
+- Ran `git add -A && git commit` in clean repo → `16ed738` (WIP backup)
+- Committed Codex's changes: LoRADownloader, SettingsPage, Sidebar, lora_service.py, install.ps1, all docs
+- Attempted PowerShell copy of 23 files install→clean. After copy, `git status` showed no changes.
+- Root cause: differences were CRLF/LF only. Content was already identical. Confirmed via `diff` with `tr -d '\r'`.
+
+### Verification
+- **VERIFIED**: `npm run build` passes (1940 modules, no TS errors)
+- **VERIFIED**: backend syntax OK (lora_service.py, social_service.py)
+- **VERIFIED**: clean repo content = install repo content (line endings aside)
+- **VERIFIED**: Both repos have `$CriticalNodes` fix in update_logic.ps1
+
+### Files effectively in clean repo now (via WIP backup commit)
+- `backend/lora_service.py` — Codex LoRA pack rewrite
+- `frontend/src/components/LoRADownloader.tsx` — Codex UX rewrite  
+- `frontend/src/components/ModelDownloader.tsx` — minor additions
+- `frontend/src/components/layout/Sidebar.tsx` — LoRA Library removed
+- `frontend/src/pages/SettingsPage.tsx` — LoRA Models tab + more model groups
+- `scripts/install.ps1` — additions
+- `frontend/src/pages/VideoPage.tsx` — error panel, VRAM free on done/error
+- `frontend/src/components/video/LtxT2vTab.tsx` — copilot prompt integration, GGUF backend selector
+- + 15 other files synced
+
+### Open
+- LTX T2V: PENDING user running `update.bat`
+- UI menu review: next task

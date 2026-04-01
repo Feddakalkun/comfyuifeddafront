@@ -14,7 +14,12 @@
 
 ---
 
-## [2026-04-01] Codex changes (unstaged in clean repo, pending commit)
+## [2026-04-01] Clean repo synced and committed (commit `16ed738`)
+- All Codex changes now committed in clean repo
+- All install-only improvements (VideoPage, LtxT2vTab, etc.) confirmed in sync
+- Frontend build passes, backend syntax clean
+
+## [2026-04-01] Codex changes (now committed in `16ed738`)
 - **Settings → LoRA Models tab**: New dedicated tab for LoRA management per family (Z-Image, QWEN, FLUX, etc.)
 - **Sidebar**: LoRA Library removed from sidebar (now in Settings)
 - **LoRADownloader**: Major rewrite of LoRA pack download/preview UX
