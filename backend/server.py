@@ -29,6 +29,12 @@ from lora_service import (
     start_zimage_turbo_sync,
     get_zimage_turbo_sync_status,
     get_zimage_turbo_catalog,
+    start_pack_sync,
+    get_pack_sync_status,
+    get_pack_catalog,
+    get_pack_preview_file_path,
+    PACK_CONFIGS,
+    start_pack_file_download,
 )
 try:
     import tiktok_service
@@ -572,6 +578,97 @@ async def get_zimage_turbo_celebs(limit: int = 500):
     try:
         catalog = get_zimage_turbo_catalog(max_items=limit)
         return {"success": True, **catalog}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/lora/packs")
+async def get_lora_packs():
+    """Return configured HF LoRA packs for Settings UI."""
+    try:
+        packs = []
+        for key, cfg in PACK_CONFIGS.items():
+            packs.append({
+                "key": key,
+                "label": cfg.get("label", key),
+                "repo": cfg.get("repo", ""),
+            })
+        return {"success": True, "packs": packs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class PackDownloadRequest(BaseModel):
+    filename: str
+
+
+@app.post("/api/lora/pack/{pack_key}/sync")
+async def sync_lora_pack(pack_key: str, limit: Optional[int] = None):
+    """Start background sync for any configured LoRA pack."""
+    try:
+        result = start_pack_sync(pack_key, limit=limit)
+        if result.get("status") == "error":
+            raise HTTPException(status_code=404, detail=result.get("message", "Unknown pack"))
+        return {"success": True, **result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/lora/pack/{pack_key}/status")
+async def get_lora_pack_status(pack_key: str):
+    """Get sync status for configured LoRA pack."""
+    try:
+        status = get_pack_sync_status(pack_key)
+        if status.get("status") == "error" and "Unknown pack key" in (status.get("message") or ""):
+            raise HTTPException(status_code=404, detail=status.get("message"))
+        return {"success": True, **status}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/lora/pack/{pack_key}/catalog")
+async def get_lora_pack_catalog(pack_key: str, limit: int = 500):
+    """Get catalog for configured LoRA pack."""
+    try:
+        catalog = get_pack_catalog(pack_key, max_items=limit)
+        remote_error = catalog.get("remote_error") or ""
+        if remote_error.startswith("Unknown pack key"):
+            raise HTTPException(status_code=404, detail=remote_error)
+        return {"success": True, **catalog}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/lora/pack/{pack_key}/preview/{image_name:path}")
+async def get_lora_pack_preview_image(pack_key: str, image_name: str):
+    """Serve local preview image for LoRA pack items."""
+    try:
+        preview_path = get_pack_preview_file_path(pack_key, image_name)
+        if not preview_path:
+            raise HTTPException(status_code=404, detail="Preview image not found")
+        return FileResponse(preview_path)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/lora/pack/{pack_key}/download")
+async def download_lora_pack_file(pack_key: str, req: PackDownloadRequest):
+    """Start a single file download from a configured LoRA pack."""
+    try:
+        result = start_pack_file_download(pack_key, req.filename)
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("message", "Failed to start file download"))
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
