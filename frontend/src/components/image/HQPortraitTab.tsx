@@ -8,6 +8,8 @@ import { DimensionSelector } from './DimensionSelector';
 import { BACKEND_API } from '../../config/api';
 import { usePersistentState } from '../../hooks/usePersistentState';
 
+type HqWorkflowProfile = 'classic' | 'pro_upscale';
+
 interface PersonConfig {
     lora: string;
     strength: number;
@@ -31,6 +33,14 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
     const [cfg, setCfg] = usePersistentState('image_hq_cfg', 1.1);
     const [dimensions, setDimensions] = usePersistentState('image_hq_dimensions', '768x1152');
     const [dualPersonMode, setDualPersonMode] = usePersistentState('image_hq_dual_person_mode', false);
+    const [workflowProfile, setWorkflowProfile] = usePersistentState<HqWorkflowProfile>('image_hq_workflow_profile', 'classic');
+    const [useUltimateUpscale, setUseUltimateUpscale] = usePersistentState('image_hq_use_ultimate_upscale', true);
+    const [upscaleBy, setUpscaleBy] = usePersistentState('image_hq_upscale_by', 2);
+    const [upscaleDenoise, setUpscaleDenoise] = usePersistentState('image_hq_upscale_denoise', 0.2);
+    const [detailerDenoise, setDetailerDenoise] = usePersistentState('image_hq_detailer_denoise', 0.8);
+    const [detailerGuideSize, setDetailerGuideSize] = usePersistentState('image_hq_detailer_guide_size', 768);
+    const [upscaleModels, setUpscaleModels] = useState<string[]>([]);
+    const [upscaleModel, setUpscaleModel] = usePersistentState('image_hq_upscale_model', '4x_foolhardy_Remacri.pth');
 
     const [personA, setPersonA] = usePersistentState<PersonConfig>('image_hq_person_a', { lora: '', strength: 0.95, description: '', label: 'man' });
     const [personB, setPersonB] = usePersistentState<PersonConfig>('image_hq_person_b', { lora: '', strength: 0.95, description: '', label: 'woman' });
@@ -52,6 +62,12 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
                     if (descResp.ok) {
                         const descData = await descResp.json();
                         if (descData.descriptions) setLoraDescriptions(descData.descriptions);
+                    }
+                } catch { /* optional */ }
+                try {
+                    const models = await comfyService.getNodeInputOptions('UpscaleModelLoader', 'model_name');
+                    if (models.length > 0) {
+                        setUpscaleModels(models);
                     }
                 } catch { /* optional */ }
             } catch (err) { console.error("Failed to load data", err); }
@@ -78,7 +94,8 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
         }
         setIsGenerating(true);
         try {
-            const response = await fetch('/workflows/zimage-HQ.json');
+            const workflowFile = workflowProfile === 'pro_upscale' ? '/workflows/workflow_zimage_hq.json' : '/workflows/zimage-HQ.json';
+            const response = await fetch(workflowFile);
             if (!response.ok) throw new Error('Failed to load workflow');
             const workflow = await response.json();
 
@@ -94,33 +111,61 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
                 } catch { /* use raw */ }
             }
 
-            // Node 46: KSampler
-            workflow["46"].inputs.seed = activeSeed;
-            workflow["46"].inputs.steps = steps;
-            workflow["46"].inputs.cfg = cfg;
+            // Main KSampler variants
+            if (workflow["46"]?.inputs) {
+                workflow["46"].inputs.seed = activeSeed;
+                workflow["46"].inputs.steps = steps;
+                workflow["46"].inputs.cfg = cfg;
+            }
+            if (workflow["9"]?.inputs) {
+                workflow["9"].inputs.seed = activeSeed;
+                workflow["9"].inputs.steps = steps;
+                workflow["9"].inputs.cfg = cfg;
+            }
 
             // Node 5: Positive Prompt (CLIPTextEncode)
             let fullPrompt = finalPrompt;
             if (dualPersonMode && personB.description) {
                 fullPrompt = `${finalPrompt}, ${personB.description}`;
             }
-            workflow["5"].inputs.text = fullPrompt;
+            if (workflow["5"]?.inputs) workflow["5"].inputs.text = fullPrompt;
+            if (workflow["6"]?.inputs && workflowProfile === 'pro_upscale') workflow["6"].inputs.text = fullPrompt;
 
             // Node 6: Negative prompt
-            workflow["6"].inputs.text = negativePrompt;
+            if (workflow["6"]?.inputs && workflowProfile === 'classic') workflow["6"].inputs.text = negativePrompt;
+            if (workflow["7"]?.inputs) workflow["7"].inputs.text = negativePrompt;
 
-            // Node 19: Dimensions
+            // Dimensions
             const [w, h] = dimensions.split('x').map(Number);
-            workflow["19"].inputs.width = w;
-            workflow["19"].inputs.height = h;
+            if (workflow["19"]?.inputs) {
+                workflow["19"].inputs.width = w;
+                workflow["19"].inputs.height = h;
+            }
+            if (workflow["8"]?.inputs) {
+                workflow["8"].inputs.width = w;
+                workflow["8"].inputs.height = h;
+            }
 
             // Detailer guide size matches largest dimension
             const maxDim = Math.max(w, h);
-            workflow["102"].inputs.guide_size = maxDim;
-            workflow["102"].inputs.max_size = maxDim;
+            const effectiveGuide = Math.max(256, Math.min(1536, detailerGuideSize || maxDim));
 
-            // Detailer seed
-            workflow["102"].inputs.seed = Math.floor(Math.random() * 1000000000000000);
+            // DetailerForEach (legacy HQ workflow)
+            if (workflow["102"]?.inputs) {
+                workflow["102"].inputs.guide_size = effectiveGuide;
+                workflow["102"].inputs.max_size = maxDim;
+                workflow["102"].inputs.seed = Math.floor(Math.random() * 1000000000000000);
+                workflow["102"].inputs.denoise = detailerDenoise;
+            }
+            // FaceDetailer (pro upscale workflow)
+            if (workflow["12"]?.inputs) {
+                workflow["12"].inputs.guide_size = effectiveGuide;
+                workflow["12"].inputs.max_size = maxDim;
+                workflow["12"].inputs.seed = Math.floor(Math.random() * 1000000000000000);
+                workflow["12"].inputs.denoise = detailerDenoise;
+                workflow["12"].inputs.steps = Math.max(1, steps - 2);
+                workflow["12"].inputs.cfg = cfg;
+            }
 
             if (dualPersonMode) {
                 // Dual person mode
@@ -163,11 +208,29 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
                 workflow["124"].inputs.strength_clip = strA;
 
                 if (personA.description) {
-                    workflow["65"].inputs.text = personA.description;
+                    if (workflow["65"]?.inputs) workflow["65"].inputs.text = personA.description;
                 }
 
-                workflow["53"].inputs.text_input = personA.label || "person";
+                if (workflow["53"]?.inputs) workflow["53"].inputs.text_input = personA.label || "person";
                 // Person index hardcoded in workflow
+            }
+
+            // Pro Upscale controls (only applied when nodes exist in workflow)
+            if (workflow["13"]?.inputs) {
+                const validUpscaleModel = upscaleModels.includes(upscaleModel) ? upscaleModel : (upscaleModels[0] || upscaleModel);
+                workflow["13"].inputs.model_name = validUpscaleModel;
+            }
+            if (workflow["14"]?.inputs) {
+                workflow["14"].inputs.upscale_by = Math.max(1, Math.min(4, upscaleBy));
+                workflow["14"].inputs.denoise = Math.max(0, Math.min(1, upscaleDenoise));
+                workflow["14"].inputs.seed = activeSeed;
+                workflow["14"].inputs.steps = Math.max(4, Math.min(20, steps - 2));
+                workflow["14"].inputs.cfg = cfg;
+                if (!useUltimateUpscale) {
+                    // Pass-through behavior: keep geometry and avoid heavy second pass
+                    workflow["14"].inputs.upscale_by = 1;
+                    workflow["14"].inputs.denoise = 0;
+                }
             }
 
             await queueWorkflow(workflow);
@@ -262,6 +325,73 @@ export const HQPortraitTab = ({ isGenerating, setIsGenerating }: HQPortraitTabPr
 
                 {showAdvanced && (
                     <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 fade-in duration-200">
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-2 uppercase tracking-wider">Workflow Profile</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() => setWorkflowProfile('classic')}
+                                    className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${workflowProfile === 'classic' ? 'bg-white text-black border-white' : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'}`}
+                                >
+                                    Classic HQ
+                                </button>
+                                <button
+                                    onClick={() => setWorkflowProfile('pro_upscale')}
+                                    className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${workflowProfile === 'pro_upscale' ? 'bg-white text-black border-white' : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'}`}
+                                >
+                                    Pro Upscale
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-slate-600 mt-1">Pro Upscale enables UltimateSDUpscale when supported by the workflow.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="bg-[#0a0a0f] border border-white/10 rounded-lg p-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs text-slate-400 uppercase tracking-wider">Use Ultimate Upscale</label>
+                                    <button
+                                        onClick={() => setUseUltimateUpscale(!useUltimateUpscale)}
+                                        className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${useUltimateUpscale ? 'bg-white' : 'bg-white/10'}`}
+                                    >
+                                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform duration-200 ${useUltimateUpscale ? 'translate-x-5 bg-black' : 'translate-x-0 bg-slate-400'}`} />
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-slate-600 mt-2">If disabled, upscale node is pass-through (upscale_by=1).</p>
+                            </div>
+
+                            <div className="bg-[#0a0a0f] border border-white/10 rounded-lg p-3">
+                                <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Upscale Model</label>
+                                <select
+                                    value={upscaleModel}
+                                    onChange={(e) => setUpscaleModel(e.target.value)}
+                                    className="w-full bg-[#11111a] border border-white/10 rounded-lg px-2 py-2 text-xs text-slate-200"
+                                >
+                                    {(upscaleModels.length > 0 ? upscaleModels : [upscaleModel]).map((m) => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-2">Upscale By: {upscaleBy.toFixed(1)}x</label>
+                            <input type="range" min="1" max="4" step="0.1" value={upscaleBy} onChange={(e) => setUpscaleBy(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-2">Upscale Denoise: {upscaleDenoise.toFixed(2)}</label>
+                            <input type="range" min="0" max="1" step="0.01" value={upscaleDenoise} onChange={(e) => setUpscaleDenoise(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-2">Detailer Denoise: {detailerDenoise.toFixed(2)}</label>
+                            <input type="range" min="0.1" max="1" step="0.01" value={detailerDenoise} onChange={(e) => setDetailerDenoise(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-slate-400 mb-2">Detailer Guide Size: {detailerGuideSize}px</label>
+                            <input type="range" min="256" max="1536" step="64" value={detailerGuideSize} onChange={(e) => setDetailerGuideSize(parseInt(e.target.value, 10))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white" />
+                        </div>
+
                         <div>
                             <label className="block text-xs text-slate-400 mb-2 uppercase tracking-wider">Negative Prompt</label>
                             <textarea value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)}
