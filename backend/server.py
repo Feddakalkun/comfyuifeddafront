@@ -1537,9 +1537,9 @@ REQUIRED_MODELS["ltx2-lipsync"] = REQUIRED_MODELS["ltx2-i2v-sound"] + [
     },
     {
         "id": "ltx2-herocam-lora",
-        "name": "HeroCam_LTX2_bucket113_step_02000.safetensors",
-        "url": "https://huggingface.co/Nebsh/LTX2_Herocam_Lora/resolve/main/HeroCam_LTX2_bucket113_step_02000.safetensors",
-        "path": "loras/HeroCam_LTX2_bucket113_step_02000.safetensors",
+        "name": "HeroCam_LTX2_bucket113_step_1500.safetensors",
+        "url": "https://huggingface.co/Nebsh/LTX2_Herocam_Lora/resolve/main/HeroCam_LTX2_bucket113_step_1500.safetensors",
+        "path": "loras/HeroCam_LTX2_bucket113_step_1500.safetensors",
         "size_gb": 0.31
     },
     {
@@ -1603,6 +1603,12 @@ MODEL_PATH_ALIASES = {
     ],
     "diffusion_models/MelBandRoFormer_fp16.safetensors": [
         "diffusion_models/MelBandRoformer_fp16.safetensors",
+    ],
+    "loras/HeroCam_LTX2_bucket113_step_1500.safetensors": [
+        "loras/HeroCam_LTX2_bucket113_step_02000.safetensors",
+    ],
+    "loras/HeroCam_LTX2_bucket113_step_02000.safetensors": [
+        "loras/HeroCam_LTX2_bucket113_step_1500.safetensors",
     ],
 }
 
