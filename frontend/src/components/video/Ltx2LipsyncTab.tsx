@@ -10,18 +10,24 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 
 type PresetTier = 'fast' | 'balanced' | 'quality';
 
-const PRESETS: Record<PresetTier, { label: string; description: string; steps: number; cfg: number; strength: number }> = {
-    fast:     { label: 'Fast',     description: 'Quick preview',     steps: 8,  cfg: 1, strength: 0.75 },
-    balanced: { label: 'Balanced', description: 'Good sync quality', steps: 14, cfg: 1, strength: 0.82 },
-    quality:  { label: 'Quality',  description: 'Best lipsync',      steps: 20, cfg: 1, strength: 0.85 },
+// ManualSigmas strings for v2 (LTX-2.3 22B) — more sigmas = more denoising steps = better quality
+const PRESET_SIGMAS: Record<PresetTier, string> = {
+    fast:     "1., 0.975, 0.909375, 0.725, 0.421875, 0.0",
+    balanced: "1., 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
+    quality:  "1., 0.9969, 0.9938, 0.9906, 0.9875, 0.975, 0.95, 0.9125, 0.875, 0.8, 0.725, 0.625, 0.5, 0.421875, 0.3, 0.15, 0.0",
 };
 
-const ASPECT_RATIOS = [
-    { label: '1:1', width: 512, height: 512 },
-    { label: '9:16', width: 432, height: 768 },
-    { label: '16:9', width: 768, height: 432 },
-    { label: '3:4', width: 448, height: 600 },
-    { label: '4:3', width: 600, height: 448 },
+const PRESETS: Record<PresetTier, { label: string; description: string; strength: number }> = {
+    fast:     { label: 'Fast',     description: 'Quick preview',     strength: 0.85 },
+    balanced: { label: 'Balanced', description: 'Good sync quality', strength: 0.90 },
+    quality:  { label: 'Quality',  description: 'Best lipsync',      strength: 0.95 },
+};
+
+// Width presets — aspect ratio is automatically preserved from the uploaded face image
+const WIDTH_OPTIONS = [
+    { label: '512px', width: 512 },
+    { label: '720px', width: 720 },
+    { label: '1024px', width: 1024 },
 ];
 
 export const Ltx2LipsyncTab = () => {
@@ -41,25 +47,20 @@ export const Ltx2LipsyncTab = () => {
     const [isGeneratingTts, setIsGeneratingTts] = useState(false);
 
     // Parameters
-    const [prompt, setPrompt] = usePersistentState('ltx2_lipsync_prompt', 'S looks directly at the camera with a loving smile, and lip-syncing with emotion');
-    const [negativePrompt, setNegativePrompt] = usePersistentState('ltx2_lipsync_negative', 'blurry, low quality, distorted face, deformed, artifacts, watermark');
+    const [prompt, setPrompt] = usePersistentState('ltx2_lipsync_prompt', 'woman looks directly at camera, lip-syncing with emotion, natural face movements');
+    const [negativePrompt, setNegativePrompt] = usePersistentState('ltx2_lipsync_negative', 'blurry, low quality, still frame, frames, watermark, overlay, titles');
     const [preset, setPreset] = usePersistentState<PresetTier>('ltx2_lipsync_preset', 'balanced');
-    const [audioDuration, setAudioDuration] = usePersistentState('ltx2_lipsync_duration', 2);
+    const [audioDuration, setAudioDuration] = usePersistentState('ltx2_lipsync_duration', 4);
     const [audioStart, setAudioStart] = usePersistentState('ltx2_lipsync_audio_start', 0);
-    const [aspectRatio, setAspectRatio] = usePersistentState('ltx2_lipsync_aspect', '1:1');
-    const [steps, setSteps] = usePersistentState('ltx2_lipsync_steps', PRESETS.balanced.steps);
-    const [cfg, setCfg] = usePersistentState('ltx2_lipsync_cfg', PRESETS.balanced.cfg);
+    const [targetWidth, setTargetWidth] = usePersistentState('ltx2_lipsync_width', 720);
     const [strength, setStrength] = usePersistentState('ltx2_lipsync_strength', PRESETS.balanced.strength);
+    const [cfg, setCfg] = usePersistentState('ltx2_lipsync_cfg', 1);
     const [seed, setSeed] = usePersistentState('ltx2_lipsync_seed', -1);
     const [showAdvanced, setShowAdvanced] = usePersistentState('ltx2_lipsync_show_advanced', false);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const selectedAR = ASPECT_RATIOS.find(a => a.label === aspectRatio) || ASPECT_RATIOS[0];
-
     const applyPreset = (tier: PresetTier) => {
         setPreset(tier);
-        setSteps(PRESETS[tier].steps);
-        setCfg(PRESETS[tier].cfg);
         setStrength(PRESETS[tier].strength);
     };
 
@@ -112,68 +113,58 @@ export const Ltx2LipsyncTab = () => {
                 faceFilename = uploadRes.name;
             }
 
-            // Load LTX-2 Lipsync workflow (uses installed LTX-2 19B models)
-            const response = await fetch(`/workflows/LTX2lipsync.json?v=${Date.now()}`);
-            if (!response.ok) throw new Error('Failed to load LTX-2 Lipsync workflow');
+            // Load LTX-2.3 22B v2 Lipsync workflow
+            const response = await fetch(`/workflows/LTX2lipsyncv2.json?v=${Date.now()}`);
+            if (!response.ok) throw new Error('Failed to load LTX-2.3 Lipsync v2 workflow');
             const workflow = await response.json();
 
             const activeSeed = seed === -1 ? Math.floor(Math.random() * 1000000000000000) : seed;
             const runTag = Date.now().toString(36);
 
-            // Remove HuggingFaceDownloader + ShowText nodes (handled by UI)
-            delete workflow['139'];
-            delete workflow['143'];
-            delete workflow['455'];
-            delete workflow['559'];
+            // Inject HF token into downloader nodes (let them download any missing models)
+            const hfToken = localStorage.getItem('fedda_hf_token') || '';
+            if (workflow['5267']) workflow['5267'].inputs.hf_token = hfToken;
+            if (workflow['5271']) workflow['5271'].inputs.hf_token = hfToken;
 
-            // Node 392: LoadImage (face)
-            if (workflow['392']) workflow['392'].inputs.image = faceFilename;
+            // Node 5310: LoadImage (face)
+            if (workflow['5310']) workflow['5310'].inputs.image = faceFilename;
 
-            // Node 404: LoadAudio
-            if (workflow['404']) workflow['404'].inputs.audio = audioFilename;
-
-            // Node 402: CR Prompt Text (positive prompt)
-            if (workflow['402']) workflow['402'].inputs.prompt = prompt;
-
-            // Node 403: CLIPTextEncode (negative prompt)
-            if (workflow['403']) workflow['403'].inputs.text = negativePrompt;
-
-            // Node 393: Audio start time
-            if (workflow['393']) workflow['393'].inputs.value = audioStart;
-
-            // Node 394: Audio duration
-            if (workflow['394']) workflow['394'].inputs.value = audioDuration;
-
-            // Node 395: AspectRatioImageSize (resolution)
-            if (workflow['395']) {
-                workflow['395'].inputs.width = selectedAR.width;
-                workflow['395'].inputs.height = selectedAR.height;
-                workflow['395'].inputs.aspect_ratio = aspectRatio;
+            // Node 5299: VHS_LoadAudioUpload — has start_time and duration built in
+            if (workflow['5299']) {
+                workflow['5299'].inputs.audio = audioFilename;
+                workflow['5299'].inputs.start_time = audioStart;
+                workflow['5299'].inputs.duration = audioDuration;
             }
 
-            // Node 405: RandomNoise (seed)
-            if (workflow['405']) workflow['405'].inputs.noise_seed = activeSeed;
+            // Node 5283: CLIPTextEncode (positive prompt)
+            if (workflow['5283']) workflow['5283'].inputs.text = prompt;
 
-            // Node 425: BasicScheduler (steps)
-            if (workflow['425']) workflow['425'].inputs.steps = steps;
+            // Node 5282: CLIPTextEncode (negative prompt)
+            if (workflow['5282']) workflow['5282'].inputs.text = negativePrompt;
 
-            // Node 426: CFGGuider (cfg)
-            if (workflow['426']) workflow['426'].inputs.cfg = cfg;
+            // Node 5293: RandomNoise (seed)
+            if (workflow['5293']) workflow['5293'].inputs.noise_seed = activeSeed;
 
-            // Node 410: LTXVImgToVideoInplace (denoise strength)
-            if (workflow['410']) workflow['410'].inputs.strength = strength;
+            // Node 5294: CFGGuider (cfg)
+            if (workflow['5294']) workflow['5294'].inputs.cfg = cfg;
 
-            // Node 396: VHS_VideoCombine (output filename)
-            if (workflow['396']) workflow['396'].inputs.filename_prefix = `VIDEO/LTX2/LIPSYNC_${runTag}`;
+            // Node 5301: LTXVImgToVideoInplace (denoise strength)
+            if (workflow['5301']) workflow['5301'].inputs.strength = strength;
 
-            // Node 470: SaveImage (last frame)
-            if (workflow['470']) workflow['470'].inputs.filename_prefix = `VIDEO/LTX2/LIPSYNC_LAST_${runTag}`;
+            // Node 5286: ManualSigmas (quality preset → sigma schedule)
+            if (workflow['5286']) workflow['5286'].inputs.sigmas = PRESET_SIGMAS[preset];
+
+            // Node 5311: ResizeImageMaskNode (target width — aspect ratio auto-preserved)
+            if (workflow['5311']) workflow['5311'].inputs['resize_type.width'] = targetWidth;
+
+            // Node 5296: VHS_VideoCombine (output filename)
+            if (workflow['5296']) workflow['5296'].inputs.filename_prefix = `VIDEO/LTX2/LIPSYNC_${runTag}`;
 
             await queueWorkflow(workflow);
-            toast('LTX-2 Lipsync queued!', 'success');
+            toast('LTX-2.3 Lipsync queued!', 'success');
 
         } catch (error: any) {
-            console.error('LTX-2 Lipsync generation failed:', error);
+            console.error('LTX-2.3 Lipsync generation failed:', error);
             toast(error?.message || 'Generation failed', 'error');
         } finally {
             setIsGenerating(false);
@@ -316,16 +307,16 @@ export const Ltx2LipsyncTab = () => {
                 {/* Prompt */}
                 <div>
                     <label className="block text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Motion Prompt</label>
-                    <p className="text-[10px] text-slate-600 mb-1.5">Describe facial expressions and lip movement. Audio drives the actual sync.</p>
+                    <p className="text-[10px] text-slate-600 mb-1.5">Describe facial expressions and movement. Audio drives the actual lip sync.</p>
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="S looks directly at the camera, lip-syncing with emotion..."
+                        placeholder="woman looks directly at camera, lip-syncing with emotion..."
                         className="w-full h-20 bg-[#0a0a0f] border border-white/10 rounded-xl p-3 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none"
                     />
                 </div>
 
-                {/* Preset Picker */}
+                {/* Quality Preset */}
                 <div>
                     <label className="block text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Quality Preset</label>
                     <div className="flex gap-1 bg-black/40 rounded-lg p-1 border border-white/5">
@@ -346,7 +337,7 @@ export const Ltx2LipsyncTab = () => {
                     </div>
                 </div>
 
-                {/* Audio Duration + Aspect Ratio */}
+                {/* Audio Duration + Resolution */}
                 <div className="space-y-4 bg-[#0a0a0f] border border-white/10 rounded-xl p-4">
                     <div>
                         <div className="flex justify-between text-xs text-slate-400 mb-1">
@@ -354,28 +345,30 @@ export const Ltx2LipsyncTab = () => {
                             <span className="text-white font-mono">{audioDuration}s</span>
                         </div>
                         <input
-                            type="range" min="1" max="16" value={audioDuration}
+                            type="range" min="1" max="20" value={audioDuration}
                             onChange={(e) => setAudioDuration(parseInt(e.target.value))}
                             className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-white"
                         />
+                        <p className="text-[9px] text-slate-600 mt-1">~{Math.round(audioDuration * 24 + 1)} frames at 24fps</p>
                     </div>
                     <div>
-                        <label className="block text-xs text-slate-400 mb-2">Aspect Ratio</label>
+                        <label className="block text-xs text-slate-400 mb-2">Output Width <span className="text-slate-600">(aspect ratio auto from image)</span></label>
                         <div className="flex gap-1.5">
-                            {ASPECT_RATIOS.map((ar) => (
+                            {WIDTH_OPTIONS.map((opt) => (
                                 <button
-                                    key={ar.label}
-                                    onClick={() => setAspectRatio(ar.label)}
+                                    key={opt.width}
+                                    onClick={() => setTargetWidth(opt.width)}
                                     className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all border ${
-                                        aspectRatio === ar.label
+                                        targetWidth === opt.width
                                             ? 'bg-white text-black border-white'
                                             : 'text-slate-500 hover:text-white border-white/5 hover:border-white/20'
                                     }`}
                                 >
-                                    {ar.label}
+                                    {opt.label}
                                 </button>
                             ))}
                         </div>
+                        <p className="text-[9px] text-slate-600 mt-1">Output upscaled 1.5× → {Math.round(targetWidth * 1.5)}px wide</p>
                     </div>
                 </div>
 
@@ -396,40 +389,29 @@ export const Ltx2LipsyncTab = () => {
                                     <span className="text-white font-mono">{audioStart}s</span>
                                 </div>
                                 <input
-                                    type="range" min="0" max="60" step="0.5" value={audioStart}
+                                    type="range" min="0" max="120" step="0.5" value={audioStart}
                                     onChange={(e) => setAudioStart(parseFloat(e.target.value))}
                                     className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-white"
                                 />
                             </div>
                             <div>
                                 <div className="flex justify-between text-xs text-slate-400 mb-1">
-                                    <span>Steps</span>
-                                    <span className="text-white font-mono">{steps}</span>
-                                </div>
-                                <input
-                                    type="range" min="4" max="30" value={steps}
-                                    onChange={(e) => setSteps(parseInt(e.target.value))}
-                                    className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-white"
-                                />
-                            </div>
-                            <div>
-                                <div className="flex justify-between text-xs text-slate-400 mb-1">
-                                    <span>CFG</span>
+                                    <span>CFG Scale</span>
                                     <span className="text-white font-mono">{cfg.toFixed(1)}</span>
                                 </div>
                                 <input
-                                    type="range" min="1" max="10" step="0.1" value={cfg}
+                                    type="range" min="1" max="5" step="0.1" value={cfg}
                                     onChange={(e) => setCfg(parseFloat(e.target.value))}
                                     className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-white"
                                 />
                             </div>
                             <div>
                                 <div className="flex justify-between text-xs text-slate-400 mb-1">
-                                    <span>Image Strength</span>
+                                    <span>Image Strength <span className="text-slate-600">(how much to move the face)</span></span>
                                     <span className="text-white font-mono">{strength.toFixed(2)}</span>
                                 </div>
                                 <input
-                                    type="range" min="0.3" max="1.0" step="0.05" value={strength}
+                                    type="range" min="0.5" max="1.0" step="0.01" value={strength}
                                     onChange={(e) => setStrength(parseFloat(e.target.value))}
                                     className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-white"
                                 />
@@ -463,7 +445,7 @@ export const Ltx2LipsyncTab = () => {
                     isLoading={isGenerating || isGeneratingTts}
                     disabled={isGenerating || isGeneratingTts}
                 >
-                    {isGeneratingTts ? 'Generating Speech...' : isGenerating ? 'Rendering...' : 'Generate Lipsync'}
+                    {isGeneratingTts ? 'Generating Speech...' : isGenerating ? 'Rendering...' : 'Generate Lipsync v2'}
                 </Button>
             </div>
         </>
