@@ -62,6 +62,8 @@ export const TikTokPage = ({ onSendToImg2Img, onSendToInpaint }: TikTokPageProps
     return (
         <WorkbenchShell
             topBar={<PageTabs tabs={TABS} activeTab={activeMode} onChange={setActiveMode} />}
+            collapsible
+            collapseKey="tiktok_preview_collapsed"
             leftPane={
                 <>
                     <div style={{ display: activeMode === 'download' ? undefined : 'none' }}>

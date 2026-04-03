@@ -260,6 +260,8 @@ export const Flux2KleinPage = ({ modelId, modelLabel }: Flux2KleinPageProps) => 
         <WorkbenchShell
             leftWidthClassName="w-[500px]"
             leftPaneClassName="p-4"
+            collapsible
+            collapseKey="flux2klein_preview_collapsed"
             leftPane={
                 <>
                     <ModelDownloader modelGroup={mode} />

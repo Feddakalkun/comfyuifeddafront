@@ -373,6 +373,8 @@ export const QwenAnglePage = ({ modelId }: QwenAnglePageProps) => {
         <WorkbenchShell
             leftWidthClassName="w-[500px]"
             leftPaneClassName="p-4"
+            collapsible
+            collapseKey="qwen_angle_preview_collapsed"
             leftPane={
                 <>
                     <ModelDownloader modelGroup="qwen-angle" />

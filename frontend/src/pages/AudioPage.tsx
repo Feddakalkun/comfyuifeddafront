@@ -737,6 +737,8 @@ export const AudioPage = () => {
 
     return (
         <WorkbenchShell
+            collapsible
+            collapseKey="audio_preview_collapsed"
             leftPane={
                 <>
                     {/* Quick Create — one-shot song generation */}
