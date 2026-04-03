@@ -77,15 +77,20 @@ if !errorlevel! neq 0 (
 echo [OK] Code updated successfully.
 
 :: ============================================================================
-:: CHECK FRONTEND DEPENDENCIES
+:: RUN FULL MAINTENANCE (nodes, deps, npm, cleanup)
 :: ============================================================================
 echo.
-echo [2/2] Checking frontend dependencies...
+echo [2/2] Running dependency maintenance (nodes, pip, npm)...
+echo       This fixes missing nodes and dependency issues.
+echo.
 
-if exist "%BASE_DIR%\frontend\node_modules" (
-    echo [OK] node_modules exists.
-) else (
-    echo [INFO] node_modules missing - will be installed on next run.
+powershell -ExecutionPolicy Bypass -File "%BASE_DIR%\scripts\update_logic.ps1"
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [WARN] Maintenance script reported issues - check output above.
+    echo        FEDDA may still work, but some features could be affected.
+    echo.
 )
 
 :: ============================================================================
@@ -95,6 +100,10 @@ echo.
 echo =========================================
 echo   UPDATE COMPLETE
 echo =========================================
+echo.
+echo   Code: pulled from GitHub
+echo   Nodes: synced / missing ones installed
+echo   Deps: pip + npm updated
 echo.
 echo   Run RUN.bat to start FEDDA.
 echo.

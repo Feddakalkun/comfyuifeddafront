@@ -19,18 +19,27 @@ if (-not $SilentMode) {
 # DETECT MODE
 # ============================================================================
 $PortablePy = Join-Path $RootPath "python_embeded\python.exe"
-$VenvPy = Join-Path $RootPath "venv\Scripts\python.exe"
+$VenvPy     = Join-Path $RootPath "venv\Scripts\python.exe"
+$NodeEmbed  = Join-Path $RootPath "node_embeded\node.exe"
 $ComfyDir = Join-Path $RootPath "ComfyUI"
 $CustomNodesDir = Join-Path $ComfyDir "custom_nodes"
 
-if (Test-Path $PortablePy) {
-    $Mode = "portable"
-    $PyExe = $PortablePy
-    if (-not $SilentMode) { Write-Host "`n  Mode: Full (portable)" -ForegroundColor Green }
-} elseif (Test-Path $VenvPy) {
+# Detection order: venv = Lite (even if python_embeded also exists, since
+# Lite now embeds Python 3.11.9 but still creates a venv from it).
+# Full/portable = has python_embeded AND node_embeded (no venv).
+if (Test-Path $VenvPy) {
     $Mode = "lite"
     $PyExe = $VenvPy
     if (-not $SilentMode) { Write-Host "`n  Mode: Lite (venv)" -ForegroundColor Green }
+} elseif ((Test-Path $PortablePy) -and (Test-Path $NodeEmbed)) {
+    $Mode = "portable"
+    $PyExe = $PortablePy
+    if (-not $SilentMode) { Write-Host "`n  Mode: Full (portable)" -ForegroundColor Green }
+} elseif (Test-Path $PortablePy) {
+    # python_embeded only, no venv and no node_embeded - treat as portable
+    $Mode = "portable"
+    $PyExe = $PortablePy
+    if (-not $SilentMode) { Write-Host "`n  Mode: Full (portable - no node_embeded)" -ForegroundColor Yellow }
 } else {
     Write-Host "`n  [ERROR] No Python environment found!" -ForegroundColor Red
     Write-Host "  Run install.bat first." -ForegroundColor Yellow
@@ -162,9 +171,16 @@ if ($NeedNodeUpdate -or $HasMissing) {
                     $ReqFile = Join-Path $NodeDir_Install "requirements.txt"
                     if (Test-Path $ReqFile) {
                         Write-Host "  [$($Node.name)] Installing dependencies..." -ForegroundColor Gray
+                        $SkipPkgs = @('^\s*insightface','^\s*byaldi','^\s*nano-graphrag','^\s*kaleido','^\s*qwen-vl-utils','^\s*fastparquet')
+                        $ReqContent = Get-Content $ReqFile
+                        $Filtered = $ReqContent
+                        foreach ($p in $SkipPkgs) { $Filtered = $Filtered | Where-Object { $_ -notmatch $p } }
+                        $TmpReq = Join-Path $NodeDir_Install "_req_filtered.txt"
+                        Set-Content -Path $TmpReq -Value $Filtered
                         $ErrorActionPreference = "Continue"
-                        & $PyExe -m pip install -r "$ReqFile" --no-warn-script-location 2>&1 | Out-Null
+                        & $PyExe -m pip install -r "$TmpReq" --no-warn-script-location 2>&1 | Out-Null
                         $ErrorActionPreference = "Stop"
+                        Remove-Item $TmpReq -Force -ErrorAction SilentlyContinue
                     }
                 } else {
                     Write-Host "  [$($Node.name)] Clone failed!" -ForegroundColor Red
@@ -196,9 +212,16 @@ if ($NeedNodeUpdate -or $HasMissing) {
 
             $ReqFile = Join-Path $NodeDir_Install "requirements.txt"
             if (Test-Path $ReqFile) {
+                $SkipPkgs = @('^\s*insightface','^\s*byaldi','^\s*nano-graphrag','^\s*kaleido','^\s*qwen-vl-utils','^\s*fastparquet')
+                $ReqContent = Get-Content $ReqFile
+                $Filtered = $ReqContent
+                foreach ($p in $SkipPkgs) { $Filtered = $Filtered | Where-Object { $_ -notmatch $p } }
+                $TmpReq = Join-Path $NodeDir_Install "_req_filtered.txt"
+                Set-Content -Path $TmpReq -Value $Filtered
                 $ErrorActionPreference = "Continue"
-                & $PyExe -m pip install -r "$ReqFile" --no-warn-script-location 2>&1 | Out-Null
+                & $PyExe -m pip install -r "$TmpReq" --no-warn-script-location 2>&1 | Out-Null
                 $ErrorActionPreference = "Stop"
+                Remove-Item $TmpReq -Force -ErrorAction SilentlyContinue
             }
         }
         else {
