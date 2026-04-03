@@ -20,6 +20,7 @@ import { ExecutionStatusBar } from './components/ExecutionStatusBar';
 import { TopSystemStrip } from './components/ui/TopSystemStrip';
 import { MODELS } from './config/api';
 import { addUiLog, getUiLogs, UI_LOG_EVENT } from './services/uiLogger';
+import { HFTokenSettings } from './components/HFTokenSettings';
 
 const UI_STATE_KEY = 'fedda_ui_state_v1';
 const VALID_TABS = new Set([
@@ -351,6 +352,7 @@ function App() {
                     LTX Hub: Experimental
                   </span>
                 )}
+                <HFTokenSettings />
                 <button
                   onClick={() => {
                     setShowLanding(false);

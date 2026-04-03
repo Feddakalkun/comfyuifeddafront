@@ -35,17 +35,18 @@ export const HFTokenSettings = () => {
 
     return (
         <>
-            {/* Settings Button */}
+            {/* Header Button */}
             <button
                 onClick={() => setIsOpen(true)}
-                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1.5 ${
                     hasToken
                         ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25'
-                        : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                        : 'border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
                 }`}
-                title="HuggingFace Token Settings"
+                title={hasToken ? 'HuggingFace token is set - click to update' : 'No HuggingFace token - click to add (required for gated model downloads)'}
             >
-                <Key className="w-3.5 h-3.5 inline" />
+                <Key className="w-3.5 h-3.5" />
+                <span>{hasToken ? 'HF Token' : 'Add HF Token'}</span>
             </button>
 
             {/* Modal Overlay */}
@@ -67,7 +68,8 @@ export const HFTokenSettings = () => {
                         <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                             <p className="text-xs text-blue-200 leading-relaxed">
                                 <AlertCircle className="w-3.5 h-3.5 inline mr-1 mb-0.5" />
-                                Required for downloading gated models like <strong>WAN (Lipsync)</strong>.
+                                Required for downloading gated models like <strong>Flux2Klein</strong> and <strong>WAN (Lipsync)</strong>.
+                                If a model download failed with an error, adding your token and retrying usually fixes it.
                                 Get your token from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-100">HuggingFace Settings</a>.
                             </p>
                         </div>
