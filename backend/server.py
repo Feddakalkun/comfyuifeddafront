@@ -1589,6 +1589,23 @@ REQUIRED_MODELS["ltx2-cinematic-lora-pack"] = [
 
 download_progress = {} # { model_id: { downloaded: 0, total: 0, status: 'idle' } }
 
+# File-name parity aliases used by different workflow packs/Comfy builds.
+# If one variant exists, we treat the model as present to avoid false negatives.
+MODEL_PATH_ALIASES = {
+    "text_encoders/comfy_gemma_3_12B_it.safetensors": [
+        "text_encoders/gemma_3_12B_it.safetensors",
+    ],
+    "text_encoders/gemma_3_12B_it.safetensors": [
+        "text_encoders/comfy_gemma_3_12B_it.safetensors",
+    ],
+    "diffusion_models/MelBandRoformer_fp16.safetensors": [
+        "diffusion_models/MelBandRoFormer_fp16.safetensors",
+    ],
+    "diffusion_models/MelBandRoFormer_fp16.safetensors": [
+        "diffusion_models/MelBandRoformer_fp16.safetensors",
+    ],
+}
+
 def start_download(model_info, hf_token=None):
     """Download a model using curl (fast, resume-capable) with file-size progress tracking."""
     import time
@@ -1701,8 +1718,16 @@ async def get_models_status(group: str = "z-image"):
     
     results = []
     for m in REQUIRED_MODELS[group]:
-        full_path = COMFY_MODELS_DIR / m['path']
-        exists = full_path.exists()
+        primary_path = COMFY_MODELS_DIR / m['path']
+        resolved_path = primary_path
+        exists = resolved_path.exists()
+        if not exists:
+            for alias in MODEL_PATH_ALIASES.get(m['path'], []):
+                alias_path = COMFY_MODELS_DIR / alias
+                if alias_path.exists():
+                    resolved_path = alias_path
+                    exists = True
+                    break
         
         # Basic corruption check: if file exists but much smaller than expected
         # Skip check if the file is currently being downloaded
@@ -1711,7 +1736,7 @@ async def get_models_status(group: str = "z-image"):
         is_downloading = current_prog.get('status') == 'downloading'
 
         if exists and not is_downloading:
-            fsize_gb = full_path.stat().st_size / (1024**3)
+            fsize_gb = resolved_path.stat().st_size / (1024**3)
             threshold = 0.5 if m['size_gb'] < 1.0 else 0.95
             if fsize_gb < (m['size_gb'] * threshold):
                 is_corrupt = True
@@ -1734,7 +1759,7 @@ async def get_models_status(group: str = "z-image"):
             **m,
             "exists": model_exists,
             "is_corrupt": is_corrupt,
-            "actual_size_gb": round(full_path.stat().st_size / (1024**3), 3) if exists else 0,
+            "actual_size_gb": round(resolved_path.stat().st_size / (1024**3), 3) if exists else 0,
             "progress": current_prog
         })
     
