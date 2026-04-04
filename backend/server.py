@@ -1364,6 +1364,41 @@ REQUIRED_MODELS = {
             "url": "https://huggingface.co/scenario-labs/sam_vit/resolve/main/sam_vit_b_01ec64.pth",
             "path": "sams/sam_vit_b_01ec64.pth",
             "size_gb": 0.349
+        },
+        {
+            "id": "qwen-instantx-controlnet",
+            "name": "Qwen-Image-InstantX-ControlNet-Union.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/Qwen-Image-InstantX-ControlNets/resolve/main/split_files/controlnet/Qwen-Image-InstantX-ControlNet-Union.safetensors",
+            "path": "controlnet/Qwen-Image-InstantX-ControlNet-Union.safetensors",
+            "size_gb": 3.54
+        },
+        {
+            "id": "qwen-image-edit-2509",
+            "name": "qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+            "url": "https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+            "path": "diffusion_models/qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+            "size_gb": 9.1
+        },
+        {
+            "id": "upscaler-ultrasharp",
+            "name": "4x-UltraSharp.pth",
+            "url": "https://huggingface.co/lokCX/4x-Ultrasharp/resolve/main/4x-UltraSharp.pth",
+            "path": "upscale_models/4x-UltraSharp.pth",
+            "size_gb": 0.067
+        },
+        {
+            "id": "upscaler-nmkd",
+            "name": "4x-NMKD-Superscale-SP_178000_G.pth",
+            "url": "https://huggingface.co/gemasai/4x_NMKD-Superscale-SP_178000_G/resolve/main/4x-NMKD-Superscale-SP_178000_G.pth",
+            "path": "upscale_models/4x-NMKD-Superscale-SP_178000_G.pth",
+            "size_gb": 0.067
+        },
+        {
+            "id": "upscaler-realesrgan",
+            "name": "RealESRGAN_x4plus.pth",
+            "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+            "path": "upscale_models/RealESRGAN_x4plus.pth",
+            "size_gb": 0.067
         }
         ],
     "ace-step": [
@@ -1561,6 +1596,7 @@ REQUIRED_MODELS["image-hq"] = REQUIRED_MODELS["z-image"]
 REQUIRED_MODELS["image-img2img"] = REQUIRED_MODELS["z-image"]
 REQUIRED_MODELS["image-mood-edit"] = REQUIRED_MODELS["z-image"]
 REQUIRED_MODELS["image-inpaint"] = REQUIRED_MODELS["z-image"]
+REQUIRED_MODELS["image-autoinpaint"] = REQUIRED_MODELS["z-image"]
 REQUIRED_MODELS["image-metadata"] = REQUIRED_MODELS["z-image"]
 # FLUX2KLEIN modes share the same base model set
 REQUIRED_MODELS["flux2klein-image-edit"] = REQUIRED_MODELS["flux2klein-txt2img9b"]
@@ -1692,6 +1728,67 @@ REQUIRED_MODELS["ltx2-lipsync"] = REQUIRED_MODELS["ltx2-i2v-sound"] + [
         "path": "diffusion_models/MelBandRoformer_fp16.safetensors",
         "size_gb": 0.43
     },
+]
+
+
+# ─── LTX-2.3 5-in-1 AV Workflow ────────────────────────────────────
+REQUIRED_MODELS["ltx23-av"] = [
+    {
+        "id": "ltx23-unet-fp8",
+        "name": "ltx-2.3-22b-dev_transformer_only_fp8_scaled.safetensors",
+        "url": "https://huggingface.co/Kijai/LTX2.3_comfy/resolve/main/diffusion_models/ltx-2.3-22b-dev_transformer_only_fp8_scaled.safetensors",
+        "path": "diffusion_models/ltx-2.3-22b-dev_transformer_only_fp8_scaled.safetensors",
+        "size_gb": 21.86
+    },
+    {
+        "id": "ltx23-text-projection",
+        "name": "ltx-2.3_text_projection_bf16.safetensors",
+        "url": "https://huggingface.co/Kijai/LTX2.3_comfy/resolve/main/text_encoders/ltx-2.3_text_projection_bf16.safetensors",
+        "path": "text_encoders/ltx-2.3_text_projection_bf16.safetensors",
+        "size_gb": 2.15
+    },
+    {
+        "id": "ltx23-gemma3",
+        "name": "gemma_3_12B_it.safetensors",
+        "url": "https://huggingface.co/Comfy-Org/ltx-2/resolve/main/split_files/text_encoders/gemma_3_12B_it.safetensors",
+        "path": "text_encoders/gemma_3_12B_it.safetensors",
+        "size_gb": 22.71
+    },
+    {
+        "id": "ltx23-video-vae",
+        "name": "LTX23_video_vae_bf16.safetensors",
+        "url": "https://huggingface.co/Kijai/LTX2.3_comfy/resolve/main/vae/LTX23_video_vae_bf16.safetensors",
+        "path": "vae/LTX23_video_vae_bf16.safetensors",
+        "size_gb": 1.35
+    },
+    {
+        "id": "ltx23-audio-vae",
+        "name": "LTX23_audio_vae_bf16.safetensors",
+        "url": "https://huggingface.co/Kijai/LTX2.3_comfy/resolve/main/vae/LTX23_audio_vae_bf16.safetensors",
+        "path": "vae/LTX23_audio_vae_bf16.safetensors",
+        "size_gb": 0.35
+    },
+    {
+        "id": "ltx23-distilled-lora",
+        "name": "ltx-2.3-22b-distilled-lora-384.safetensors",
+        "url": "https://huggingface.co/Lightricks/LTX-2.3/resolve/main/ltx-2.3-22b-distilled-lora-384.safetensors",
+        "path": "loras/ltx-2.3-22b-distilled-lora-384.safetensors",
+        "size_gb": 7.08
+    },
+    {
+        "id": "ltx23-union-control",
+        "name": "ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+        "url": "https://huggingface.co/Lightricks/LTX-2.3-22b-IC-LoRA-Union-Control/resolve/main/ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+        "path": "loras/ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+        "size_gb": 0.62
+    },
+    {
+        "id": "lotus-depth-v2",
+        "name": "lotus-depth-g-v2-0-disparity.safetensors",
+        "url": "https://huggingface.co/jingheya/lotus-depth-g-v2-0-disparity/resolve/main/unet/diffusion_pytorch_model.safetensors",
+        "path": "diffusion_models/lotus-depth-g-v2-0-disparity.safetensors",
+        "size_gb": 3.23
+    }
 ]
 
 # ─── LTX Optional Add-on LoRA packs (downloadable from Settings) ───────────

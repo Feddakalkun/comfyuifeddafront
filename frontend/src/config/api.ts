@@ -1,4 +1,4 @@
-﻿// ComfyUI API Configuration
+// ComfyUI API Configuration
 // Desktop mode: uses .env.development with localhost URLs
 // Docker mode: falls back to relative URLs through Nginx reverse proxy
 

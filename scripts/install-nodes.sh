@@ -58,6 +58,7 @@ CORE_FOLDERS = {
     "ComfyUI-Custom-Scripts",
     "ComfyUI_essentials",
     "was-node-suite-comfyui",
+    "ComfyUI-KJNodes",
 }
 
 with open(config_path, encoding="utf-8") as f:

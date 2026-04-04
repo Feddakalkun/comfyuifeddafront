@@ -46,10 +46,9 @@ RUN python3 -m pip install --no-cache-dir \
 RUN python3 -m pip install --no-cache-dir \
     xformers --index-url https://download.pytorch.org/whl/cu124
 
-# Clone ComfyUI at pinned stable commit
+# Clone ComfyUI at latest master to support newest LTX nodes
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI \
     && cd /app/ComfyUI \
-    && git checkout 25b6d1d6 \
     && pip install --no-cache-dir -r requirements.txt
 
 # Pre-install critical custom nodes in Docker image
