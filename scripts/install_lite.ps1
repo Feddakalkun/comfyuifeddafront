@@ -400,38 +400,37 @@ if (-not (Test-Path $PyEmbedExe)) {
     Write-Step "Embedded Python 3.11.9 already present." "Green"
 }
 
-# Determine which Python to use for venv creation
-$SystemPyForVenv = "python"
-if (Test-Path $PyEmbedExe) {
-    $SystemPyForVenv = $PyEmbedExe
-    Write-Step "Using embedded Python 3.11.9 for venv." "Green"
+# Determine the Python to use for ALL steps — embedded zip has NO venv module,
+# so we install packages directly into embedded Python (same as portable installer).
+$EmbedPy = $PyEmbedExe
+if (-not (Test-Path $EmbedPy)) {
+    # Fallback: use system Python if embedded download failed
+    $SysPy = (Get-Command python -ErrorAction SilentlyContinue)?.Source
+    if (-not $SysPy) {
+        Write-Step "ERROR: No Python available. Embedded download must have failed." "Red"
+        throw "No Python found"
+    }
+    $EmbedPy = $SysPy
+    Write-Step "WARNING: Using system Python as fallback (embedded download failed)." "Yellow"
 } else {
-    Write-Step "Using system Python for venv (embedded download failed)." "Yellow"
+    Write-Step "Using embedded Python 3.11.9 directly (no venv — embedded zip has no venv module)." "Green"
 }
 
 # ============================================================================
-# 1. PYTHON VENV
+# 1. PYTHON PACKAGES (directly into embedded Python — no venv)
 # ============================================================================
-Write-Header "STEP 1/7 - Python Virtual Environment"
+Write-Header "STEP 1/7 - Python Setup"
 
-$VenvDir = Join-Path $RootPath "venv"
-$VenvPy = Join-Path $VenvDir "Scripts\python.exe"
-$VenvPip = Join-Path $VenvDir "Scripts\pip.exe"
+# Alias $VenvPy so the rest of the script stays unchanged
+$VenvPy  = $EmbedPy
+$VenvPip = Join-Path (Split-Path $EmbedPy) "Scripts\pip.exe"
 
-if (-not (Test-Path $VenvPy)) {
-    Write-Step "Creating venv from Python 3.11.9..."
-    & $SystemPyForVenv -m venv "$VenvDir"
-    Write-Step "Upgrading pip..."
-    & $VenvPy -m pip install --upgrade pip wheel setuptools --quiet
-    Write-Step "venv created." "Green"
-} else {
-    Write-Step "venv already exists." "Green"
-}
+Write-Step "pip is ready in embedded Python." "Green"
 
-# Helper to run pip in venv
+# Helper to run pip
 function Venv-Pip {
     param([string]$PipArgs)
-    $cmd = "$VenvPy -m pip $PipArgs"
+    $cmd = "& '$VenvPy' -m pip $PipArgs"
     Invoke-Expression $cmd
     if ($LASTEXITCODE -ne 0) {
         Write-Step "WARNING: pip command had issues: $PipArgs" "Yellow"
