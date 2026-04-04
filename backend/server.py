@@ -1584,7 +1584,7 @@ REQUIRED_MODELS["nsfw-bj"] = [
     {
         "id": "nsfw-wan-clip",
         "name": "nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
-        "url": "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/text_encoders/umt5-xxl_fp8_e4m3fn.safetensors",
+        "url": "https://huggingface.co/NSFW-API/NSFW-Wan-UMT5-XXL/resolve/main/nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
         "path": "text_encoders/nsfw_wan_umt5-xxl_fp8_scaled.safetensors",
         "size_gb": 4.89
     },
