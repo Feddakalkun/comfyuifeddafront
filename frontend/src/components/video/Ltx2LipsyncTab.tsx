@@ -11,25 +11,26 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 type PresetTier = 'fast' | 'balanced' | 'quality';
 
 // ManualSigmas strings for v2 (LTX-2.3 22B) — more sigmas = more denoising steps = better quality
+// ManualSigmas strings for v2 (LTX-2.3 22B) — increased step counts for high-fidelity output
 const PRESET_SIGMAS: Record<PresetTier, string> = {
-    fast:     "1., 0.975, 0.909375, 0.725, 0.421875, 0.0",
-    balanced: "1., 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0",
-    quality:  "1., 0.9969, 0.9938, 0.9906, 0.9875, 0.975, 0.95, 0.9125, 0.875, 0.8, 0.725, 0.625, 0.5, 0.421875, 0.3, 0.15, 0.0",
+    fast:     "1., 0.95, 0.85, 0.7, 0.5, 0.3, 0.15, 0.05, 0.0",
+    balanced: "1., 0.99, 0.97, 0.94, 0.9, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.08, 0.03, 0.0",
+    quality:  "1.0, 0.997, 0.995, 0.992, 0.99, 0.985, 0.98, 0.975, 0.97, 0.965, 0.96, 0.955, 0.95, 0.94, 0.93, 0.92, 0.9, 0.88, 0.85, 0.82, 0.78, 0.74, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.0",
 };
 
 const PRESETS: Record<PresetTier, { label: string; description: string; strength: number }> = {
-    fast:     { label: 'Fast',     description: 'Quick preview',     strength: 0.85 },
-    balanced: { label: 'Balanced', description: 'Good sync quality', strength: 0.90 },
-    quality:  { label: 'Quality',  description: 'Best lipsync',      strength: 0.95 },
+    fast:     { label: 'Fast',     description: '8-steps preview', strength: 0.90 },
+    balanced: { label: 'Balanced', description: '16-steps detail',  strength: 0.95 },
+    quality:  { label: 'Quality',  description: '40-steps cinematic',strength: 1.0 },
 };
 
 // Resolution presets — both width AND height enforced via ImageResizeKJv2 (center-crop to aspect ratio)
 // LTX-2.3 was trained on landscape video, so 16:9 gives best lipsync quality
 const RESOLUTION_OPTIONS = [
-    { label: '16:9', sublabel: '720×416', width: 720, height: 416, note: 'Best quality' },
-    { label: '1:1',  sublabel: '512×512', width: 512, height: 512, note: 'Square' },
-    { label: '9:16', sublabel: '416×736', width: 416, height: 736, note: 'Portrait' },
-    { label: '4:3',  sublabel: '576×448', width: 576, height: 448, note: '' },
+    { label: 'Cinema', sublabel: '768×448', width: 768, height: 448, note: 'Best quality' },
+    { label: '16:9',   sublabel: '720×416', width: 720, height: 416, note: 'Standard' },
+    { label: '1:1',    sublabel: '512×512', width: 512, height: 512, note: 'Square' },
+    { label: '9:16',   sublabel: '416×736', width: 416, height: 736, note: 'Portrait' },
 ];
 
 export const Ltx2LipsyncTab = () => {
@@ -49,14 +50,14 @@ export const Ltx2LipsyncTab = () => {
     const [isGeneratingTts, setIsGeneratingTts] = useState(false);
 
     // Parameters
-    const [prompt, setPrompt] = usePersistentState('ltx2_lipsync_prompt', 'woman looks directly at camera, lip-syncing with emotion, natural face movements');
-    const [negativePrompt, setNegativePrompt] = usePersistentState('ltx2_lipsync_negative', 'blurry, low quality, still frame, frames, watermark, overlay, titles');
+    const [prompt, setPrompt] = usePersistentState('ltx2_lipsync_prompt', 'close-up cinematic portrait of a person looks directly at camera, lip-syncing with high emotion, sharp focus, detailed skin texture, 4k, crisp resolution, natural face movements');
+    const [negativePrompt, setNegativePrompt] = usePersistentState('ltx2_lipsync_negative', 'blurry, noise, low resolution, artifacts, ghosting, distorted face, still frame, watermark, overlay, titles');
     const [preset, setPreset] = usePersistentState<PresetTier>('ltx2_lipsync_preset', 'balanced');
     const [audioDuration, setAudioDuration] = usePersistentState('ltx2_lipsync_duration', 4);
     const [audioStart, setAudioStart] = usePersistentState('ltx2_lipsync_audio_start', 0);
-    const [resolutionLabel, setResolutionLabel] = usePersistentState('ltx2_lipsync_resolution', '16:9');
+    const [resolutionLabel, setResolutionLabel] = usePersistentState('ltx2_lipsync_resolution', 'Cinema');
     const [strength, setStrength] = usePersistentState('ltx2_lipsync_strength', PRESETS.balanced.strength);
-    const [cfg, setCfg] = usePersistentState('ltx2_lipsync_cfg', 1);
+    const [cfg, setCfg] = usePersistentState('ltx2_lipsync_cfg', 3.5);
     const [seed, setSeed] = usePersistentState('ltx2_lipsync_seed', -1);
     const [showAdvanced, setShowAdvanced] = usePersistentState('ltx2_lipsync_show_advanced', false);
     const [isGenerating, setIsGenerating] = useState(false);

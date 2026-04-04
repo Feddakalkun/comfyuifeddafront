@@ -87,6 +87,7 @@ export const MODELS = {
         { id: 'ltx-generate-t2v', label: 'Generate T2V', icon: 'Type', category: 'GENERATE', source: 'LTX2.3', mapsTo: 'ltx-t2v' },
         { id: 'ltx-edit-i2v-sound', label: 'I2V + Sound', icon: 'Volume2', category: 'EDIT', source: 'LTX2', mapsTo: 'ltx2-i2v-sound' },
         { id: 'ltx-motion-lipsync', label: 'Lipsync Pro', icon: 'Mic2', category: 'MOTION', source: 'LTX2', mapsTo: 'ltx2-lipsync' },
+        { id: 'ltx23-av', label: 'AV 5-in-1', icon: 'Music', category: 'GENERATE', source: 'LTX2.3', mapsTo: 'ltx23-av' },
     ],
     VIDEO: [
         // Keep Video menu focused on WAN utilities.

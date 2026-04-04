@@ -1,4 +1,4 @@
-// Video Page - LTX I2V, LTX T2V, LTX-2 I2V+Sound, LTX-2 Lipsync, WAN Lipsync, Scene Builder
+// Video Page - LTX I2V, LTX T2V, LTX-2 I2V+Sound, LTX-2 Lipsync, WAN Lipsync, Scene Builder, LTX 2.3 AV
 import { useState, useEffect, useRef } from 'react';
 import { Film } from 'lucide-react';
 import { ModelDownloader } from '../components/ModelDownloader';
@@ -8,6 +8,7 @@ import { Ltx2I2vSoundTab } from '../components/video/Ltx2I2vSoundTab';
 import { Ltx2LipsyncTab } from '../components/video/Ltx2LipsyncTab';
 import { LipsyncTab } from '../components/video/LipsyncTab';
 import { SceneBuilderTab } from '../components/video/SceneBuilderTab';
+import { Ltx23AVTab } from '../components/video/Ltx23AVTab';
 import { useComfyExecution } from '../contexts/ComfyExecutionContext';
 import { comfyService } from '../services/comfyService';
 import { WorkbenchShell } from '../components/layout/WorkbenchShell';
@@ -22,6 +23,7 @@ const PREFIX_MAP: Record<string, string> = {
     'ltx-t2v': 'VIDEO/LTX23/T2V',
     'ltx2-i2v-sound': 'VIDEO/LTX2/',
     'ltx2-lipsync': 'VIDEO/LTX2/',
+    'ltx23-av': 'VIDEO/LTX23/AV',
 };
 
 const normalizePath = (value: string) => String(value || '').replace(/\\/g, '/');
@@ -165,6 +167,9 @@ export const VideoPage = ({ modelId }: VideoPageProps) => {
                         </div>
                         <div style={{ display: modelId === 'scene-builder' ? undefined : 'none' }}>
                             <SceneBuilderTab />
+                        </div>
+                        <div style={{ display: modelId === 'ltx23-av' ? undefined : 'none' }}>
+                            <Ltx23AVTab />
                         </div>
                     </div>
                 </>

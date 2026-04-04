@@ -522,6 +522,116 @@ async def get_civitai_key_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# === LOCAL LORA LIBRARY (SYMLINK) ===
+
+LORA_SYMLINK_NAME = "fedda"
+LORA_SYMLINK_TARGET = Path(__file__).parent.parent / "ComfyUI" / "models" / "loras" / LORA_SYMLINK_NAME
+
+
+class LoraPathRequest(BaseModel):
+    path: str
+
+
+def _get_lora_symlink_status() -> dict:
+    """Return the current state of the fedda LoRA symlink."""
+    target = LORA_SYMLINK_TARGET
+    if target.is_symlink():
+        resolved = str(target.resolve())
+        link_dest = str(os.readlink(str(target)))
+        exists = target.is_dir()  # Checks that the destination is reachable
+        return {"linked": True, "link_dest": link_dest, "resolved": resolved, "target_exists": exists}
+    elif target.exists():
+        return {"linked": False, "link_dest": None, "resolved": None, "target_exists": True, "is_real_dir": True}
+    return {"linked": False, "link_dest": None, "resolved": None, "target_exists": False}
+
+
+@app.get("/api/settings/lora-path")
+async def get_lora_path():
+    """Get the configured local LoRA library path and symlink status."""
+    try:
+        data = _load_runtime_settings()
+        saved_path = data.get("local_lora_path", "")
+        status = _get_lora_symlink_status()
+        return {"success": True, "path": saved_path, **status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/settings/lora-path")
+async def set_lora_path(req: LoraPathRequest):
+    """
+    Set a local LoRA library path and create a symlink at:
+      ComfyUI/models/loras/fedda  ->  <user_path>
+    Requires the path to be an existing directory on this machine.
+    On Windows, symlink creation may require Developer Mode or admin rights.
+    """
+    try:
+        user_path = Path(req.path.strip())
+        if not user_path.is_dir():
+            raise HTTPException(status_code=400, detail=f"Path does not exist or is not a directory: {user_path}")
+
+        # Remove existing symlink or bail if a real directory is there
+        if LORA_SYMLINK_TARGET.is_symlink():
+            LORA_SYMLINK_TARGET.unlink()
+        elif LORA_SYMLINK_TARGET.exists():
+            raise HTTPException(
+                status_code=409,
+                detail=f"A real directory already exists at {LORA_SYMLINK_TARGET}. Remove it manually first."
+            )
+
+        # Create parent dirs if needed
+        LORA_SYMLINK_TARGET.parent.mkdir(parents=True, exist_ok=True)
+
+        # Create symlink — on Windows a junction is safer (no admin needed)
+        if os.name == "nt":
+            # Use mklink /J (directory junction) which doesn't require elevation on Windows
+            result = subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(LORA_SYMLINK_TARGET), str(user_path)],
+                capture_output=True, text=True
+            )
+            if result.returncode != 0:
+                raise HTTPException(status_code=500, detail=f"mklink failed: {result.stderr.strip()}")
+        else:
+            os.symlink(str(user_path), str(LORA_SYMLINK_TARGET))
+
+        # Persist the path
+        data = _load_runtime_settings()
+        data["local_lora_path"] = str(user_path)
+        _save_runtime_settings(data)
+
+        print(f"[OK] LoRA symlink created: {LORA_SYMLINK_TARGET} -> {user_path}")
+        return {"success": True, "message": f"Symlink created: ComfyUI/models/loras/{LORA_SYMLINK_NAME} → {user_path}", **_get_lora_symlink_status()}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] set_lora_path: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/settings/lora-path")
+async def remove_lora_path():
+    """Remove the fedda LoRA symlink and clear the saved path."""
+    try:
+        if LORA_SYMLINK_TARGET.is_symlink():
+            LORA_SYMLINK_TARGET.unlink()
+            msg = "Symlink removed."
+        elif LORA_SYMLINK_TARGET.exists():
+            msg = "Target is a real directory — not removed. Delete it manually."
+        else:
+            msg = "No symlink found."
+
+        data = _load_runtime_settings()
+        data.pop("local_lora_path", None)
+        _save_runtime_settings(data)
+
+        return {"success": True, "message": msg}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 @app.post("/api/lora/sync-premium")
 async def sync_premium_loras():
     """

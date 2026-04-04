@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, Trash2, Search, RotateCw, CheckCircle2, AlertCircle, ExternalLink, FolderOpen, Key, Settings, BrainCircuit } from 'lucide-react';
+import { Download, Trash2, Search, RotateCw, CheckCircle2, AlertCircle, ExternalLink, FolderOpen, Key, Settings, BrainCircuit, Link, LinkIcon, Unlink } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { CatalogShell, CatalogCard } from '../components/layout/CatalogShell';
 import { useOllamaManager } from '../hooks/useOllamaManager';
@@ -100,6 +100,60 @@ export const SettingsPage = () => {
     const [civitaiConfigured, setCivitaiConfigured] = useState(false);
     const [civitaiSaved, setCivitaiSaved] = useState(false);
 
+    // Local LoRA Library
+    const [loraPath, setLoraPath] = useState('');
+    const [loraLinkStatus, setLoraLinkStatus] = useState<{linked: boolean; link_dest: string|null; target_exists: boolean} | null>(null);
+    const [loraPathSaving, setLoraPathSaving] = useState(false);
+    const [loraPathMsg, setLoraPathMsg] = useState<{type: 'success'|'error'; text: string} | null>(null);
+
+    const fetchLoraPath = () => {
+        fetch('/api/settings/lora-path')
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    setLoraPath(d.path || '');
+                    setLoraLinkStatus({ linked: d.linked, link_dest: d.link_dest, target_exists: d.target_exists });
+                }
+            })
+            .catch(() => {});
+    };
+
+    const handleLoraPathApply = async () => {
+        setLoraPathSaving(true);
+        setLoraPathMsg(null);
+        try {
+            const resp = await fetch('/api/settings/lora-path', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: loraPath.trim() }),
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data?.detail || 'Failed');
+            setLoraLinkStatus({ linked: data.linked, link_dest: data.link_dest, target_exists: data.target_exists });
+            setLoraPathMsg({ type: 'success', text: data.message });
+        } catch (e: any) {
+            setLoraPathMsg({ type: 'error', text: e.message || 'Unknown error' });
+        } finally {
+            setLoraPathSaving(false);
+        }
+    };
+
+    const handleLoraPathRemove = async () => {
+        setLoraPathSaving(true);
+        setLoraPathMsg(null);
+        try {
+            const resp = await fetch('/api/settings/lora-path', { method: 'DELETE' });
+            const data = await resp.json();
+            setLoraPath('');
+            setLoraLinkStatus({ linked: false, link_dest: null, target_exists: false });
+            setLoraPathMsg({ type: 'success', text: data.message });
+        } catch (e: any) {
+            setLoraPathMsg({ type: 'error', text: e.message || 'Unknown error' });
+        } finally {
+            setLoraPathSaving(false);
+        }
+    };
+
     useEffect(() => {
         const stored = localStorage.getItem(HF_TOKEN_KEY);
         if (stored) setHfToken(stored);
@@ -107,6 +161,7 @@ export const SettingsPage = () => {
             .then(r => r.json())
             .then(d => setCivitaiConfigured(Boolean(d?.configured)))
             .catch(() => {});
+        fetchLoraPath();
     }, []);
 
     const handleHfSave = () => {
@@ -190,6 +245,76 @@ export const SettingsPage = () => {
                     <p className="text-sm text-slate-400">
                         Character LoRAs are managed by model family. Workflow-required LoRAs are downloaded automatically with their base model groups.
                     </p>
+
+                    {/* Local LoRA Library */}
+                    <CatalogCard className="p-5 space-y-4">
+                        <div className="flex items-center gap-2">
+                            <LinkIcon className="w-4 h-4 text-violet-400" />
+                            <h3 className="text-sm font-semibold text-white">Local LoRA Library</h3>
+                            {loraLinkStatus?.linked && (
+                                <span className="ml-auto text-[10px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3" /> Linked
+                                </span>
+                            )}
+                            {loraLinkStatus && !loraLinkStatus.linked && (
+                                <span className="ml-auto text-[10px] text-slate-500 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <Unlink className="w-3 h-3" /> Not linked
+                                </span>
+                            )}
+                        </div>
+
+                        <p className="text-[11px] text-slate-500 leading-relaxed">
+                            Paste the path to a folder on your PC that contains <code className="text-slate-300">.safetensors</code> LoRA files.
+                            FEDDA will create a junction (<code className="text-slate-300">ComfyUI/models/loras/fedda</code>) pointing to that folder,
+                            so ComfyUI auto-discovers your LoRAs without copying any files.
+                        </p>
+
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={loraPath}
+                                onChange={e => setLoraPath(e.target.value)}
+                                placeholder="e.g. E:\\StableLoras  or  C:\\Users\\you\\loras"
+                                className="flex-1 bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50 font-mono"
+                            />
+                            <Button
+                                variant="primary"
+                                onClick={handleLoraPathApply}
+                                isLoading={loraPathSaving}
+                                disabled={loraPathSaving || !loraPath.trim()}
+                                className="px-4 whitespace-nowrap bg-violet-600 hover:bg-violet-500 border-violet-500"
+                            >
+                                <Link className="w-3.5 h-3.5 mr-1" /> Apply
+                            </Button>
+                            {loraLinkStatus?.linked && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleLoraPathRemove}
+                                    disabled={loraPathSaving}
+                                    className="px-3 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40"
+                                >
+                                    <Unlink className="w-3.5 h-3.5" />
+                                </Button>
+                            )}
+                        </div>
+
+                        {loraLinkStatus?.linked && loraLinkStatus.link_dest && (
+                            <div className="text-[10px] text-slate-500 font-mono truncate">
+                                → {loraLinkStatus.link_dest}
+                            </div>
+                        )}
+
+                        {loraPathMsg && (
+                            <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg border ${
+                                loraPathMsg.type === 'success'
+                                    ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20'
+                                    : 'text-red-300 bg-red-500/10 border-red-500/20'
+                            }`}>
+                                {loraPathMsg.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />}
+                                {loraPathMsg.text}
+                            </div>
+                        )}
+                    </CatalogCard>
 
                     <div className="flex flex-wrap gap-2 bg-[#0a0a0f] p-1 rounded-xl border border-white/10">
                         {LORA_FAMILIES.map((f) => (
