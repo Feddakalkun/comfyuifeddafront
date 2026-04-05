@@ -8,6 +8,10 @@ import requests
 import base64
 import re
 from pathlib import Path
+from brain_models import MemoryEntry, TaskEntry, ProjectEntry, AssetEntry
+from brain_store import brain_store
+from datetime import datetime
+import uuid
 
 # Add backend directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -128,37 +132,70 @@ async def transcribe(audio: UploadFile = File(...)):
 
 
 # Request models
+from fastapi import Form, UploadFile, File
+from typing import Optional
+from pydantic import BaseModel
+
+# Extended TTSRequest for FishAudio
 class TTSRequest(BaseModel):
     text: str
-    voice_style: str = "female, clear voice"
+    model: Optional[str] = None  # FishAudio model name (e.g., s2-pro, s2-pro-fp8)
+    voice_style: Optional[str] = "female, clear voice"
 
 
+
+
+# PATCHED: Accept model selection and reference audio for FishAudio
 @app.post("/api/audio/tts")
-async def generate_speech(request: TTSRequest):
+async def generate_speech(
+    text: str = Form(...),
+    model: Optional[str] = Form(None),
+    voice_style: Optional[str] = Form(None),
+    reference_audio: Optional[UploadFile] = File(None),
+    temperature: Optional[float] = Form(0.7),
+    top_p: Optional[float] = Form(0.7),
+    chunk_length: Optional[int] = Form(200),
+    max_new_tokens: Optional[int] = Form(192),
+    repetition_penalty: Optional[float] = Form(1.2),
+    seed: Optional[int] = Form(42)
+):
     """
-    Generate speech from text using ComfyUI Qwen TTS workflow
-    
+    Generate speech from text using FishAudio (LLM TTS) or legacy engines.
     Args:
         text: Text to convert to speech
+        model: FishAudio model name (e.g., s2-pro, s2-pro-fp8)
         voice_style: Voice style description
-    
+        reference_audio: Optional audio file for voice cloning
     Returns:
         Audio file
     """
     try:
-        # Generate TTS
-        audio_path = text_to_speech(request.text, request.voice_style)
-        
-        # Return audio file with correct media type
-        ext = audio_path.suffix.lower()
+        # If FishAudio model selected, use FishAudio workflow
+        fishaudio_models = ["s2-pro", "s2-pro-fp8", "s2-pro-bnb-int8", "s2-pro-bnb-nf4"]
+        if model and model in fishaudio_models:
+            from audio_service import fishaudio_tts
+            audio_path = await fishaudio_tts(
+                text, model, reference_audio,
+                temperature=temperature,
+                top_p=top_p,
+                chunk_length=chunk_length,
+                max_new_tokens=max_new_tokens,
+                repetition_penalty=repetition_penalty,
+                seed=seed
+            )
+        else:
+            # Legacy TTS
+            from audio_service import text_to_speech
+            audio_path = text_to_speech(text, voice_style or "female, clear voice")
+
+        ext = Path(audio_path).suffix.lower()
         media_types = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".flac": "audio/flac"}
         media_type = media_types.get(ext, "audio/wav")
         return FileResponse(
             path=str(audio_path),
             media_type=media_type,
-            filename=f"tts_{audio_path.name}"
+            filename=f"tts_{Path(audio_path).name}"
         )
-        
     except Exception as e:
         print(f"[ERROR] TTS error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -628,8 +665,6 @@ async def remove_lora_path():
         return {"success": True, "message": msg}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
 
 
 @app.post("/api/lora/sync-premium")
@@ -1415,7 +1450,8 @@ REQUIRED_MODELS = {
             "url": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/text_encoders/qwen_0.6b_ace15.safetensors",
             "path": "text_encoders/qwen_0.6b_ace15.safetensors",
             "size_gb": 1.11
-        },{
+        },
+        {
             "id": "ace-vae",
             "name": "ace_1.5_vae.safetensors",
             "url": "https://huggingface.co/Comfy-Org/ace_step_1.5_ComfyUI_files/resolve/main/split_files/vae/ace_1.5_vae.safetensors",
@@ -2555,6 +2591,42 @@ async def ltx_copilot(req: LtxCopilotRequest):
         return {"success": True, "spec": spec}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LTX copilot failed: {e}")
+
+class MemoryRequest(BaseModel):
+    content: str
+    kind: str = "note"
+    tags: list[str] = []
+
+@app.get("/api/brain/memory")
+async def get_memories():
+    """Get all memories for the default user (user_1)."""
+    memories = brain_store.search_memory("user_1", limit=100)
+    return {"success": True, "memories": [m.dict() for m in memories]}
+
+@app.post("/api/brain/memory")
+async def add_memory(req: MemoryRequest):
+    """Add a new memory to the brain."""
+    import uuid
+    from datetime import datetime
+    from brain_models import MemoryEntry
+    m_id = str(uuid.uuid4())
+    entry = MemoryEntry(
+        memory_id=m_id,
+        user_id="user_1",
+        kind=req.kind, # type: ignore
+        content=req.content,
+        tags=req.tags,
+        created_at=datetime.utcnow()
+    )
+    brain_store.add_memory(entry)
+    return {"success": True, "memory": entry.dict()}
+
+@app.delete("/api/brain/memory/{memory_id}")
+async def delete_memory(memory_id: str):
+    success = brain_store.delete_memory("user_1", memory_id, hard_delete=False)
+    if not success:
+        raise HTTPException(status_code=404, detail="Memory not found")
+    return {"success": True}
 
 
 @app.post("/api/chat")

@@ -1,3 +1,75 @@
+# Add FishAudio TTS handler
+import shutil
+import tempfile
+import requests
+def _download_fishaudio_model(model_name: str) -> Path:
+    """Download FishAudio model if not present. Returns model path."""
+    # Map model_name to URLs (update as needed)
+    model_urls = {
+        "s2-pro": "https://huggingface.co/fishaudio/s2-pro/resolve/main/model.safetensors",
+        "s2-pro-fp8": "https://huggingface.co/fishaudio/s2-pro-fp8/resolve/main/model.safetensors",
+        "s2-pro-bnb-int8": "https://huggingface.co/fishaudio/s2-pro-bnb-int8/resolve/main/model.safetensors",
+        "s2-pro-bnb-nf4": "https://huggingface.co/fishaudio/s2-pro-bnb-nf4/resolve/main/model.safetensors",
+    }
+    model_dir = Path(__file__).parent.parent / "models" / "fishaudio"
+    model_dir.mkdir(parents=True, exist_ok=True)
+    model_path = model_dir / f"{model_name}.safetensors"
+    if not model_path.exists():
+        url = model_urls.get(model_name)
+        if not url:
+            raise RuntimeError(f"Unknown FishAudio model: {model_name}")
+        print(f"[FishAudio] Downloading model {model_name}...")
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(model_path, "wb") as f:
+                shutil.copyfileobj(r.raw, f)
+        print(f"[FishAudio] Downloaded: {model_path}")
+    return model_path
+
+async def fishaudio_tts(
+    text: str,
+    model: str,
+    reference_audio: UploadFile = None,
+    temperature: float = 0.7,
+    top_p: float = 0.7,
+    chunk_length: int = 200,
+    max_new_tokens: int = 192,
+    repetition_penalty: float = 1.2,
+    seed: int = 42
+) -> Path:
+    """
+    Run FishAudio TTS or Voice Clone via ComfyUI workflow, with advanced parameters.
+    """
+    model_path = _download_fishaudio_model(model)
+
+    ref_audio_path = None
+    if reference_audio:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(reference_audio.filename).suffix) as tmp:
+            tmp.write(await reference_audio.read())
+            ref_audio_path = tmp.name
+
+    payload = {
+        "text": text,
+        "model_path": str(model_path),
+        "temperature": temperature,
+        "top_p": top_p,
+        "chunk_length": chunk_length,
+        "max_new_tokens": max_new_tokens,
+        "repetition_penalty": repetition_penalty,
+        "seed": seed,
+    }
+    if ref_audio_path:
+        payload["reference_audio"] = ref_audio_path
+
+    comfy_url = "http://127.0.0.1:8199/fishaudio_tts"  # Replace with your actual endpoint
+    resp = requests.post(comfy_url, json=payload)
+    if not resp.ok:
+        raise RuntimeError(f"FishAudio TTS failed: {resp.text}")
+    result = resp.json()
+    audio_path = result.get("audio_path")
+    if not audio_path or not Path(audio_path).exists():
+        raise RuntimeError("FishAudio TTS did not return a valid audio file.")
+    return Path(audio_path)
 """
 Audio Service - TTS (Chatterbox-Turbo/Kokoro/Edge) + STT (faster-whisper large-v3-turbo) + VAD (Silero)
 Direct Python calls, no ComfyUI dependency.
